@@ -57,23 +57,6 @@ GenerateClassCluster=0
 DocumentUniqueId=TGCDIGRW
 
 [Document2]
-DocumentPath=Slave_Schematic_2.SchDoc
-AnnotationEnabled=1
-AnnotateStartValue=1
-AnnotationIndexControlEnabled=0
-AnnotateSuffix=
-AnnotateScope=All
-AnnotateOrder=1
-DoLibraryUpdate=1
-DoDatabaseUpdate=1
-ClassGenCCAutoEnabled=1
-ClassGenCCAutoRoomEnabled=1
-ClassGenNCAutoScope=None
-DItemRevisionGUID=
-GenerateClassCluster=0
-DocumentUniqueId=TGCDIGRW
-
-[Document3]
 DocumentPath=Slave_PCB.PcbDoc
 AnnotationEnabled=1
 AnnotateStartValue=1
@@ -90,7 +73,7 @@ DItemRevisionGUID=
 GenerateClassCluster=0
 DocumentUniqueId=UOXDSBSQ
 
-[Document4]
+[Document3]
 DocumentPath=..\..\Altium Libraries\SlaveLib.SchLib
 AnnotationEnabled=1
 AnnotateStartValue=1
@@ -107,7 +90,7 @@ DItemRevisionGUID=
 GenerateClassCluster=0
 DocumentUniqueId=SPUKLEZG
 
-[Document5]
+[Document4]
 DocumentPath=..\..\Altium Libraries\SlaveLib.PcbLib
 AnnotationEnabled=1
 AnnotateStartValue=1
@@ -124,7 +107,7 @@ DItemRevisionGUID=
 GenerateClassCluster=0
 DocumentUniqueId=UPBFHHOE
 
-[Document6]
+[Document5]
 DocumentPath=Slave_PCB_V1.Annotation
 AnnotationEnabled=1
 AnnotateStartValue=1
@@ -264,7 +247,7 @@ OutputDefault20=0
 [OutputGroup2]
 Name=Simulator Outputs
 Description=
-TargetPrinter=SMART Notebook Document Writer
+TargetPrinter=Microsoft Print to PDF
 PrinterOptions=Record=PrinterOptions|Copies=1|Duplex=1|TrueTypeOptions=3|Collate=1|PrintJobKind=1|PrintWhat=1
 
 [OutputGroup3]
