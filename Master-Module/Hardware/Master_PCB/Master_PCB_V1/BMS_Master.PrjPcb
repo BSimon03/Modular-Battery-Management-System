@@ -89,7 +89,7 @@ ClassGenCCAutoRoomEnabled=1
 ClassGenNCAutoScope=None
 DItemRevisionGUID=
 GenerateClassCluster=0
-DocumentUniqueId=
+DocumentUniqueId=BIMWYRDV
 
 [Document4]
 DocumentPath=..\..\Altium Libraries\BMS_Master.SchLib
@@ -106,7 +106,11 @@ ClassGenCCAutoRoomEnabled=1
 ClassGenNCAutoScope=None
 DItemRevisionGUID=
 GenerateClassCluster=0
-DocumentUniqueId=
+DocumentUniqueId=JPULESAY
+
+[GeneratedDocument1]
+DocumentPath=Project Outputs for BMS_Master\Design Rule Check - Master_PCB.html
+DItemRevisionGUID=
 
 [Configuration1]
 Name=Sources
