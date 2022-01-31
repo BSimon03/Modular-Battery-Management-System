@@ -30,13 +30,17 @@ void ADC_setup()
 int measure_temperature()
 {
     int temperature = 0;
-
+	ADMUX &= ~(1 << MUX1);					  //Clearing all important bits of the ADMUX register
+	ADMUX |= (1 << MUX2);					  //Attaching Channel 5 to the ADC... Temperature
+	
     return temperature;
 }
 
 float measure_voltage()
 {
     float voltage = 0;
+	ADMUX &= ~(1 << MUX2); //Clearing all important bits of the ADMUX register
+	ADMUX |= (1 << MUX1);  //Attaching Channel 6 to the ADC... Battery
 
     return voltage;
 }
