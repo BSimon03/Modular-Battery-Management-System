@@ -10,6 +10,10 @@
 
 #include "ADC.h"
 
+uint16_t adc_values[ADC_SAMPLES] = {0};
+uint16_t adc_value = 0;
+uint16_t sort; //sort algorithm
+
 void ADC_setup()
 {
 	//ADC5 : Temperature Sensor NTC 
@@ -27,20 +31,111 @@ void ADC_setup()
 	//When its completed the channel can safely be changed. The next conversion takes 25 clock cycles.
 }
 
-int measure_temperature()
+uint16_t measure_temperature(uint8_t reps, uint8_t filter)
 {
-    int temperature = 0;
-	ADMUX &= ~(1 << MUX1);					  //Clearing all important bits of the ADMUX register
-	ADMUX |= (1 << MUX2);					  //Attaching Channel 5 to the ADC... Temperature
+    uint16_t temperature = 0;
+	uint8_t adc_counter=0;
+	ADMUX |= (1 << MUX0)|(1 << MUX1)|(1 << MUX2)|(1 << MUX3)|(1 << MUX4)|(1 << MUX5);	//Attaching Channel 11 to the ADC... Temperature
 	
+	for(adc_counter = 0; adc_counter <= reps; adc_counter++)
+		{
+			while(!ADC_INTERRUPT);
+			adc_values[adc_counter] = 0;						//current position in the array set to 0
+			adc_values[adc_counter] |= ADCL;					//save ADCL in the array
+			adc_values[adc_counter] |= ((ADCH & 0x03) << 8);	//save ADCH at the right position in the array
+		}
+		if(filter)		//filters out the greatest and the smallest value measured for higher precision
+		{
+				//shifting the greatest value to the right
+				for (adc_counter = 0; adc_counter <= reps; adc_counter++)
+				{
+					if (adc_values[adc_counter - 1] > adc_values[adc_counter])
+					{
+						sort = adc_values[adc_counter + 1];
+						adc_values[adc_counter + 1] = adc_values[adc_counter];
+						adc_values[adc_counter] = sort;
+					}
+				}
+
+				//shifting the lowest value to the left
+				for (adc_counter = reps; adc_counter >= 0; adc_counter--)
+				{
+					if (adc_values[adc_counter] < adc_values[adc_counter - 1])
+					{
+						sort = adc_values[adc_counter - 1];
+						adc_values[adc_counter - 1] = adc_values[adc_counter];
+						adc_values[adc_counter] = sort;
+					}
+				}
+
+				//Adding all measured values to variable, except the outer ones
+				adc_value = 0; //Resetting variable
+				for (adc_counter = 1; adc_counter < (reps - 1); adc_counter++)
+					adc_value += adc_values[adc_counter];
+				adc_value /= (reps - 2);
+		}
+		else
+		{
+			//Adding all measured values to variable
+				adc_value = 0; //Resetting variable
+				for (adc_counter = 0; adc_counter < reps; adc_counter++)
+					adc_value += adc_values[adc_counter];
+				adc_value /= (reps);
+		}
+	temperature = (float)adc_value / TEMP_CONSTANT;
     return temperature;
 }
 
-float measure_voltage()
+float measure_voltage(uint8_t reps, uint8_t filter)
 {
     float voltage = 0;
-	ADMUX &= ~(1 << MUX2); //Clearing all important bits of the ADMUX register
-	ADMUX |= (1 << MUX1);  //Attaching Channel 6 to the ADC... Battery
+	uint8_t adc_counter=0;
+	ADMUX &= ~(1 << MUX0)|(1 << MUX3)|(1 << MUX4)|(1 << MUX5); //Clearing all important bits of the ADMUX register
+		for(adc_counter = 0; adc_counter <= reps; adc_counter++)
+		{
+			while(!ADC_INTERRUPT);
+			adc_values[adc_counter] = 0;						//current position in the array set to 0
+			adc_values[adc_counter] |= ADCL;					//save ADCL in the array
+			adc_values[adc_counter] |= ((ADCH & 0x03) << 8);	//save ADCH at the right position in the array
+		}
+		if(filter)		//filters out the greatest and the smallest value measured for higher precision
+		{
+				//shifting the greatest value to the right
+				for (adc_counter = 0; adc_counter <= reps; adc_counter++)
+				{
+					if (adc_values[adc_counter - 1] > adc_values[adc_counter])
+					{
+						sort = adc_values[adc_counter + 1];
+						adc_values[adc_counter + 1] = adc_values[adc_counter];
+						adc_values[adc_counter] = sort;
+					}
+				}
 
+				//shifting the lowest value to the left
+				for (adc_counter = reps; adc_counter >= 0; adc_counter--)
+				{
+					if (adc_values[adc_counter] < adc_values[adc_counter - 1])
+					{
+						sort = adc_values[adc_counter - 1];
+						adc_values[adc_counter - 1] = adc_values[adc_counter];
+						adc_values[adc_counter] = sort;
+					}
+				}
+
+				//Adding all measured values to variable, except the outer ones
+				adc_value = 0; //Resetting variable
+				for (adc_counter = 1; adc_counter < (reps - 1); adc_counter++)
+					adc_value += adc_values[adc_counter];
+				adc_value /= (reps - 2);
+		}
+		else
+		{
+			//Adding all measured values to variable
+				adc_value = 0; //Resetting variable
+				for (adc_counter = 0; adc_counter < reps; adc_counter++)
+					adc_value += adc_values[adc_counter];
+				adc_value /= (reps);
+		}
+	voltage = (float)adc_value / 400; //divided by 1024 aka 10-bit, multiplied by 2,56 aka internal reference voltage
     return voltage;
 }
