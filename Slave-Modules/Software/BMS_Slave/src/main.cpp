@@ -10,8 +10,6 @@
 
 #include "init_ATtiny261A.h"
 
-#define ADC_SAMPLES 6 		//Averaging x-2 samples
-
 //Data received
 uint8_t storedDATA = 0;
 
@@ -47,13 +45,11 @@ uint8_t ADCstat = 0;
 // 0  : Set up for Battery Temperature Measurement
 // 1  : Set up for Battery Voltage Measurement
 
-uint16_t adc_values[ADC_SAMPLES] = {0};
 
-uint16_t adc_value = 0;
 uint8_t battery_temperature = 0;
 float battery_voltage = 0;
 
-uint16_t sort; //sort algorithm
+
 
 //Outcome of Measurements
 uint8_t capacity = 0;
@@ -67,60 +63,6 @@ int main(void)
 
 	while (1)
 	{
-		if (ADC_INTERRUPT) //ADC Interrupt ADIF is high
-		{
-			if (adc_counter >= ADC_SAMPLES)
-			{
-				//shifting the greatest value to the right
-				for (adc_counter = 0; adc_counter <= ADC_SAMPLES; adc_counter++)
-				{
-					if (adc_values[adc_counter - 1] > adc_values[adc_counter])
-					{
-						sort = adc_values[adc_counter + 1];
-						adc_values[adc_counter + 1] = adc_values[adc_counter];
-						adc_values[adc_counter] = sort;
-					}
-				}
-
-				//shifting the lowest value to the left
-				for (adc_counter = ADC_SAMPLES; adc_counter >= 0; adc_counter--)
-				{
-					if (adc_values[adc_counter] < adc_values[adc_counter - 1])
-					{
-						sort = adc_values[adc_counter - 1];
-						adc_values[adc_counter - 1] = adc_values[adc_counter];
-						adc_values[adc_counter] = sort;
-					}
-				}
-				//Adding all measured values to variable, except the outer ones
-				adc_value = 0; //Resetting variable
-				for (adc_counter = 1; adc_counter < (ADC_SAMPLES - 1); adc_counter++)
-					adc_value += adc_values[adc_counter];
-				adc_value /= (ADC_SAMPLES - 2);
-				adc_counter = 0;
-
-				if (ADCstat) //Temperature
-				{
-					battery_temperature = (float)adc_value / TEMP_CONSTANT;
-					ADMUX &= ~(1 << MUX2); //Clearing all important bits of the ADMUX register
-					ADMUX |= (1 << MUX1);  //Attaching Channel 6 to the ADC... Battery
-					ADCstat = 0;
-				}
-				else if (!ADCstat) //Battery
-				{
-					battery_voltage = (float)adc_value / 400; //divided by 1024 aka 10-bit, multiplied by 2,56 aka internal reference voltage
-					ADMUX &= ~(1 << MUX1);					  //Clearing all important bits of the ADMUX register
-					ADMUX |= (1 << MUX2);					  //Attaching Channel 5 to the ADC... Temperature
-					ADCstat = 1;
-				}
-			}
-
-			adc_values[adc_counter] = 0;
-			adc_values[adc_counter] |= ADCL;
-			adc_values[adc_counter] |= ((ADCH & 0x03) << 8);
-			
-			adc_counter++;
-		}
 		//Communication
 		information_string = 0; //Reset string
 
@@ -200,27 +142,6 @@ ISR(INT0_vect) 		//Pin change interrupt set up for the chip-select pin
 	{	
 		// If edge is rising, turn the 4-bit overflow interrupt off:
 		USICR &= ~(1<<USIOIE);
-	}
-}
-
-ISR(USI_OVF_vect) 		// USI interrupt routine. Always executed when 4-bit overflows (after 16 clock edges = 8 clock cycles/ 8 bits)
-{
-	storedDATA = USIDR; 		// Read in from USIDR register
-	switch (storedDATA)			// Switch-Case to respond according to the request from Master	
-	{		
-	case 0:					 	// If storedDATA is an empty string only the flag is being cleared
-		USISR |= (1<<USIOIF); 		// Clear Overflow bit
-		break;
-
-	case request_info: 			// If the master requested information, the information string immediately gets sent back.
-		USIDR |= information_string;
-		USISR |= (1<<USIOIF);
-		break;
-
-	case request_secs: 			// If the master requested the second string, values are getting sent back.
-		USIDR |= value_string;
-		USISR |= (1<<USIOIF);
-		break;
 	}
 }
 

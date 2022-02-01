@@ -57,7 +57,7 @@ void PWM_setup()	//Charge/Discharge
 
 void init_attiny261a()					//Combining all setup functions
 {
-	DDRA|=(1<<STAT_GREEN)|(1<<STAT_RED);
+	DDRA|=(1<<STAT_G)|(1<<STAT_R);
 	mcu_set_clock();
 	INT_setup();
 	PWM_setup();
