@@ -21,11 +21,7 @@ uint8_t adc_gain = 0;                   //ADC drift
 uint8_t ntc_constant = 0;						//NTC Constant
 
 //Data received
-uint8_t storedDATA = 0;
-
-//Data to be sent
-uint8_t information_string; //Bits[7:6] for indication and information, Bits[5:0] resistance of the battery cell
-uint8_t value_string;		//Bits[7:0] capacitance of the battery cell
+uint16_t storedDATA = 0;
 
 //Interrupt
 uint8_t secs = 0; //8bit: Overflow after 255 seconds, needs 1 second timer
@@ -36,16 +32,9 @@ uint8_t ADCstat = 0;
 // 0  : Set up for Battery Temperature Measurement
 // 1  : Set up for Battery Voltage Measurement
 
-
 //Measurements
 uint8_t battery_temperature = 0;
 float battery_voltage = 0;
-
-
-
-//Outcome of Measurements
-uint8_t capacity = 0;
-uint8_t resistance = 0;
 
 int main(void)
 {
@@ -59,10 +48,12 @@ int main(void)
 			if(ADCstat)
 			{
 				battery_temperature = measure_temperature(ADC_SAMPLES, ADC_FILTER, ntc_constant);
+				ADCstat=0;
 			}
 			else
 			{
 				battery_voltage = measure_voltage(ADC_SAMPLES, ADC_FILTER, adc_offset, adc_gain);
+				ADCstat=1;
 			}
 		}
 	}
