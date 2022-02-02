@@ -19,9 +19,9 @@ void mcu_set_clock()		//set clock to 10MHz? supply voltage?
 }
 */
 
-void mcu_set_clock()					//Function to easily switch between Clock prescalers using the previous define
+void CLK_setup()					//Function to easily switch between Clock prescalers using the define in the header file
 {
-	CLKPR = CLK_PRESCALER_VALUE;
+	CLKPR = CLK_PS_SETTING;
 }
 
 void INT_setup()						//External Interrupt, any edge
@@ -31,7 +31,7 @@ void INT_setup()						//External Interrupt, any edge
 	MCUCR&=~(1<<ISC01);
 }
 
-void PWM_setup()	//Charge/Discharge
+void TIM_setup()	//Charge/Discharge
 {
 	//Timer 1: 10kHz Software-PWM
 	//2 Channels can be controlled by changing OCR1x and used via the OVF Interrupt
@@ -58,8 +58,10 @@ void PWM_setup()	//Charge/Discharge
 void init_attiny261a()					//Combining all setup functions
 {
 	DDRA|=(1<<STAT_G)|(1<<STAT_R);
-	mcu_set_clock();
+	CLK_setup();
 	INT_setup();
-	PWM_setup();
+	TIM_setup();
 	ADC_setup();
+	sei(); //global interrupt enable
+
 }

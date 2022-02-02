@@ -10,7 +10,6 @@
 
 #include "ADC.h"
 
-uint16_t adc_values[ADC_SAMPLES] = {0};
 uint16_t adc_value = 0;
 uint16_t sort; //sort algorithm
 
@@ -31,8 +30,9 @@ void ADC_setup()
 	//When its completed the channel can safely be changed. The next conversion takes 25 clock cycles.
 }
 
-uint16_t measure_temperature(uint8_t reps, uint8_t filter)
+uint16_t measure_temperature(uint8_t reps, uint8_t filter, float temp_constant)
 {
+	uint16_t adc_values[reps];
     uint16_t temperature = 0;
 	uint8_t adc_counter=0;
 	ADMUX |= (1 << MUX0)|(1 << MUX1)|(1 << MUX2)|(1 << MUX3)|(1 << MUX4)|(1 << MUX5);	//Attaching Channel 11 to the ADC... Temperature
@@ -82,12 +82,13 @@ uint16_t measure_temperature(uint8_t reps, uint8_t filter)
 					adc_value += adc_values[adc_counter];
 				adc_value /= (reps);
 		}
-	temperature = (float)adc_value / TEMP_CONSTANT;
+	temperature = (float)adc_value / temp_constant;
     return temperature;
 }
 
-float measure_voltage(uint8_t reps, uint8_t filter)
+float measure_voltage(uint8_t reps, uint8_t filter, float adc_offset, float adc_drift)
 {
+	uint16_t adc_values[reps];
     float voltage = 0;
 	uint8_t adc_counter=0;
 	ADMUX &= ~(1 << MUX0)|(1 << MUX3)|(1 << MUX4)|(1 << MUX5); //Clearing all important bits of the ADMUX register
