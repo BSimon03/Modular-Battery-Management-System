@@ -1,7 +1,7 @@
 Protel Design System Design Rule Check
 PCB File : C:\Users\Admin\Documents\GitHub\Modular-Battery-Management-System\Slave-Modules\Hardware\Slave_PCB\Slave_PCB_V1\Slave_PCB.PcbDoc
-Date     : 04/02/2022
-Time     : 21:54:39
+Date     : 06/02/2022
+Time     : 16:47:26
 
 Processing Rule : Clearance Constraint (Gap=0.203mm) (OnLayer('Top Layer')),(All)
 Rule Violations :0
@@ -43,13 +43,7 @@ Processing Rule : Minimum Solder Mask Sliver (Gap=0.1mm) (All),(All)
 Rule Violations :0
 
 Processing Rule : Silk To Solder Mask (Clearance=0.1mm) (IsPad),(All)
-   Violation between Silk To Solder Mask Clearance Constraint: (Collision < 0.1mm) Between Arc (6.5mm,26.6mm) on Top Overlay And Pad RDB1-1(6.7mm,26.2mm) on Top Layer [Top Overlay] to [Top Solder] clearance [0mm]
-   Violation between Silk To Solder Mask Clearance Constraint: (Collision < 0.1mm) Between Arc (6.5mm,26.6mm) on Top Overlay And Pad RDB1-1(6.7mm,26.2mm) on Top Layer [Top Overlay] to [Top Solder] clearance [0mm]
-   Violation between Silk To Solder Mask Clearance Constraint: (0.062mm < 0.1mm) Between Pad CBOT1-1(1.4mm,31.6mm) on Top Layer And Text "+" (2.004mm,30.25mm) on Top Overlay [Top Overlay] to [Top Solder] clearance [0.062mm]
-   Violation between Silk To Solder Mask Clearance Constraint: (0.053mm < 0.1mm) Between Pad CTOP1-1(13.6mm,31.6mm) on Top Layer And Text "-" (12.004mm,30.242mm) on Top Overlay [Top Overlay] to [Top Solder] clearance [0.053mm]
-   Violation between Silk To Solder Mask Clearance Constraint: (0.053mm < 0.1mm) Between Pad RL1-2(4.3mm,3.7mm) on Top Layer And Text "+" (0.504mm,3mm) on Top Overlay [Top Overlay] to [Top Solder] clearance [0.053mm]
-   Violation between Silk To Solder Mask Clearance Constraint: (0.077mm < 0.1mm) Between Pad TB1-3(4.6mm,23.92mm) on Top Layer And Track (5.05mm,23.45mm)(5.125mm,23.45mm) on Top Overlay [Top Overlay] to [Top Solder] clearance [0.077mm]
-Rule Violations :6
+Rule Violations :0
 
 Processing Rule : Silk to Silk (Clearance=0.1mm) (All),(All)
 Rule Violations :0
@@ -58,28 +52,12 @@ Processing Rule : Net Antennae (Tolerance=0mm) (All)
 Rule Violations :0
 
 Processing Rule : Board Clearance Constraint (Gap=0mm) (All)
-   Violation between Board Outline Clearance(Outline Edge): (Collision < 0.2mm) Between Board Edge And Pad Free-2(-10.6mm,36.9mm) on Multi-Layer 
-   Violation between Board Outline Clearance(Outline Edge): (Collision < 0.2mm) Between Board Edge And Pad Free-2(-10mm,36.9mm) on Multi-Layer 
-   Violation between Board Outline Clearance(Outline Edge): (Collision < 0.2mm) Between Board Edge And Pad Free-2(-11.2mm,36.9mm) on Multi-Layer 
-   Violation between Board Outline Clearance(Outline Edge): (Collision < 0.2mm) Between Board Edge And Pad Free-2(-13mm,36.9mm) on Multi-Layer 
-   Violation between Board Outline Clearance(Outline Edge): (Collision < 0.2mm) Between Board Edge And Pad Free-2(-2.2mm,36.9mm) on Multi-Layer 
-   Violation between Board Outline Clearance(Outline Edge): (Collision < 0.2mm) Between Board Edge And Pad Free-2(-2.8mm,36.9mm) on Multi-Layer 
-   Violation between Board Outline Clearance(Outline Edge): (Collision < 0.2mm) Between Board Edge And Pad Free-2(-3.4mm,36.9mm) on Multi-Layer 
-   Violation between Board Outline Clearance(Outline Edge): (Collision < 0.2mm) Between Board Edge And Pad Free-2(-4.6mm,36.9mm) on Multi-Layer 
-   Violation between Board Outline Clearance(Outline Edge): (Collision < 0.2mm) Between Board Edge And Pad Free-2(-4mm,36.9mm) on Multi-Layer 
-   Violation between Board Outline Clearance(Outline Edge): (Collision < 0.2mm) Between Board Edge And Pad Free-2(-5.2mm,36.9mm) on Multi-Layer 
-   Violation between Board Outline Clearance(Outline Edge): (Collision < 0.2mm) Between Board Edge And Pad Free-2(-5.8mm,36.9mm) on Multi-Layer 
-   Violation between Board Outline Clearance(Outline Edge): (Collision < 0.2mm) Between Board Edge And Pad Free-2(-6.4mm,36.9mm) on Multi-Layer 
-   Violation between Board Outline Clearance(Outline Edge): (Collision < 0.2mm) Between Board Edge And Pad Free-2(-7mm,36.9mm) on Multi-Layer 
-   Violation between Board Outline Clearance(Outline Edge): (Collision < 0.2mm) Between Board Edge And Pad Free-2(-8.2mm,36.9mm) on Multi-Layer 
-   Violation between Board Outline Clearance(Outline Edge): (Collision < 0.2mm) Between Board Edge And Pad Free-2(-8.8mm,36.9mm) on Multi-Layer 
-   Violation between Board Outline Clearance(Outline Edge): (Collision < 0.2mm) Between Board Edge And Pad Free-2(-9.4mm,36.9mm) on Multi-Layer 
-Rule Violations :16
+Rule Violations :0
 
 Processing Rule : Height Constraint (Min=0mm) (Max=25.4mm) (Prefered=12.7mm) (All)
 Rule Violations :0
 
 
-Violations Detected : 22
+Violations Detected : 0
 Waived Violations : 0
-Time Elapsed        : 00:00:02
+Time Elapsed        : 00:00:01
