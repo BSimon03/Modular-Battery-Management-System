@@ -13,6 +13,32 @@ Used DCodes :
 *************************************************************
 
 *************************************************************
+Generating : Bottom Overlay
+      File : Slave_PCB.GBO
+
+    Adding Layer      : Bottom Overlay
+
+
+Used DCodes :
+*************************************************************
+
+*************************************************************
+Generating : Bottom Solder
+      File : Slave_PCB.GBS
+
+    Adding Layer      : Bottom Solder
+
+    Adding Layer      : Bottom Layer
+
+    Adding Layer      : Multi-Layer
+
+
+Used DCodes :
+    D26
+    D27
+*************************************************************
+
+*************************************************************
 Generating : Top Solder
       File : Slave_PCB.GTS
 
@@ -41,63 +67,6 @@ Used DCodes :
 *************************************************************
 
 *************************************************************
-Generating : Bottom Solder
-      File : Slave_PCB.GBS
-
-    Adding Layer      : Bottom Solder
-
-    Adding Layer      : Bottom Layer
-
-    Adding Layer      : Multi-Layer
-
-
-Used DCodes :
-    D26
-    D27
-*************************************************************
-
-*************************************************************
-Generating : Bottom Layer
-      File : Slave_PCB.GBL
-
-    Adding Layer      : Bottom Layer
-
-    Adding Layer      : Multi-Layer
-
-
-Used DCodes :
-    D20
-    D41
-    D43
-    D44
-    D45
-*************************************************************
-
-*************************************************************
-Generating : Top Overlay
-      File : Slave_PCB.GTO
-
-    Adding Layer      : Top Overlay
-
-
-Used DCodes :
-    D10
-    D11
-    D12
-    D13
-*************************************************************
-
-*************************************************************
-Generating : Bottom Overlay
-      File : Slave_PCB.GBO
-
-    Adding Layer      : Bottom Overlay
-
-
-Used DCodes :
-*************************************************************
-
-*************************************************************
 Generating : Top Layer
       File : Slave_PCB.GTL
 
@@ -108,7 +77,8 @@ Generating : Top Layer
 
 Used DCodes :
     D12
-    D20
+    D21
+    D26
     D28
     D29
     D30
@@ -126,6 +96,36 @@ Used DCodes :
     D42
     D43
     D44
-    D45
+*************************************************************
+
+*************************************************************
+Generating : Bottom Layer
+      File : Slave_PCB.GBL
+
+    Adding Layer      : Bottom Layer
+
+    Adding Layer      : Multi-Layer
+
+
+Used DCodes :
+    D21
+    D26
+    D41
+    D43
+    D44
+*************************************************************
+
+*************************************************************
+Generating : Top Overlay
+      File : Slave_PCB.GTO
+
+    Adding Layer      : Top Overlay
+
+
+Used DCodes :
+    D10
+    D11
+    D12
+    D13
 *************************************************************
 
