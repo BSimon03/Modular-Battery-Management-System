@@ -8,6 +8,8 @@
 /*  digital conversions  */
 /*************************/
 
+#include <avr/io.h>
+#include <stdint.h>
 #include "ADC.h"
 
 uint16_t adc_value = 0;

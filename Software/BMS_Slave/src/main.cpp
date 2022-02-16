@@ -7,9 +7,14 @@
 /*                       */
 /*  Author: Simon Ball   */
 /*************************/
-#define __AVR_ATtiny261A__
-#define F_CPU 8000000UL
 
+#define F_CPU 2000000L
+
+#include <avr/io.h>
+#include <stdint.h>
+
+#include "../../ADC/ADC.h"
+#include "../../One_Wire_COMM/communication.h"
 #include "../init_bms_slave.h"
 
 //Settings

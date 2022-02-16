@@ -8,11 +8,6 @@
 /*  digital conversions  */
 /*************************/
 
-#include <avr/io.h>
-#include <avr/interrupt.h>
-#include <stdio.h>
-#include <stdint.h>
-
 //ADC interrupt flag set?
 #define ADC_INTERRUPT ADCSRA & 0b00010000
 

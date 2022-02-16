@@ -1,3 +1,6 @@
+#ifndef INIT_BMS_SLAVE
+#define INIT_BMS_SLAVE
+
 /*************************/
 /*  init_attiny261a.h    */
 /*  Slave Initiation     */
@@ -8,16 +11,8 @@
 /*  Author: Simon Ball   */
 /*************************/
 
-#include <avr/io.h>
-#include <avr/interrupt.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <avr/eeprom.h>
-#include "../ADC/ADC.h"
-#include <../One_Wire_COMM/communication.h>
-
 //Pin definitions
-	//PORTA
+	//PORTAS
 	#define COMM_TOP PINA2
 	#define STAT_R PINA5
 	#define STAT_G PINA6
@@ -53,31 +48,31 @@ const uint8_t done 				= 0b11000000;	//done with the measurement		resistance in 
 
 //Prescaler value converted to bit settings.
 
-#if F_CPU == 8000000UL										//PS = 1
+#if F_CPU == 8000000L										//PS = 1
 #define CLK_PS_SETTING (1<<CLKPCE)
 
-#elif F_CPU == 4000000UL									//PS = 2
+#elif F_CPU == 4000000L									//PS = 2
 #define CLK_PS_SETTING (1<<CLKPCE)|(1<<CLKPS0)
 
-#elif F_CPU == 2000000UL									//PS = 4
+#elif F_CPU == 2000000L									//PS = 4
 #define CLK_PS_SETTING (1<<CLKPCE)|(1<<CLKPS1)
 
-#elif F_CPU == 1000000UL									//PS = 8
+#elif F_CPU == 1000000L									//PS = 8
 #define CLK_PS_SETTING (1<<CLKPCE)|(1<<CLKPS1)|(1<<CLKPS0)
 
-#elif F_CPU == 500000UL										//PS = 16
+#elif F_CPU == 500000L										//PS = 16
 #define CLK_PS_SETTING (1<<CLKPCE)|(1<<CLKPS2)
 
-#elif F_CPU == 250000UL										//PS = 32
+#elif F_CPU == 250000L										//PS = 32
 #define CLK_PS_SETTING (1<<CLKPCE)|(1<<CLKPS2)|(1<<CLKPS0)
 
-#elif F_CPU == 125000UL										//PS = 64
+#elif F_CPU == 125000L										//PS = 64
 #define CLK_PS_SETTING (1<<CLKPCE)|(1<<CLKPS2)|(1<<CLKPS1)
 
-#elif F_CPU == 62500UL										//PS = 128
+#elif F_CPU == 62500L										//PS = 128
 #define CLK_PS_SETTING (1<<CLKPCE)|(1<<CLKPS2)|(1<<CLKPS1)|(1<<CLKPS0)
 
-#elif F_CPU == 31250UL										//PS = 256
+#elif F_CPU == 31250L										//PS = 256
 #define CLK_PS_SETTING (1<<CLKPCE)|(1<<CLKPS3)
 
 #else
@@ -86,3 +81,4 @@ const uint8_t done 				= 0b11000000;	//done with the measurement		resistance in 
 #endif
 
 void init_attiny261a(void){};
+#endif
