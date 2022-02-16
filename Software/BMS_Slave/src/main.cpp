@@ -10,7 +10,7 @@
 #define __AVR_ATtiny261A__
 #define F_CPU 8000000UL
 
-#include "init_attiny261A.h"
+#include "../init_bms_slave.h"
 
 //Settings
 #define ADC_SAMPLES 6 		//Averaging x-2 samples

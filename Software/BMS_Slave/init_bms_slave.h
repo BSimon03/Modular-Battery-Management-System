@@ -13,8 +13,8 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <avr/eeprom.h>
-#include "ADC.h"
-#include "communication.h"
+#include "../ADC/ADC.h"
+#include <../One_Wire_COMM/communication.h>
 
 //Pin definitions
 	//PORTA

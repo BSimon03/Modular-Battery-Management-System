@@ -8,7 +8,7 @@
 /*  Author: Simon Ball   */
 /*************************/
 
-#include "init_attiny261a.h"
+#include "init_bms_slave.h"
 
 /*
 void mcu_set_clock()		//set clock to 10MHz? supply voltage?
