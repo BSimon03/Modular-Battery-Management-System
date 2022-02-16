@@ -53,31 +53,31 @@ const uint8_t done 				= 0b11000000;	//done with the measurement		resistance in 
 
 //Prescaler value converted to bit settings.
 
-#if CLK_PRESCALER_VALUE == 1
+#if F_CPU == 8000000UL										//PS = 1
 #define CLK_PS_SETTING (1<<CLKPCE)
 
-#elif CLK_PRESCALER_VALUE == 2
+#elif F_CPU == 4000000UL									//PS = 2
 #define CLK_PS_SETTING (1<<CLKPCE)|(1<<CLKPS0)
 
-#elif CLK_PRESCALER_VALUE == 4
+#elif F_CPU == 2000000UL									//PS = 4
 #define CLK_PS_SETTING (1<<CLKPCE)|(1<<CLKPS1)
 
-#elif CLK_PRESCALER_VALUE == 8
+#elif F_CPU == 1000000UL									//PS = 8
 #define CLK_PS_SETTING (1<<CLKPCE)|(1<<CLKPS1)|(1<<CLKPS0)
 
-#elif CLK_PRESCALER_VALUE == 16
+#elif F_CPU == 500000UL										//PS = 16
 #define CLK_PS_SETTING (1<<CLKPCE)|(1<<CLKPS2)
 
-#elif CLK_PRESCALER_VALUE == 32
+#elif F_CPU == 250000UL										//PS = 32
 #define CLK_PS_SETTING (1<<CLKPCE)|(1<<CLKPS2)|(1<<CLKPS0)
 
-#elif CLK_PRESCALER_VALUE == 64
+#elif F_CPU == 125000UL										//PS = 64
 #define CLK_PS_SETTING (1<<CLKPCE)|(1<<CLKPS2)|(1<<CLKPS1)
 
-#elif CLK_PRESCALER_VALUE == 128
+#elif F_CPU == 62500UL										//PS = 128
 #define CLK_PS_SETTING (1<<CLKPCE)|(1<<CLKPS2)|(1<<CLKPS1)|(1<<CLKPS0)
 
-#elif CLK_PRESCALER_VALUE == 256
+#elif F_CPU == 31250UL										//PS = 256
 #define CLK_PS_SETTING (1<<CLKPCE)|(1<<CLKPS3)
 
 #else

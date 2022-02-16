@@ -7,8 +7,10 @@
 /*                       */
 /*  Author: Simon Ball   */
 /*************************/
+#define __AVR_ATtiny261A__
+#define F_CPU 8000000UL
 
-#include "init_ATtiny261A.h"
+#include "init_attiny261A.h"
 
 //Settings
 #define ADC_SAMPLES 6 		//Averaging x-2 samples
@@ -18,7 +20,7 @@
 //only linear error correction... y=k*x+d
 uint8_t adc_offset = 0;					//ADC offset
 uint8_t adc_gain = 0;                   //ADC drift
-uint8_t ntc_constant = 0;						//NTC Constant
+uint8_t ntc_constant = 0;				//NTC Constant
 
 //Data received
 uint16_t storedDATA = 0;
