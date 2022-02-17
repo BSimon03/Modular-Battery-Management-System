@@ -9,6 +9,8 @@
 /*  upper and lower uC   */
 /*************************/
 
+#include <avr/io.h>
+#include <stdint.h>
 #include "communication.h"
 
 int handle_upper(int datapackage)

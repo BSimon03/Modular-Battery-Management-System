@@ -8,10 +8,12 @@
 /*  Author: Simon Ball   */
 /*************************/
 
-#define F_CPU 2000000L
+//#define F_CPU 2000000L
 
 #include <avr/io.h>
 #include <stdint.h>
+#include <avr/interrupt.h>
+#include <avr/eeprom.h>
 
 #include "../../ADC/ADC.h"
 #include "../../One_Wire_COMM/communication.h"

@@ -1,3 +1,5 @@
+#ifndef COMM_H
+#define COMM_H
 /*************************/
 /*  communication.h      */
 /*						 */
@@ -9,11 +11,7 @@
 /*  upper and lower uC   */
 /*************************/
 
-#include <avr/io.h>
-#include <avr/interrupt.h>
-#include <stdio.h>
-#include <stdint.h>
-
 int handle_upper(int);
 
 int handle_lower(int);
+#endif

@@ -1,3 +1,5 @@
+#ifndef ADC_H
+#define ADC_H
 /*************************/
 /*  ADC.h                */
 /*						 */
@@ -15,6 +17,7 @@
 
 void ADC_setup(void){};
 
-uint16_t measure_temperature(uint8_t reps, uint8_t filter, float temp_constant);
+uint16_t measure_temperature(uint8_t reps, uint8_t filter, float temp_constant){};
 
-float measure_voltage(uint8_t reps, uint8_t filter, float adc_offset, float adc_drift);
+float measure_voltage(uint8_t reps, uint8_t filter, float adc_offset, float adc_drift){};
+#endif
