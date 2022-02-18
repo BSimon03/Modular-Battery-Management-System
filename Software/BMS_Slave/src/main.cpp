@@ -8,7 +8,7 @@
 /*  Author: Simon Ball   */
 /*************************/
 
-//#define F_CPU 2000000L
+//#define F_CPU 2000000L not needed as the properties file of platform io already defines the clock frequency
 
 #include <avr/io.h>
 #include <stdint.h>
@@ -47,7 +47,7 @@ float battery_voltage = 0;
 
 int main(void)
 {
-	init_attiny261a(); //Initiating the MCU, Registers configurated
+	init_mcu(); //Initiating the MCU, Registers configurated
 
 	
 	while (1)

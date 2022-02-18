@@ -60,7 +60,7 @@ void TIM_setup()	//Charge/Discharge
 	OCR1B=0;
 }
 
-void init_attiny261a()					//Combining all setup functions
+void init_mcu()					//Combining all setup functions
 {
 	DDRA|=(1<<STAT_G)|(1<<STAT_R);
 	CLK_setup();

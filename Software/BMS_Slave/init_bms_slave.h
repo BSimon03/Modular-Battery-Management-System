@@ -80,5 +80,5 @@ const uint8_t done 				= 0b11000000;	//done with the measurement		resistance in 
 
 #endif
 
-void init_attiny261a(void){};
+void init_mcu(void){};
 #endif
