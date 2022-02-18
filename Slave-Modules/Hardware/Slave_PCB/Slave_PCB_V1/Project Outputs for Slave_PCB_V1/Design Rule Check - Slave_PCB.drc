@@ -1,7 +1,7 @@
 Protel Design System Design Rule Check
 PCB File : C:\Users\Admin\Documents\GitHub\Modular-Battery-Management-System\Slave-Modules\Hardware\Slave_PCB\Slave_PCB_V1\Slave_PCB.PcbDoc
-Date     : 06/02/2022
-Time     : 16:47:26
+Date     : 08/02/2022
+Time     : 22:07:12
 
 Processing Rule : Clearance Constraint (Gap=0.203mm) (OnLayer('Top Layer')),(All)
 Rule Violations :0
