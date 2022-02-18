@@ -25,6 +25,8 @@
 #define STAT_SSR PINF5
 #define STAT_RELAY PINF6
 
+#define IGNITION PINF&(1<<PINF4)        //check if ignition is on
+
 //Settings
 #define CLK_PRESCALER_VALUE 1
 
