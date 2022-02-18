@@ -12,7 +12,8 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <stdint.h>
-#include "init_master.h"
+#include "../init_master.h"
+#include "../../One_Wire_COMM/communication.h"
 
 int main(void)
 {

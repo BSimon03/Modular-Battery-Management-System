@@ -8,11 +8,6 @@
 /* Author: Tristan Horvath */
 /***************************/
 
-#include <avr/io.h>
-#include <avr/interrupt.h>
-#include <stdio.h>
-#include <stdint.h>
-
 //Pin definitions
 //PORTB
 #define CAN_SLEEP PINB1
@@ -65,4 +60,6 @@
 
 #endif
 
+void CLK_setup(){};
+void INT_setup(){};
 void init_master(){};
