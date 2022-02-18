@@ -51,13 +51,13 @@ const uint8_t done 				= 0b11000000;	//done with the measurement		resistance in 
 #if F_CPU == 8000000L										//PS = 1
 #define CLK_PS_SETTING (1<<CLKPCE)
 
-#elif F_CPU == 4000000L									//PS = 2
+#elif F_CPU == 4000000L										//PS = 2
 #define CLK_PS_SETTING (1<<CLKPCE)|(1<<CLKPS0)
 
-#elif F_CPU == 2000000L									//PS = 4
+#elif F_CPU == 2000000L										//PS = 4
 #define CLK_PS_SETTING (1<<CLKPCE)|(1<<CLKPS1)
 
-#elif F_CPU == 1000000L									//PS = 8
+#elif F_CPU == 1000000L										//PS = 8
 #define CLK_PS_SETTING (1<<CLKPCE)|(1<<CLKPS1)|(1<<CLKPS0)
 
 #elif F_CPU == 500000L										//PS = 16
@@ -80,5 +80,5 @@ const uint8_t done 				= 0b11000000;	//done with the measurement		resistance in 
 
 #endif
 
-void init_mcu(void){};
+void init_bms_slave(void){};
 #endif

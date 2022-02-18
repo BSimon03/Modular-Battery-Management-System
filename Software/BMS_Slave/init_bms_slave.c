@@ -60,13 +60,14 @@ void TIM_setup()	//Charge/Discharge
 	OCR1B=0;
 }
 
-void init_mcu()					//Combining all setup functions
+void init_bms_slave()					//Combining all setup functions
 {
 	DDRA|=(1<<STAT_G)|(1<<STAT_R);
 	CLK_setup();
 	INT_setup();
 	TIM_setup();
 	ADC_setup();
+	ADC_get_cal();
 	sei(); //global interrupt enable
 
 }

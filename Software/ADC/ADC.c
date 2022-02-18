@@ -10,10 +10,8 @@
 
 #include <avr/io.h>
 #include <stdint.h>
+#include <avr/eeprom.h>
 #include "ADC.h"
-
-uint16_t adc_value = 0;
-uint16_t sort; //sort algorithm
 
 void ADC_setup()
 {
@@ -32,11 +30,17 @@ void ADC_setup()
 	//When its completed the channel can safely be changed. The next conversion takes 25 clock cycles.
 }
 
-uint16_t measure_temperature(uint8_t reps, uint8_t filter, float temp_constant)
+void ADC_cal_VOLT()
+{
+	VOLT_K = eeprom_read_word(EEPROM_k_ADR);
+	VOLT_D = eeprom_read_dword(EEPROM_d_ADR);
+	TEMP_D = eeprom_read_word(EEPROM_temp_ADR);
+}
+
+uint16_t measure_temperature(uint8_t reps, uint8_t filter)
 {
 	uint16_t adc_values[reps];
-    uint16_t temperature = 0;
-	uint8_t adc_counter=0;
+	uint16_t temperature = 0;
 	ADMUX |= (1 << MUX0)|(1 << MUX1)|(1 << MUX2)|(1 << MUX3)|(1 << MUX4)|(1 << MUX5);	//Attaching Channel 11 to the ADC... Temperature
 	
 	for(adc_counter = 0; adc_counter <= reps; adc_counter++)
@@ -84,15 +88,13 @@ uint16_t measure_temperature(uint8_t reps, uint8_t filter, float temp_constant)
 					adc_value += adc_values[adc_counter];
 				adc_value /= (reps);
 		}
-	temperature = (float)adc_value / temp_constant;
+	temperature = adc_value - TEMP_D;
     return temperature;
 }
 
-float measure_voltage(uint8_t reps, uint8_t filter, float adc_offset, float adc_drift)
+uint16_t measure_voltage(uint8_t reps, uint8_t filter)
 {
 	uint16_t adc_values[reps];
-    float voltage = 0;
-	uint8_t adc_counter=0;
 	ADMUX &= ~(1 << MUX0)|(1 << MUX3)|(1 << MUX4)|(1 << MUX5); //Clearing all important bits of the ADMUX register
 		for(adc_counter = 0; adc_counter <= reps; adc_counter++)
 		{
@@ -139,6 +141,6 @@ float measure_voltage(uint8_t reps, uint8_t filter, float adc_offset, float adc_
 					adc_value += adc_values[adc_counter];
 				adc_value /= (reps);
 		}
-	voltage = (float)adc_value / 400; //divided by 1024 aka 10-bit, multiplied by 2,56 aka internal reference voltage
-    return voltage;
+	//voltage = (float)adc_value / 400; //divided by 1024 aka 10-bit, multiplied by 2,56 aka internal reference voltage
+    return adc_value;
 }

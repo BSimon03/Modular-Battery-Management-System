@@ -4,3 +4,5 @@ Slave-Modules/Hardware/Slave_PCB/Slave_PCB_V1/Project Outputs for Slave_PCB_V1/D
 Slave-Modules/Hardware/Slave_PCB/Slave_PCB_V1/Project Outputs for Slave_PCB_V1/Design Rule Check - Slave_PCB.drc
 Software/ADC/.vscode/c_cpp_properties.json
 Software/One_Wire_COMM/.vscode/c_cpp_properties.json
+Software/Manchester/.vscode/c_cpp_properties.json
+Software/Timing/.vscode/c_cpp_properties.json

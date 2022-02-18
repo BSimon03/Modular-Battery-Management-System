@@ -8,7 +8,13 @@
 /*  Author: Simon Ball   */
 /*************************/
 
-//#define F_CPU 2000000L not needed as the properties file of platform io already defines the clock frequency
+#ifndef F_CPU
+#define F_CPU 2000000L		//not needed as the properties file of platform io already defines the clock frequency
+#endif
+
+#ifndef __AVR_ATtiny261A__
+#define __AVR_ATtiny261A__
+#endif
 
 #include <avr/io.h>
 #include <stdint.h>
@@ -42,8 +48,8 @@ uint8_t ADCstat = 0;
 // 1  : Set up for Battery Voltage Measurement
 
 //Measurements
-uint8_t battery_temperature = 0;
-float battery_voltage = 0;
+uint16_t battery_temperature = 0;
+uint16_t battery_voltage = 0;
 
 int main(void)
 {
@@ -56,12 +62,12 @@ int main(void)
 		{
 			if(ADCstat)
 			{
-				battery_temperature = measure_temperature(ADC_SAMPLES, ADC_FILTER, ntc_constant);
+				battery_temperature = measure_temperature(ADC_SAMPLES, ADC_FILTER);
 				ADCstat=0;
 			}
 			else
 			{
-				battery_voltage = measure_voltage(ADC_SAMPLES, ADC_FILTER, adc_offset, adc_gain);
+				battery_voltage = measure_voltage(ADC_SAMPLES, ADC_FILTER);
 				ADCstat=1;
 			}
 		}
