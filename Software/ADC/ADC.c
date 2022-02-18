@@ -37,10 +37,10 @@ void ADC_cal_VOLT()
 	TEMP_D = eeprom_read_word(EEPROM_temp_ADR);
 }
 
-uint16_t measure_temperature(uint8_t reps, uint8_t filter)
-{
+uint16_t measure_temperature(uint8_t reps)
+{	
 	uint16_t adc_values[reps];
-	uint16_t temperature = 0;
+	int16_t temperature = 0;
 	ADMUX |= (1 << MUX0)|(1 << MUX1)|(1 << MUX2)|(1 << MUX3)|(1 << MUX4)|(1 << MUX5);	//Attaching Channel 11 to the ADC... Temperature
 	
 	for(adc_counter = 0; adc_counter <= reps; adc_counter++)
@@ -50,7 +50,7 @@ uint16_t measure_temperature(uint8_t reps, uint8_t filter)
 			adc_values[adc_counter] |= ADCL;					//save ADCL in the array
 			adc_values[adc_counter] |= ((ADCH & 0x03) << 8);	//save ADCH at the right position in the array
 		}
-		if(filter)		//filters out the greatest and the smallest value measured for higher precision
+		if(FILTER)		//filters out the greatest and the smallest value measured for higher precision
 		{
 				//shifting the greatest value to the right
 				for (adc_counter = 0; adc_counter <= reps; adc_counter++)
@@ -92,7 +92,7 @@ uint16_t measure_temperature(uint8_t reps, uint8_t filter)
     return temperature;
 }
 
-uint16_t measure_voltage(uint8_t reps, uint8_t filter)
+uint16_t measure_voltage(uint8_t reps)
 {
 	uint16_t adc_values[reps];
 	ADMUX &= ~(1 << MUX0)|(1 << MUX3)|(1 << MUX4)|(1 << MUX5); //Clearing all important bits of the ADMUX register
@@ -103,7 +103,7 @@ uint16_t measure_voltage(uint8_t reps, uint8_t filter)
 			adc_values[adc_counter] |= ADCL;					//save ADCL in the array
 			adc_values[adc_counter] |= ((ADCH & 0x03) << 8);	//save ADCH at the right position in the array
 		}
-		if(filter)		//filters out the greatest and the smallest value measured for higher precision
+		if(FILTER)		//filters out the greatest and the smallest value measured for higher precision
 		{
 				//shifting the greatest value to the right
 				for (adc_counter = 0; adc_counter <= reps; adc_counter++)

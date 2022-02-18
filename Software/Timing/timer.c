@@ -38,7 +38,7 @@ void timer_add_time(void)
    TCNT0 = t & 0x03; //stellen für die ganzen ms löschen
    timer_tick += (t >> 2);
 #else
-   error! f_CPU not set or no function implemented
+   #error f_CPU not set or no function implemented
 #endif // F_CPU
 }
 
