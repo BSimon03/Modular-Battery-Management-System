@@ -17,6 +17,10 @@
 //ADC interrupt flag set?
 #define ADC_INTERRUPT ADCSRA & 0b00010000
 
+#ifndef FILTER
+#define FILTER 0
+#endif
+
 uint16_t VOLT_K = 0;
 uint16_t VOLT_D = 0;
 uint16_t TEMP_D = 0;
@@ -31,7 +35,7 @@ void ADC_setup(void);
 
 void ADC_get_cal(void);
 
-uint16_t measure_temperature(uint8_t , uint8_t){};
+uint16_t measure_temperature(uint8_t);
 
-uint16_t measure_voltage(uint8_t, uint8_t){};
+uint16_t measure_voltage(uint8_t);
 #endif

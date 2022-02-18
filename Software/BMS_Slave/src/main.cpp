@@ -16,6 +16,8 @@
 #define __AVR_ATtiny261A__
 #endif
 
+#define FILTER 1
+
 #include <avr/io.h>
 #include <stdint.h>
 #include <avr/interrupt.h>
@@ -29,7 +31,6 @@
 
 //Settings
 #define ADC_SAMPLES 6 		//Averaging x-2 samples
-#define ADC_FILTER  1
 
 //Tolerances read form eeprom
 //only linear error correction... y=k*x+d
@@ -50,8 +51,8 @@ uint8_t ADCstat = 0;
 // 1  : Set up for Battery Voltage Measurement
 
 //Measurements
-uint16_t battery_temperature = 0;
-uint16_t battery_voltage = 0;
+uint16_t battery_temperature;
+uint16_t battery_voltage;
 
 int main(void)
 {
@@ -64,12 +65,12 @@ int main(void)
 		{
 			if(ADCstat)
 			{
-				battery_temperature = measure_temperature(ADC_SAMPLES, ADC_FILTER);
+				battery_temperature = measure_temperature(1);
 				ADCstat=0;
 			}
 			else
 			{
-				battery_voltage = measure_voltage(ADC_SAMPLES, ADC_FILTER);
+				battery_voltage = measure_voltage(ADC_SAMPLES);
 				ADCstat=1;
 			}
 		}
