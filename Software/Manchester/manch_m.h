@@ -1,3 +1,6 @@
+#ifndef MANCH_H
+#define MANCH_H
+
 //===============================================================
 //
 //   Projekt sax-extender master
@@ -79,3 +82,4 @@ uint8_t manch_receive(uint16_t *data);
    // return 2: fehlerhafter empfang, empfang abgebrochen, muss neu gestartet werden
 
 #endif // MANCHESTER1
+#endif //MANCH_H

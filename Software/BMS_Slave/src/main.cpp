@@ -23,6 +23,8 @@
 
 #include "../../ADC/ADC.h"
 #include "../../One_Wire_COMM/communication.h"
+#include "../../Manchester/manch_m.h"
+#include "../../Timing/timer.h"
 #include "../init_bms_slave.h"
 
 //Settings
@@ -53,7 +55,7 @@ uint16_t battery_voltage = 0;
 
 int main(void)
 {
-	init_mcu(); //Initiating the MCU, Registers configurated
+	init_bms_slave(); //Initiating the MCU, Registers configurated
 
 	
 	while (1)

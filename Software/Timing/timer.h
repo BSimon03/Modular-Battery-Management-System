@@ -1,3 +1,5 @@
+#ifndef TIMER_H
+#define TIMER_H
 //===============================================================
 //
 //   Projekt sax-extender master
@@ -24,4 +26,4 @@ void timer_add_time(void);
 // max. zeit zwischen 2 aufrufe: 32ms
 // liest hw-timer aus und addiert die timer
 
-
+#endif

@@ -22,7 +22,7 @@ void timer_init_timer()
 #elif F_CPU == 1000000L
    TCCR0B = 0x04; // clk/256 => 4 takte je ms
 #else
-noch nicht implementiert
+//noch nicht implementiert
 #endif // F_CPU
 }
 
