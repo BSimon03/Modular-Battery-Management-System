@@ -1,18 +1,20 @@
+/*********************************************/
+/*  file:   ADC.h                            */
+/*						                     */
+/*  Diploma Thesis:                          */
+/*   Battery Management System 2021/22       */
+/* 						                     */
+/*  brief:  Functions for analog measurement */
+/* 						                     */
+/*  Author: Simon Ball                       */
+/*********************************************/
+
 #ifndef ADC_H
 #define ADC_H
-/*************************/
-/*  ADC.h                */
-/*						 */
-/*  Battery Management   */
-/*      System           */
-/* 						 */
-/*  Functions for analog */
-/*  digital conversions  */
-/*************************/
 
-#define EEPROM_k_ADR (uint16_t *)0x01 		//Address of ADC slop coefficient
-#define EEPROM_d_ADR (uint16_t *)0x03 		//Address of ADC offset
-#define EEPROM_temp_ADR (uint16_t *)0x05 	//Address of ADC temperature offset
+#define EEPROM_k_ADR (uint16_t *)0x00 		//Address of ADC slop coefficient
+#define EEPROM_d_ADR (uint16_t *)0x02 		//Address of ADC offset
+#define EEPROM_temp_ADR (uint16_t *)0x04 	//Address of ADC temperature offset
 
 //ADC interrupt flag set?
 #define ADC_INTERRUPT ADCSRA&(1<<ADIF)

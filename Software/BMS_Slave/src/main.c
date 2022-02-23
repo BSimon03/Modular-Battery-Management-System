@@ -1,12 +1,13 @@
-/*************************/
-/*  main.cpp             */
-/*  Diplomarbeit BMS     */
-/*                       */
-/*  Attiny261A Slave     */
-/*  V1.0                 */
-/*                       */
-/*  Author: Simon Ball   */
-/*************************/
+/*********************************************/
+/*  file:	main.c (V1.0)                    */
+/*						                     */
+/*  Diploma Thesis:                          */
+/*   Battery Management System 2021/22       */
+/* 						                     */
+/*  brief:  Application for the Slaves       */
+/* 						                     */
+/*  Author: Simon Ball                       */
+/*********************************************/
 
 #ifndef F_CPU
 #define F_CPU 2000000L

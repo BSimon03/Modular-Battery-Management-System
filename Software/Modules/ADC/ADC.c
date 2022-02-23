@@ -1,12 +1,13 @@
-/*************************/
-/*  ADC.c                */
-/*						 */
-/*  Battery Management   */
-/*      System           */
-/* 						 */
-/*  Functions for analog */
-/*  digital conversions  */
-/*************************/
+/*********************************************/
+/*  file:   ADC.c                            */
+/*						                     */
+/*  Diploma Thesis:                          */
+/*   Battery Management System 2021/22       */
+/* 						                     */
+/*  brief:  Functions for analog measurement */
+/* 						                     */
+/*  Author: Simon Ball                       */
+/*********************************************/
 
 #include <avr/io.h>
 #include <stdint.h>

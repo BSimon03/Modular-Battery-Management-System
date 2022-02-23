@@ -1,15 +1,16 @@
+/*********************************************/
+/*  file:   init_bms_slave.h (Stand-Alone)   */
+/*						                     */
+/*  Diploma Thesis:                          */
+/*   Battery Management System 2021/22       */
+/* 						                     */
+/*  brief:  Defines for the Slave            */
+/* 						                     */
+/*  Author: Simon Ball                       */
+/*********************************************/
+
 #ifndef INIT_BMS_SLAVE_H
 #define INIT_BMS_SLAVE_H
-
-/*************************/
-/*  init_bms_slave.h     */
-/*  Slave Initiation     */
-/*						 */
-/*  Battery Management   */
-/*      System           */
-/* 						 */
-/*  Author: Simon Ball   */
-/*************************/
 
 #ifndef F_CPU
 #define F_CPU 2000000L
