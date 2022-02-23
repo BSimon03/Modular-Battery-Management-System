@@ -12,7 +12,6 @@
 #include <stdio.h>
 #include <stdint.h>
 #include "init_master.h"
-#include "../../Timing/timer.h"
 
 void CLK_setup()
 {

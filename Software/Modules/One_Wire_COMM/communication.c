@@ -1,5 +1,5 @@
 /*************************/
-/*  communication.c      */
+/*  communication.h      */
 /*						 */
 /*  Battery Management   */
 /*      System           */
@@ -9,16 +9,18 @@
 /*  upper and lower uC   */
 /*************************/
 
-#include <avr/io.h>
+#include <stdio.h>
 #include <stdint.h>
 #include "communication.h"
 
-int handle_upper(int datapackage)
+uint16_t bal_com (uint8_t address)
 {
-
-}
-
-int handle_lower(int datapackage) // Pointer? *
-{
-
+    if(address%2==1)
+    {
+        return COM_BLC_A + 0x10 + address;
+    }
+    else if (address%2==0)
+    {
+        return COM_BLC_A + address;
+    }
 }
