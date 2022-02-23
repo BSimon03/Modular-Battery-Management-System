@@ -22,17 +22,14 @@
 #endif
 
 enum STATES{
-    ST_REG,
-    ST_MSR,
+    ST_REGISTER,
+    ST_MEASURE,
     ST_FILTER
 };
 
 static uint16_t VOLT_K = 0;
 static uint16_t VOLT_D = 0;
 static uint16_t TEMP_D = 0;
-
-static uint16_t adc_value = 0;
-uint16_t sort; //sort algorithm
 
 //Function deklarations
 

@@ -12,6 +12,9 @@
 #include "status.h"
 
 //Status LED
+void stat_led_init(){
+    LEDDDR|=(1<<LEDPINR)|(LEDPING);
+}
 void stat_led_red(){
     LEDPORT|=(1<<LEDPINR);
     LEDPORT&=~(1<<LEDPING);

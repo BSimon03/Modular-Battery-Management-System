@@ -27,8 +27,8 @@
 
 #include "ADC.h"
 #include "communication.h"
-#include "timer.h"
-#include "manch_m.h"
+//#include "timer.h"
+//#include "manch_m.h"
 #include "status.h"
 
 
@@ -109,7 +109,7 @@ ISR(TIMER1_OVF_vect)	//Charge or Discharge ON
 
 void init_bms_slave()					//Combining all setup functions
 {
-	DDRA|=(1<<STAT_G)|(1<<STAT_R);
+	stat_led_init();
 	CLKPR |= CLK_PS_SETTING;
 	ADC_setup();
 	ADC_get_cal();

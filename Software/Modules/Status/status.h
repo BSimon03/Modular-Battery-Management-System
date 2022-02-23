@@ -10,16 +10,20 @@
 /* Author: Tristan Horvath */
 /***************************/
 #ifdef __AVR_ATtiny261A__
+#define LEDDDR  DDRA
 #define LEDPORT PORTA
 #define LEDPINR PINA5
 #define LEDPING PINA6
 #elif __AVR_ATmega32U4__
+#define LEDDDR  DDRD
 #define LEDPORT PORTD
 #define LEDPINR PIND6
 #define LEDPING PIND7
 #endif
 
 //Status LED
+void stat_led_init();
+//initialize status led
 void stat_led_red();
 //make status LED light up RED
 void stat_led_green();
