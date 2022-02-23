@@ -9,25 +9,27 @@
 /***************************/
 
 #include <avr/io.h>
+#include "status.h"
 
 //Status LED
 void stat_led_red(){
-    PORTD|=(1<<PIND6);
-    PORTD&=~(1<<PIND7);
+    LEDPORT|=(1<<LEDPINR);
+    LEDPORT&=~(1<<LEDPING);
 }
 void stat_led_green(){
-    PORTD|=(1<<PIND7);
-    PORTD&=~(1<<PIND6);
+    LEDPORT|=(1<<LEDPING);
+    LEDPORT&=~(1<<LEDPINR);
 }
 void stat_led_orange(){
-    PORTD|=(1<<PIND7);
-    PORTD|=(1<<PIND6);
+    LEDPORT|=(1<<LEDPING);
+    LEDPORT|=(1<<LEDPINR);
 }
 void stat_led_off(){
-    PORTD==~(1<<PIND7);
-    PORTD&=~(1<<PIND6);
+    LEDPORT==~(1<<LEDPING);
+    LEDPORT&=~(1<<LEDPINR);
 }
 
+#ifdef __AVR_ATmega32U4__
 //Status Relay
 void stat_rel_on(){
     PORTF|=(1<<PINF6);
@@ -43,3 +45,4 @@ void stat_ssr_on(){
 void stat_ssr_off(){
     PORTF&=~(1<<PINF5);
 }
+#endif
