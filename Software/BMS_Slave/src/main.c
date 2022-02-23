@@ -23,9 +23,11 @@
 #include <avr/interrupt.h>
 #include <avr/eeprom.h>
 
+#include "../init_bms_slave.h"
+
 #include "../../ADC/ADC.h"
 #include "../../One_Wire_COMM/communication.h"
-#include "../init_bms_slave.h"
+
 
 //Settings
 #define ADC_SAMPLES 6 		//Averaging x-2 samples
@@ -51,6 +53,8 @@ uint8_t ADCstat = 0;
 //Measurements
 uint16_t battery_temperature;
 uint16_t battery_voltage;
+
+void init_bms_slave(void);
 
 int main(void)
 {
@@ -98,4 +102,13 @@ ISR(TIMER1_COMPB_vect)	//Discharging OFF on compare match
 ISR(TIMER1_OVF_vect)	//Charge or Discharge ON
 {
 		secs++;
+}
+
+void init_bms_slave()					//Combining all setup functions
+{
+	DDRA|=(1<<STAT_G)|(1<<STAT_R);
+	CLKPR |= CLK_PS_SETTING;
+	ADC_setup();
+	ADC_get_cal();
+	sei(); //global interrupt enable
 }

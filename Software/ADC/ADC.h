@@ -15,11 +15,17 @@
 #define EEPROM_temp_ADR (uint16_t *)0x05 	//Address of ADC temperature offset
 
 //ADC interrupt flag set?
-#define ADC_INTERRUPT ADCSRA & 0b00010000
+#define ADC_INTERRUPT ADCSRA&(1<<ADIF)
 
 #ifndef FILTER
 #define FILTER 0
 #endif
+
+enum STATES{
+    ST_REG,
+    ST_MSR,
+    ST_FILTER
+};
 
 static uint16_t VOLT_K = 0;
 static uint16_t VOLT_D = 0;
@@ -27,7 +33,6 @@ static uint16_t TEMP_D = 0;
 
 static uint16_t adc_value = 0;
 uint16_t sort; //sort algorithm
-static uint8_t adc_counter=0;
 
 //Function deklarations
 
@@ -35,7 +40,7 @@ void ADC_setup(void);
 
 void ADC_get_cal(void);
 
-uint16_t measure_temperature(uint8_t);
+int8_t measure_temperature(uint8_t);
 
 uint16_t measure_voltage(uint8_t);
-#endif
+#endif //ADC_H

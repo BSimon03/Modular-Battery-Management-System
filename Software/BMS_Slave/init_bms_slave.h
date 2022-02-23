@@ -1,8 +1,8 @@
-#ifndef INIT_BMS_SLAVE
-#define INIT_BMS_SLAVE
+#ifndef INIT_BMS_SLAVE_H
+#define INIT_BMS_SLAVE_H
 
 /*************************/
-/*  init_attiny261a.h    */
+/*  init_bms_slave.h     */
 /*  Slave Initiation     */
 /*						 */
 /*  Battery Management   */
@@ -13,6 +13,14 @@
 
 #ifndef F_CPU
 #define F_CPU 2000000L
+#endif
+
+#ifndef __AVR_ATtiny261A__
+#define __AVR_ATtiny261A__
+#endif
+
+#ifndef BMS_SLAVE
+#define BMS_SLAVE
 #endif
 
 //Pin definitions
@@ -66,6 +74,4 @@
 #error Invalid prescaler setting.
 
 #endif
-
-void init_bms_slave(void);
-#endif
+#endif //INIT_BMS_SLAVE_H

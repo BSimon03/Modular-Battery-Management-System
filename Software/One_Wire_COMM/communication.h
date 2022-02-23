@@ -14,4 +14,4 @@
 int handle_upper(int);
 
 int handle_lower(int);
-#endif
+#endif //COMM_H
