@@ -48,7 +48,6 @@ int8_t measure_temperature(uint8_t reps)
 	{
 	case ST_REG:
 		ADMUX |= (1 << MUX0) | (1 << MUX1) | (1 << MUX2) | (1 << MUX3) | (1 << MUX4) | (1 << MUX5); // Attaching Channel 11 to the ADC... Temperature
-		ADCSRA
 		state = ST_MSR;
 		adc_counter = 0;
 		break;
@@ -117,7 +116,7 @@ uint16_t measure_voltage(uint8_t reps)
 {
 	uint16_t adc_values[reps];
 	ADMUX &= ~(1 << MUX0) | (1 << MUX3) | (1 << MUX4) | (1 << MUX5); // Clearing all important bits of the ADMUX register
-	for (adc_counter = 0; adc_counter <= reps; adc_counter++)
+	for (uint8_t adc_counter = 0; adc_counter <= reps; adc_counter++)
 	{
 		while (!ADC_INTERRUPT)
 			;
@@ -128,7 +127,7 @@ uint16_t measure_voltage(uint8_t reps)
 	if (FILTER) // filters out the greatest and the smallest value measured for higher precision
 	{
 		// shifting the greatest value to the right
-		for (adc_counter = 0; adc_counter <= reps; adc_counter++)
+		for (uint8_t adc_counter = 0; adc_counter <= reps; adc_counter++)
 		{
 			if (adc_values[adc_counter - 1] > adc_values[adc_counter])
 			{
@@ -139,7 +138,7 @@ uint16_t measure_voltage(uint8_t reps)
 		}
 
 		// shifting the lowest value to the left
-		for (adc_counter = reps; adc_counter >= 0; adc_counter--)
+		for (uint8_t adc_counter = reps; adc_counter >= 0; adc_counter--)
 		{
 			if (adc_values[adc_counter] < adc_values[adc_counter - 1])
 			{
@@ -151,7 +150,7 @@ uint16_t measure_voltage(uint8_t reps)
 
 		// Adding all measured values to variable, except the outer ones
 		adc_value = 0; // Resetting variable
-		for (adc_counter = 1; adc_counter < (reps - 1); adc_counter++)
+		for (uint8_t adc_counter = 1; adc_counter < (reps - 1); adc_counter++)
 			adc_value += adc_values[adc_counter];
 		adc_value /= (reps - 2);
 	}
@@ -159,7 +158,7 @@ uint16_t measure_voltage(uint8_t reps)
 	{
 		// Adding all measured values to variable
 		adc_value = 0; // Resetting variable
-		for (adc_counter = 0; adc_counter < reps; adc_counter++)
+		for (uint8_t adc_counter = 0; adc_counter < reps; adc_counter++)
 			adc_value += adc_values[adc_counter];
 		adc_value /= (reps);
 	}

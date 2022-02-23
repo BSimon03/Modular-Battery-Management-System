@@ -25,8 +25,8 @@
 
 #include "../init_bms_slave.h"
 
-#include "../../ADC/ADC.h"
-#include "../../One_Wire_COMM/communication.h"
+#include "ADC.h"
+#include "communication.h"
 
 
 //Settings
