@@ -33,7 +33,7 @@ void ADC_setup()
 void ADC_get_cal()
 {
 	VOLT_K = eeprom_read_word(EEPROM_k_ADR);
-	VOLT_D = eeprom_read_dword(EEPROM_d_ADR);
+	VOLT_D = eeprom_read_word(EEPROM_d_ADR);
 	TEMP_D = eeprom_read_word(EEPROM_temp_ADR);
 }
 

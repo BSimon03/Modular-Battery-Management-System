@@ -27,6 +27,9 @@
 
 #include "ADC.h"
 #include "communication.h"
+#include "timer.h"
+#include "manch_m.h"
+#include "status.h"
 
 
 //Settings
