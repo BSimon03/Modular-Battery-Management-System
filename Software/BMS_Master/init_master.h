@@ -1,3 +1,5 @@
+#ifndef MASTER_INIT_H
+#define MASTER_INIT_H
 /***************************/
 /*      init_master.h      */
 /*    Master Initiation    */
@@ -62,6 +64,7 @@
 
 #endif
 
-void CLK_setup(){};
-void INT_setup(){};
-void init_master(){};
+void CLK_setup();
+void INT_setup();
+void init_master();
+#endif  //MASTER_INIT_H

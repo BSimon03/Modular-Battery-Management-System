@@ -13,8 +13,8 @@
 #include <avr/interrupt.h>
 #include <stdint.h>
 #include "../init_master.h"
-#include "../../One_Wire_COMM/communication.h"
-#include "../../Timing/timer.h"
+#include "communication.h"
+#include "timer.h"
 
 int main(void)
 {

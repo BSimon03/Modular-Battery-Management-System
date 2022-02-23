@@ -6,3 +6,4 @@ Software/ADC/.vscode/c_cpp_properties.json
 Software/One_Wire_COMM/.vscode/c_cpp_properties.json
 Software/Manchester/.vscode/c_cpp_properties.json
 Software/Timing/.vscode/c_cpp_properties.json
+Software/Modules/.vscode/c_cpp_properties.json
