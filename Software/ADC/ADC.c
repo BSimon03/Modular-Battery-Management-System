@@ -30,7 +30,7 @@ void ADC_setup()
 	//When its completed the channel can safely be changed. The next conversion takes 25 clock cycles.
 }
 
-void ADC_cal_VOLT()
+void ADC_get_cal()
 {
 	VOLT_K = eeprom_read_word(EEPROM_k_ADR);
 	VOLT_D = eeprom_read_dword(EEPROM_d_ADR);

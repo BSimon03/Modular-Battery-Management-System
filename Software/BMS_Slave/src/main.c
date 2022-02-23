@@ -9,7 +9,7 @@
 /*************************/
 
 #ifndef F_CPU
-#define F_CPU 2000000L		//not needed as the properties file of platform io already defines the clock frequency
+#define F_CPU 2000000L
 #endif
 
 #ifndef __AVR_ATtiny261A__
@@ -25,8 +25,6 @@
 
 #include "../../ADC/ADC.h"
 #include "../../One_Wire_COMM/communication.h"
-#include "../../Manchester/manch_m.h"
-#include "../../Timing/timer.h"
 #include "../init_bms_slave.h"
 
 //Settings
@@ -65,7 +63,7 @@ int main(void)
 		{
 			if(ADCstat)
 			{
-				battery_temperature = measure_temperature(1);
+				battery_temperature = measure_temperature(ADC_SAMPLES);
 				ADCstat=0;
 			}
 			else
