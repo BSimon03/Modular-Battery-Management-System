@@ -1,5 +1,5 @@
 /*************************/
-/*  communication.h      */
+/*  communication.c      */
 /*						 */
 /*  Battery Management   */
 /*      System           */
@@ -9,7 +9,6 @@
 /*  upper and lower uC   */
 /*************************/
 
-#include <stdio.h>
 #include <stdint.h>
 #include "communication.h"
 

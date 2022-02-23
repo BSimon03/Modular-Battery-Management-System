@@ -28,7 +28,7 @@ void stat_led_orange(){
     LEDPORT|=(1<<LEDPINR);
 }
 void stat_led_off(){
-    LEDPORT==~(1<<LEDPING);
+    LEDPORT&=~(1<<LEDPING);
     LEDPORT&=~(1<<LEDPINR);
 }
 
