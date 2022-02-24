@@ -19,8 +19,8 @@
 //ADC interrupt flag set?
 #define ADC_INTERRUPT ADCSRA&(1<<ADIF)
 
-#ifndef FILTER
-#define FILTER 0
+#ifndef ADC_FILTER
+#define ADC_FILTER 0
 #endif
 
 enum STATES{

@@ -9,6 +9,9 @@
 /*  Author: Simon Ball                       */
 /*********************************************/
 
+
+//--Define CPU frequency, if not already defined in the platform.ini or intellisense
+
 #ifndef F_CPU
 #define F_CPU 2000000L
 #endif
@@ -30,15 +33,18 @@
 #error Invalid prescaler setting.
 #endif
 
+
+//--Define Microcontroller, if not already defined in the platform.ini or intellisense
+
 #ifndef __AVR_ATtiny261A__
 #define __AVR_ATtiny261A__
 #endif
 
+//--Define main to be slave software
+
 #ifndef BMS_SLAVE
 #define BMS_SLAVE
 #endif
-
-#define FILTER 1
 
 //Pin definitions
 	//PORTAS
@@ -54,21 +60,22 @@
 
 //Settings
 #define MIN_VOLTAGE	3							//Minimum voltage for the battery
+#define ADC_FILTER 1							//Enable ADC filtering
+#define ADC_SAMPLES 6 		//Averaging x-2 samples
 
+//Include Standard AVR libraries
 #include <avr/io.h>
 #include <stdint.h>
 #include <avr/interrupt.h>
 #include <avr/eeprom.h>
 
+//Include project specific source files
+	//These are stored external... outside of the project folder, but will be compiled aswell
 #include "ADC.h"
 #include "communication.h"
 #include "timer.h"
 #include "manch_m.h"
 #include "status.h"
-
-
-//Settings
-#define ADC_SAMPLES 6 		//Averaging x-2 samples
 
 //Tolerances read form eeprom
 //only linear error correction... y=k*x+d
@@ -97,7 +104,6 @@ void init_bms_slave(void);
 int main(void)
 {
 	init_bms_slave(); //Initiating the MCU, Registers configurated
-
 	
 	while (1)
 	{

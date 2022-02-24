@@ -72,7 +72,7 @@ int8_t measure_temperature(uint8_t reps)
 		}
 		break;
 	case ST_FILTER:
-		if (FILTER) // filters out the greatest and the smallest value measured for higher precision
+		if (ADC_FILTER) // filters out the greatest and the smallest value measured for higher precision
 		{
 			// shifting the greatest value to the right
 			for (adc_counter_t = 0; adc_counter_t <= reps; adc_counter_t++)
@@ -150,7 +150,7 @@ uint16_t measure_voltage(uint8_t reps)
 		}
 		break;
 	case ST_FILTER:
-		if (FILTER) // filters out the greatest and the smallest value measured for higher precision
+		if (ADC_FILTER) // filters out the greatest and the smallest value measured for higher precision
 		{
 			// shifting the greatest value to the right
 			for (adc_counter_v = 0; adc_counter_v <= reps; adc_counter_v++)
