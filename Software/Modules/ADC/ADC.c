@@ -46,7 +46,8 @@ int8_t measure_temperature(uint8_t reps)
 	static uint8_t adc_counter_t;
 	static uint16_t adc_value = 0;
 	static uint16_t sort_t; //sort_t algorithm
-
+	adc_value = 0;
+	
 	switch (state_t)
 	{
 	case ST_REGISTER:
@@ -123,6 +124,7 @@ uint16_t measure_voltage(uint8_t reps)
 	static uint8_t adc_counter_v;
 	static uint16_t adc_value = 0;
 	static uint16_t sort_v; //sort_v algorithm
+	adc_value = 0;
 
 	switch (state_v)
 	{
@@ -153,7 +155,7 @@ uint16_t measure_voltage(uint8_t reps)
 			// shifting the greatest value to the right
 			for (adc_counter_v = 0; adc_counter_v <= reps; adc_counter_v++)
 			{
-				if (adc_values_v[adc_counter_v - 1] > adc_values_v[adc_counter_v])
+				if (adc_values_v[adc_counter_v + 1] < adc_values_v[adc_counter_v])
 				{
 					sort_v = adc_values_v[adc_counter_v + 1];
 					adc_values_v[adc_counter_v + 1] = adc_values_v[adc_counter_v];
@@ -162,7 +164,7 @@ uint16_t measure_voltage(uint8_t reps)
 			}
 
 			// shifting the lowest value to the left
-			for (adc_counter_v = reps; adc_counter_v >= 0; adc_counter_v--)
+			for (adc_counter_v = reps; adc_counter_v > 0; adc_counter_v--)
 			{
 				if (adc_values_v[adc_counter_v] < adc_values_v[adc_counter_v - 1])
 				{
