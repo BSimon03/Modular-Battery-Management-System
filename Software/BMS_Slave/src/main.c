@@ -70,16 +70,13 @@
 #include "ADC.h"
 #include "communication.h"
 #include "timer.h"
-#include "manch_m.h"
+//#include "manch_m.h"
 #include "status.h"
 
 //Data received
 uint16_t storedDATA = 0;
 
-//Interrupt
-uint8_t secs = 0; //8bit: Overflow after 255 seconds, needs 1 second timer
-
-uint32_t t = 0; //secs compare value
+uint16_t ADC_time = 0; //secs compare value
 
 uint8_t ADCstat = 0;
 // 0  : Set up for Battery Temperature Measurement
@@ -91,14 +88,18 @@ uint16_t battery_voltage_raw;
 
 void init_bms_slave(void);
 
+//--------------MAIN-------------------------------//
 int main(void)
 {
 	init_bms_slave(); //Initiating the MCU, Registers configurated
 	
 	while (1)
 	{
-		if((t+1)==secs)
+		ADC_time=timer_get_timer(TIMER_ADC);
+		if(ADC_time>=1)
 		{
+			timer_clear_timer(TIMER_ADC);
+			timer_add_time();
 			if(ADCstat)
 			{
 				battery_temperature = measure_temperature(ADC_SAMPLES);
@@ -124,18 +125,10 @@ int main(void)
 	}
 }*/
 
-/*ISR(TIMER1_COMPB_vect)	//Discharging OFF on compare match
-{
-	//PORTA &= ~(1 << DISCHARGE);
-}
-ISR(TIMER1_OVF_vect)	//Charge or Discharge ON
-{
-		secs++;
-}*/
-
 void init_bms_slave()		//Combining all setup functions
 {
 	CLKPR |= CLK_PS_SETTING;	//Clock presescaler setting
+	timer_init_timer();
 	stat_led_init();			//Status LED initialised
 	ADC_setup();
 	ADC_get_cal();
