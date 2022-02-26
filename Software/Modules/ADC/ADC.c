@@ -17,7 +17,7 @@
 void ADC_setup()
 {
 	// ADC5 : Temperature Sensor NTC
-	ADCSRA |= (1 << ADEN);				  // ADC enabled,
+	ADCSRA |= (1 << ADEN);				  // ADC enabled
 	ADCSRA |= (1 << ADPS2) | (1 << ADIE); // Clock Prescaler of 16, ADC Interrupt enabled
 
 	ADMUX |= (1 << REFS1);	// Internal Reference Voltage 2.56V
