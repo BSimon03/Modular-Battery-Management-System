@@ -68,6 +68,7 @@
 #include "timer.h"
 //#include "manch_m.h"
 #include "status.h"
+#include "balancing.h"
 
 //Data received
 uint16_t storedDATA = 0;
@@ -91,6 +92,7 @@ int main(void)
 	
 	while (1)
 	{
+		//--------------ADC--------------------------------//
 		ADC_time=timer_get_timer(TIMER_ADC);
 		if(ADC_time>=1)
 		{
@@ -111,6 +113,11 @@ int main(void)
 				stat_led_off();
 			}
 		}
+		//--------------COMMUNICATION----------------------//
+
+		//--------------BALANCING--------------------------//
+		start_balancing();
+		stop_balancing();
 	}
 }
 
@@ -125,8 +132,9 @@ void init_bms_slave()		//Combining all setup functions
 {
 	CLKPR |= CLK_PS_SETTING;	//Clock presescaler setting
 	timer_init_timer();
-	stat_led_init();			//Status LED initialised
 	ADC_setup();
 	ADC_get_cal();
+	stat_led_init();			//Status LED initialised
+	balancing_setup();
 	sei(); //global interrupt enable
 }
