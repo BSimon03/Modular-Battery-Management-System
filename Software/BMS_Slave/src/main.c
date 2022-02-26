@@ -45,12 +45,8 @@
 //--------------PIN-DEFINITIONS--------------------//
 	//PORTA
 	#define COMM_TOP PINA2
-	#define STAT_R PINA5
-	#define STAT_G PINA6
-	#define ADC_VOLT PINA7       //ADC6 MUX5:0 000110	Connected to VCC through a 50:50 voltage divider
 	
 	//PORTB
-	#define BALANCING PINB4
 	#define DEBUG_PIN PINB5
 	#define COMM_BOT PINB6
 
