@@ -1,12 +1,17 @@
-#ifndef TIMER_H
-#define TIMER_H
 //===============================================================
 //
 //   Projekt sax-extender master
 //
 //   rst, jan 2022
 //
+//   Author: Reinhard Steindl
+//
+//   Update by: Simon Ball
+//
 //================================================================
+#ifndef TIMER_H
+#define TIMER_H
+
 //  verwendet timer 0 und stellt funktionen fürs timing zur verfügung
 // #define TIME_MAX_TIMER 2
 enum TIMER_NR {
@@ -26,4 +31,4 @@ void timer_add_time(void);
 // max. zeit zwischen 2 aufrufe: 32ms
 // liest hw-timer aus und addiert die timer
 
-#endif
+#endif //TIMER_H
