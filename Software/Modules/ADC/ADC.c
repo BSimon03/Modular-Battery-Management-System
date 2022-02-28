@@ -42,7 +42,8 @@ int8_t measure_temperature(uint8_t reps)
 {
 	static uint8_t state_t = ST_REGISTER;
 	static uint16_t adc_values_t[8];
-	static int8_t temperature = -100;
+	static int8_t temperature;
+	temperature = -100;
 	static uint8_t adc_counter_t;
 	static uint16_t adc_value = 0;
 	static uint16_t sort_t; //sort_t algorithm
