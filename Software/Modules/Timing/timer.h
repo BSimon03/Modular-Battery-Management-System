@@ -14,8 +14,6 @@
 
 //  verwendet timer 0 und stellt funktionen fürs timing zur verfügung
 // #define TIME_MAX_TIMER 2
-#ifndef TIMER_H
-#define TIMER_H
 
 enum TIMER_NR {
    TIMER_MANCH,
