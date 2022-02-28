@@ -33,9 +33,32 @@ void ADC_setup()
 
 void ADC_get_cal()
 {
-	VOLT_K = eeprom_read_word(EEPROM_k_ADR);
-	VOLT_D = eeprom_read_word(EEPROM_d_ADR);
-	TEMP_D = eeprom_read_word(EEPROM_temp_ADR);
+	VOLT_K = eeprom_read_float(EEPROM_k_ADR);
+	VOLT_D = eeprom_read_float(EEPROM_d_ADR);
+	TEMP_D = eeprom_read_byte(EEPROM_temp_ADR);
+}
+
+void ADC_callibrate()
+{
+	EEPROM_STATUS = eeprom_read_byte(EEPROM_STATUS_ADR);
+	if(NOT_CALLIBRATED)
+	{
+		eeprom_write_byte(EEPROM_STATUS_ADR, CALLIBRATED);
+		eeprom_write_float(EEPROM_k_ADR, VOLT_K);
+		eeprom_write_float(EEPROM_d_ADR, VOLT_D);
+		eeprom_write_byte(EEPROM_temp_ADR, TEMP_D);
+	}
+	else if(CALLIBRATED)
+	{
+		eeprom_update_byte(EEPROM_STATUS_ADR, CALLIBRATED);
+		eeprom_update_float(EEPROM_k_ADR, VOLT_K);
+		eeprom_update_float(EEPROM_d_ADR, VOLT_D);
+		eeprom_update_byte(EEPROM_temp_ADR, TEMP_D);
+	}
+	else
+	{
+
+	}
 }
 
 int8_t measure_temperature(uint8_t reps)

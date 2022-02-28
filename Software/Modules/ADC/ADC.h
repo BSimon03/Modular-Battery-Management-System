@@ -12,10 +12,19 @@
 #ifndef ADC_H
 #define ADC_H
 
-#define EEPROM_k_ADR (uint16_t *)0x00 		//Address of ADC slop coefficient
-#define EEPROM_d_ADR (uint16_t *)0x02 		//Address of ADC offset
-#define EEPROM_temp_ADR (uint16_t *)0x04 	//Address of ADC temperature offset
+#define EEPROM_STATUS_ADR (uint8_t *)0x00   //Address of the status byte
+#define EEPROM_k_ADR (uint16_t *)0x01 		//Address of ADC slop coefficient
+#define EEPROM_d_ADR (uint16_t *)0x03 		//Address of ADC offset
 
+#define EEPROM_temp_ADR (uint8_t *)0x05 	//Address of ADC temperature offset
+enum EEPROM_STATES{
+    NOT_CALLIBRATED,
+    CALLIBRATED
+};
+
+#define CAL_VOLTAGE_H 4
+#define CAL_VOLTAGE_L 3
+#define CAL_TEMP 22
 
 //--------------MAKROS-----------------------------//
 #define ADC_INTERRUPT ADCSRA&(1<<ADIF)      //ADC interrupt flag set?
@@ -26,16 +35,17 @@
 #endif
 
 //Giving Names to Numbers
-enum STATES{
+enum ADC_STATES{
     ST_REGISTER,
     ST_MEASURE,
     ST_FILTER
 };
 
-//ADC coefficient values
-static uint16_t VOLT_K = 0;
-static uint16_t VOLT_D = 0;
-static uint16_t TEMP_D = 0;
+//EEPROM
+static float VOLT_K = 0;
+static float VOLT_D = 0;
+static uint8_t TEMP_D = 0;
+static uint8_t EEPROM_STATUS = 0;
 
 //--------------FUNCTION-DEKLARATIONS--------------//
 
@@ -46,6 +56,10 @@ void ADC_setup(void);
 //Function ADC_get_cal:
     //Retrieving calibration data from the eeprom
 void ADC_get_cal(void);
+
+//Function ADC_callibrate:
+    //Set new callibration values
+void ADC_callibrate(void);
 
 //Function measure_temperature:
     //Returns the temperature in degree celsius after at least 3 calls

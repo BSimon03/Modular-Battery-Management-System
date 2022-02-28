@@ -70,13 +70,22 @@ uint8_t ADC_FLAG = 0;
 
 uint16_t ADC_time = 0; // secs compare value
 
-uint8_t ADCstat = 0;
+enum CAL{
+	MEASURE_L,
+	MEASURE_H,	
+	MEASURE_TEMP,
+	CALC_CAL
+};
+
+uint8_t ADCstat = MEASURE_L;
 // 0  : Set up for Battery Temperature Measurement
 // 1  : Set up for Battery Voltage Measurement
 
 // Measurements
 int8_t battery_temperature;
 uint16_t battery_voltage_raw;
+float battery_voltage_L = 0;
+float battery_voltage_H = 0;
 
 void PCINT_setup(void);
 void init_bms_slave(void);
@@ -96,25 +105,40 @@ int main(void)
 			{
 				timer_clear_timer(TIMER_ADC);
 				timer_add_time();
-				if (ADCstat)
+				switch(ADCstat)
 				{
-					battery_temperature = measure_temperature(ADC_SAMPLES);
-					if (battery_temperature >= -100)	//make sure conversion is done
-					{
-						ADCstat = 0;
-						ADC_FLAG = 0;
-					}
-					stat_led_orange();
-				}
-				else
-				{
-					battery_voltage_raw = measure_voltage(ADC_SAMPLES);
-					if (battery_voltage_raw)			//make sure conversion is done
-					{
-						ADCstat = 1;
-						ADC_FLAG = 0;
-					}
-					stat_led_off();
+					case MEASURE_L:
+						battery_voltage_raw = measure_voltage(ADC_SAMPLES);
+						if (battery_voltage_raw)			//make sure conversion is done
+						{
+							battery_voltage_L = (float)battery_voltage_raw / 400; //divided by 1024 aka 10-bit, multiplied by 2,56 aka internal reference voltage
+							ADCstat = MEASURE_H;
+							ADC_FLAG = 0;
+						}
+						break;
+					case MEASURE_H:
+						battery_voltage_raw = measure_voltage(ADC_SAMPLES);
+						if (battery_voltage_raw)			//make sure conversion is done
+						{
+							battery_voltage_H = (float)battery_voltage_raw / 400; //divided by 1024 aka 10-bit, multiplied by 2,56 aka internal reference voltage
+							ADCstat = MEASURE_TEMP;
+							ADC_FLAG = 0;
+						}
+						break;
+					case MEASURE_TEMP:
+						battery_temperature = measure_temperature(ADC_SAMPLES);
+						if (battery_temperature >= -100)	//make sure conversion is done
+						{
+							ADCstat = CALC_CAL;
+							ADC_FLAG = 0;
+						}
+						break;
+					case CALC_CAL:
+						VOLT_K=(CAL_VOLTAGE_H-CAL_VOLTAGE_L)/(battery_voltage_H-battery_voltage_L);		//calculate voltage slope error
+						VOLT_D=CAL_VOLTAGE_H-(battery_voltage_H*VOLT_K);								//calculate voltage offset
+						TEMP_D=battery_temperature-CAL_TEMP;											//calculate temperature offset
+						ADC_callibrate();
+						break;
 				}
 			}
 		}
@@ -132,6 +156,7 @@ ISR(PCINT_vect) 		// Pin change interrupt set up for the chip-select pin
 void PCINT_setup() 		// Pinchange interrupt
 {
 	DEBUG_DDR &= ~(1<<DEBUG_PIN);	// DEBUG PIN set as input
+	DEBUG_PORT |= (1<<DEBUG_PIN);	//Internal Pullup
 	GIMSK |= (1 << PCIE1);	  		// General Interrupt Mask Register / pin change interrupt enable
 	PCMSK1 |= (1 << PCINT13); 		// PCINT13 enabled
 }
