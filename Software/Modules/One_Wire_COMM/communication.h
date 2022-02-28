@@ -1,5 +1,3 @@
-#ifndef COMM_H
-#define COMM_H
 /*************************/
 /*  communication.h      */
 /*						 */
@@ -10,6 +8,9 @@
 /*  communication with   */
 /*  upper and lower uC   */
 /*************************/
+#ifndef COMM_H
+#define COMM_H
+
 #define REQ_TEMP_G 0xD4AA   //global request for temperature 1 10 10101 0 0101010
 #define REQ_VOL_G 0xC633    //global request for voltage 1 10 00110 0 0110011
 #define COM_SLP_G 0xFF0F    //global command for sleep 1 11 1111 1 00001111

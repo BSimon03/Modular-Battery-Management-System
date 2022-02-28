@@ -29,8 +29,24 @@
 
 int main(void)
 {
+  timer_init_timer();
+  init_master();
+  uint8_t com_cnt=0;
+  enum TIMER_NR {
+   Wait,
+   SEND_TEMP_REQ,
+   SEND_VOL_REQ,
+   RECIEVE_TEMP,
+   RECIEVE_VOL};
   while(1)
   {
-    
+    timer_add_time();
+    com_cnt=timer_get_timer(TIMER_COM);
+    if(com_cnt>=REQUEST_TIME)
+    {
+      com_cnt=0;
+      manch_init_send();
+      manch_send(REQ_TEMP_G);
+    }
   }
 }

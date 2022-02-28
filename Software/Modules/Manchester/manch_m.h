@@ -1,6 +1,3 @@
-#ifndef MANCH_H
-#define MANCH_H
-
 //===============================================================
 //
 //   Projekt sax-extender master
@@ -8,6 +5,8 @@
 //   rst, jan 2022
 //
 //================================================================
+#ifndef MANCH_H
+#define MANCH_H
 
 #define BAUDRATE 10000
 #define MANCHESTER1 // 2. manchester-übertragung

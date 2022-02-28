@@ -1,5 +1,3 @@
-#ifndef MASTER_INIT_H
-#define MASTER_INIT_H
 /***************************/
 /*      init_master.h      */
 /*    Master Initiation    */
@@ -9,7 +7,8 @@
 /* 						   */
 /* Author: Tristan Horvath */
 /***************************/
-
+#ifndef MASTER_INIT_H
+#define MASTER_INIT_H
 //Pin definitions
 //PORTB
 #define CAN_SLEEP PINB1
@@ -28,6 +27,8 @@
 #define STAT_RELAY PINF6
 
 #define IGNITION PINF&(1<<PINF4)        //check if ignition is on
+
+#define REQUEST_TIME 1000
 
 //Settings
 #define CLK_PRESCALER_VALUE 1

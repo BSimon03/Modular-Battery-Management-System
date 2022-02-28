@@ -1,5 +1,3 @@
-#ifndef STATUS_H
-#define STATUS_H
 /***************************/
 /*         status.h        */
 /*          Status         */
@@ -9,6 +7,9 @@
 /* 						   */
 /* Author: Tristan Horvath */
 /***************************/
+#ifndef STATUS_H
+#define STATUS_H
+
 #ifdef __AVR_ATtiny261A__
 #define LEDDDR  DDRA
 #define LEDPORT PORTA
