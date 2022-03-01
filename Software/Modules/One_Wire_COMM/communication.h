@@ -16,6 +16,9 @@
 #define COM_SLP_G 0xFF0F    //global command for sleep 1 11 1111 1 00001111
 #define COM_BLC_A 0xA600    //adressed command for balancing 1 01 00110 0 0000000 COM_BLC_A + adress = data
 
+#define PARITY_BIT_COM_A (1<<7) //Position of the Parity bit in an addressed command
+#define ADDRESS_MASK 0x007F     //Mask to isolate the address 0000 0000 0111 1111
+
 uint16_t bal_com (uint8_t);
 //calculate parity for adressed command. argument is address.
 
