@@ -18,7 +18,7 @@ volatile uint8_t manch_x, manch_res;
 
 void manch_init_send(void)
 {
-   DDRMANCH |= PN_MANCH; // pin als ausgang
+   DDRMANCH |= PN_MANCH_SEND; // pin als ausgang
    CLRMANCH; // und auf 0
    TCCR1A=0x02; // mode 14, fast pwm, top is icr1
    TCCR1B=0x18; //  - " -
@@ -30,7 +30,7 @@ void manch_init_send(void)
 
 void manch_init_receive()
 {
-   DDRMANCH &= ~PN_MANCH; // pin als Eingang
+   DDRMANCH &= ~PN_MANCH_REC; // pin als Eingang
    CLRMANCH; // no pull-up
    // timer OCRA für receive error, timeout, wenn keine flanke kommt
    TCCR1A=0x02; // mode 14, fast pwm, top is icr1
@@ -42,7 +42,7 @@ void manch_init_receive()
    manch_i=0;
    manch_res = 0;
    PCICR=0x01; //flankeninterrupt
-   PCMSK0=PN_MANCH;
+   PCMSK0=PN_MANCH_REC;
 }
 
 void manch_send(uint16_t data)

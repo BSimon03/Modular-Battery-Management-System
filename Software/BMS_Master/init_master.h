@@ -9,7 +9,7 @@
 /***************************/
 #ifndef MASTER_INIT_H
 #define MASTER_INIT_H
-//Pin definitions
+//**********Pin definitions**********
 //PORTB
 #define CAN_SLEEP PINB1
 #define ALT_SERIAL_RX PINB2
@@ -28,9 +28,12 @@
 
 #define IGNITION PINF&(1<<PINF4)        //check if ignition is on
 
-#define REQUEST_TIME 1000
+//**********measurement**********
+#define SLAVE_COUNT 13      //number of used slaves
+#define MAX_CELL_TEMP 60        //maximum temperature a battery cell is allowed to have
+#define EOC_VOLTAGE 4.2
 
-//Settings
+//**********Settings**********
 #define CLK_PRESCALER_VALUE 1
 
 #if CLK_PRESCALER_VALUE == 1

@@ -19,14 +19,27 @@
 // im pausen: beim senden hochohmig,  beim empfang liegt 0 an
 // verwendet timer1: ocr1b-int und overflow-int
 //          zum empfangen pinchange-interrupt
+#ifdef __AVR_ATmega32U4__
 #define DDRMANCH DDRB   // port der übertragungsleitung
 #define PORTMANCH PORTB
 #define PINMANCH PINB
-#define PN_MANCH 0x04   // pin zum übertragen: z.B. 0x10 => bit 5
-#define CLRMANCH (PORTMANCH&=~PN_MANCH)
-#define SETMANCH (PORTMANCH|=PN_MANCH)
-#define TOGMANCH (PINMANCH=PN_MANCH)
-#define READMANCH (PINMANCH&PN_MANCH)
+#define PN_MANCH_SEND (1<<PINB6)   // pin zum senden
+#define PN_MANCH_REC (1<<PINB5)     //pin zum empfangen
+#define CLRMANCH (PORTMANCH&=~PN_MANCH_SEND)
+#define SETMANCH (PORTMANCH|=PN_MANCH_SEND)
+#define TOGMANCH (PINMANCH=PN_MANCH_SEND)
+#define READMANCH (PINMANCH&PN_MANCH_REC)
+#elif __AVR_ATtiny261A__
+#define DDRMANCH DDRB   // port der übertragungsleitung
+#define PORTMANCH PORTB
+#define PINMANCH PINB
+#define PN_MANCH_SEND (1<<PINB6)   // pin zum senden
+#define PN_MANCH_REC (1<<PINB5)     //pin zum empfangen
+#define CLRMANCH (PORTMANCH&=~PN_MANCH_SEND)
+#define SETMANCH (PORTMANCH|=PN_MANCH_SEND)
+#define TOGMANCH (PINMANCH=PN_MANCH_SEND)
+#define READMANCH (PINMANCH&PN_MANCH_REC)
+#endif
 
 
 //=========== 2. schnittstelle ====================================
