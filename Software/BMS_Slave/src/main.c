@@ -71,7 +71,8 @@
 #include "balancing.h"
 
 //Data received
-uint16_t storedDATA = 0;
+uint16_t bot_data = 0;	//data received from the lower slave
+uint16_t top_data = 0;	//data received from the upper slave
 
 uint16_t ADC_time = 0; //secs compare value
 
@@ -124,8 +125,17 @@ int main(void)
 			}
 		}
 		//--------------COMMUNICATION----------------------//
-
+		if(bot_data&ADDRESS_MASK)	//checking if the current slave is addressed
+		{
+			bot_data-=1;				//count down address by 1
+			bot_data^=PARITY_BIT_COM_A;	//Toggle the parity bit
+		}
 		//--------------BALANCING--------------------------//
+		if(bot_data==COM_BLC_A)
+		{
+			start_balancing();
+			stat_led_orange();
+		}
 	}
 }
 
