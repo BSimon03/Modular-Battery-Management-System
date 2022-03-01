@@ -14,7 +14,13 @@
 #include <avr/eeprom.h>
 #include "ADC.h"
 
-void ADC_setup()
+//EEPROM
+static float VOLT_K = 0;
+static float VOLT_D = 0;
+static uint8_t TEMP_D = 0;
+static uint8_t EEPROM_STATUS = 0;
+
+void ADC_init()
 {
 	// ADC5 : Temperature Sensor NTC
 	ADCSRA |= (1 << ADEN);				  // ADC enabled

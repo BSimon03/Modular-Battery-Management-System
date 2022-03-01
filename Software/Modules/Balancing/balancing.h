@@ -16,7 +16,7 @@
 #define BALANCING_PORT PORTB
 #define BALANCING_PIN PINB4
 
-void balancing_setup(void);
+void balancing_init(void);
 
 void start_balancing(void);
 

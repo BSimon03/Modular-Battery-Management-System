@@ -41,17 +41,11 @@ enum ADC_STATES{
     ST_FILTER
 };
 
-//EEPROM
-static float VOLT_K = 0;
-static float VOLT_D = 0;
-static uint8_t TEMP_D = 0;
-static uint8_t EEPROM_STATUS = 0;
-
 //--------------FUNCTION-DEKLARATIONS--------------//
 
 //Function ADC_setup:
     //setting all important bits of the ADC register
-void ADC_setup(void);
+void ADC_init(void);
 
 //Function ADC_get_cal:
     //Retrieving calibration data from the eeprom

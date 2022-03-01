@@ -13,7 +13,7 @@
 #include <stdint.h>
 #include "balancing.h"
 
-void balancing_setup()
+void balancing_init()
 {
     BALANCING_DDR |= (1<<BALANCING_PIN);
 }
