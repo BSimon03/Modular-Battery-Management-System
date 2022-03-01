@@ -67,7 +67,7 @@ void ADC_callibrate()
 	}
 }
 
-int8_t measure_temperature(uint8_t reps)
+int8_t measure_temperature(uint8_t conversions)
 {
 	static uint8_t state_t = ST_REGISTER;
 	static uint16_t adc_values_t[8];
@@ -88,7 +88,7 @@ int8_t measure_temperature(uint8_t reps)
 	case ST_MEASURE:
 		if (ADC_INTERRUPT)
 		{
-			if (adc_counter_t < reps)
+			if (adc_counter_t < conversions)
 			{
 				adc_values_t[adc_counter_t] = 0;					 // current position in the array set to 0
 				adc_values_t[adc_counter_t] |= ADCL;				 // save ADCL in the array
@@ -105,7 +105,7 @@ int8_t measure_temperature(uint8_t reps)
 		if (ADC_FILTER) // filters out the greatest and the smallest value measured for higher precision
 		{
 			// shifting the greatest value to the right
-			for (adc_counter_t = 0; adc_counter_t <= reps; adc_counter_t++)
+			for (adc_counter_t = 0; adc_counter_t <= conversions; adc_counter_t++)
 			{
 				if (adc_values_t[adc_counter_t - 1] > adc_values_t[adc_counter_t])
 				{
@@ -116,7 +116,7 @@ int8_t measure_temperature(uint8_t reps)
 			}
 
 			// shifting the lowest value to the left
-			for (adc_counter_t = reps; adc_counter_t >= 0; adc_counter_t--)
+			for (adc_counter_t = conversions; adc_counter_t >= 0; adc_counter_t--)
 			{
 				if (adc_values_t[adc_counter_t] < adc_values_t[adc_counter_t - 1])
 				{
@@ -128,17 +128,17 @@ int8_t measure_temperature(uint8_t reps)
 
 			// Adding all measured values to variable, except the outer ones
 			adc_value = 0; // Resetting variable
-			for (adc_counter_t = 1; adc_counter_t < (reps - 1); adc_counter_t++)
+			for (adc_counter_t = 1; adc_counter_t < (conversions - 1); adc_counter_t++)
 				adc_value += adc_values_t[adc_counter_t];
-			adc_value /= (reps - 2);
+			adc_value /= (conversions - 2);
 		}
 		else
 		{
 			// Adding all measured values to variable
 			adc_value = 0; // Resetting variable
-			for (adc_counter_t = 0; adc_counter_t < reps; adc_counter_t++)
+			for (adc_counter_t = 0; adc_counter_t < conversions; adc_counter_t++)
 				adc_value += adc_values_t[adc_counter_t];
-			adc_value /= (reps);
+			adc_value /= (conversions);
 		}
 		temperature = adc_value - TEMP_D;
 		state_t = ST_REGISTER;
@@ -147,7 +147,7 @@ int8_t measure_temperature(uint8_t reps)
 	return temperature;
 }
 
-uint16_t measure_voltage(uint8_t reps)
+uint16_t measure_voltage(uint8_t conversions)
 {
 	static uint8_t state_v = ST_REGISTER;
 	static uint16_t adc_values_v[8];
@@ -166,7 +166,7 @@ uint16_t measure_voltage(uint8_t reps)
 	case ST_MEASURE:
 		if (ADC_INTERRUPT)
 		{
-			if (adc_counter_v < reps)
+			if (adc_counter_v < conversions)
 			{
 				adc_values_v[adc_counter_v] = 0;					 // current position in the array set to 0
 				adc_values_v[adc_counter_v] |= ADCL;				 // save ADCL in the array
@@ -183,7 +183,7 @@ uint16_t measure_voltage(uint8_t reps)
 		if (ADC_FILTER) // filters out the greatest and the smallest value measured for higher precision
 		{
 			// shifting the greatest value to the right
-			for (adc_counter_v = 0; adc_counter_v <= reps; adc_counter_v++)
+			for (adc_counter_v = 0; adc_counter_v <= conversions; adc_counter_v++)
 			{
 				if (adc_values_v[adc_counter_v + 1] < adc_values_v[adc_counter_v])
 				{
@@ -194,7 +194,7 @@ uint16_t measure_voltage(uint8_t reps)
 			}
 
 			// shifting the lowest value to the left
-			for (adc_counter_v = reps; adc_counter_v > 0; adc_counter_v--)
+			for (adc_counter_v = conversions; adc_counter_v > 0; adc_counter_v--)
 			{
 				if (adc_values_v[adc_counter_v] < adc_values_v[adc_counter_v - 1])
 				{
@@ -206,17 +206,17 @@ uint16_t measure_voltage(uint8_t reps)
 
 			// Adding all measured values to variable, except the outer ones
 			adc_value = 0; // Resetting variable
-			for (adc_counter_v = 1; adc_counter_v < (reps - 1); adc_counter_v++)
+			for (adc_counter_v = 1; adc_counter_v < (conversions - 1); adc_counter_v++)
 				adc_value += adc_values_v[adc_counter_v];
-			adc_value /= (reps - 2);
+			adc_value /= (conversions - 2);
 		}
 		else
 		{
 			// Adding all measured values to variable
 			adc_value = 0; // Resetting variable
-			for (adc_counter_v = 0; adc_counter_v < reps; adc_counter_v++)
+			for (adc_counter_v = 0; adc_counter_v < conversions; adc_counter_v++)
 				adc_value += adc_values_v[adc_counter_v];
-			adc_value /= (reps);
+			adc_value /= (conversions);
 		}
 		// voltage = (float)adc_value / 400; //divided by 1024 aka 10-bit, multiplied by 2,56 aka internal reference voltage
 		state_v = ST_REGISTER;
