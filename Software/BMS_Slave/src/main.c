@@ -83,13 +83,19 @@ uint8_t ADCstat = 0;
 int8_t battery_temperature;
 uint16_t battery_voltage_raw;
 
-void init_bms_slave(void);
+int8_t buffer_battery_temperature;
+uint16_t buffer_battery_voltage_raw;
+
+void bms_slave_init(void);
 
 //--------------MAIN-------------------------------//
 int main(void)
 {
-	init_bms_slave(); //Initiating the MCU, Registers configurated
-	
+	bms_slave_init(); //Initiating the MCU, Registers configurated
+	timer_clear_timer(TIMER_MANCH);
+	timer_clear_timer(TIMER_ADC);
+	timer_clear_timer(TIMER_COM);
+
 	while (1)
 	{
 		//--------------ADC--------------------------------//
@@ -100,41 +106,37 @@ int main(void)
 			timer_add_time();
 			if(ADCstat)
 			{
-				battery_temperature = measure_temperature(ADC_SAMPLES);
-				if(battery_temperature<=-100)
+				buffer_battery_temperature = measure_temperature(ADC_SAMPLES);
+				if(buffer_battery_temperature<=-100)
+				{
+					battery_temperature=buffer_battery_temperature;
 					ADCstat=0;
-				stat_led_orange();
+				}
 			}
 			else
 			{
-				battery_voltage_raw = measure_voltage(ADC_SAMPLES);
-				if(battery_voltage_raw)
+				buffer_battery_voltage_raw = measure_voltage(ADC_SAMPLES);
+				if(buffer_battery_voltage_raw)
+				{
+					battery_voltage_raw=buffer_battery_voltage_raw;
 					ADCstat=1;
-				stat_led_off();
+				}
 			}
 		}
 		//--------------COMMUNICATION----------------------//
 
 		//--------------BALANCING--------------------------//
-		start_balancing();
-		stop_balancing();
 	}
 }
 
-/*ISR(INT0_vect) 		//Pin change interrupt set up for the chip-select pin
-{
-	if (!(PINB & 0x40))
-	{
-	}
-}*/
-
-void init_bms_slave()		//Combining all setup functions
+void bms_slave_init()		//Combining all init functions
 {
 	CLKPR |= CLK_PS_SETTING;	//Clock presescaler setting
 	timer_init_timer();
-	ADC_setup();
+	timer_add_time();
+	ADC_init();
 	ADC_get_cal();
 	stat_led_init();			//Status LED initialised
-	balancing_setup();
+	balancing_init();
 	sei(); //global interrupt enable
 }
