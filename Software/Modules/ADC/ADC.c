@@ -41,14 +41,14 @@ void ADC_get_cal()
 void ADC_callibrate()
 {
 	EEPROM_STATUS = eeprom_read_byte(EEPROM_STATUS_ADR);
-	if(NOT_CALLIBRATED)
+	if(EEPROM_STATUS==NOT_CALLIBRATED)
 	{
 		eeprom_write_byte(EEPROM_STATUS_ADR, CALLIBRATED);
 		eeprom_write_float(EEPROM_k_ADR, VOLT_K);
 		eeprom_write_float(EEPROM_d_ADR, VOLT_D);
 		eeprom_write_byte(EEPROM_temp_ADR, TEMP_D);
 	}
-	else if(CALLIBRATED)
+	else if(EEPROM_STATUS==CALLIBRATED)
 	{
 		eeprom_update_byte(EEPROM_STATUS_ADR, CALLIBRATED);
 		eeprom_update_float(EEPROM_k_ADR, VOLT_K);

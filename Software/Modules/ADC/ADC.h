@@ -13,8 +13,8 @@
 #define ADC_H
 
 #define EEPROM_STATUS_ADR (uint8_t *)0x00   //Address of the status byte
-#define EEPROM_k_ADR (uint16_t *)0x01 		//Address of ADC slop coefficient
-#define EEPROM_d_ADR (uint16_t *)0x03 		//Address of ADC offset
+#define EEPROM_k_ADR (float *)0x01 		//Address of ADC slop coefficient
+#define EEPROM_d_ADR (float *)0x03 		//Address of ADC offset
 
 #define EEPROM_temp_ADR (uint8_t *)0x05 	//Address of ADC temperature offset
 enum EEPROM_STATES{
