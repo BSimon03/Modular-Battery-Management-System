@@ -14,11 +14,10 @@
 #include <avr/eeprom.h>
 #include "ADC.h"
 
-//EEPROM
+// EEPROM
 static float VOLT_K = 0;
 static float VOLT_D = 0;
 static uint8_t TEMP_D = 0;
-static uint8_t EEPROM_STATUS = 0;
 
 void ADC_init()
 {
@@ -41,30 +40,15 @@ void ADC_get_cal()
 {
 	VOLT_K = eeprom_read_float(EEPROM_k_ADR);
 	VOLT_D = eeprom_read_float(EEPROM_d_ADR);
-	TEMP_D = eeprom_read_byte(EEPROM_temp_ADR);
+	TEMP_D = eeprom_read_float(EEPROM_temp_ADR);
 }
 
-void ADC_callibrate(float voltage_slope_error, float voltage_offset, uint8_t temperature_offset)
+void ADC_callibrate(float voltage_slope_error, float voltage_offset, float temperature_offset)
 {
-	EEPROM_STATUS = eeprom_read_byte(EEPROM_STATUS_ADR);
-	if(EEPROM_STATUS==NOT_CALLIBRATED)
-	{
-		eeprom_write_byte(EEPROM_STATUS_ADR, CALLIBRATED);
-		eeprom_write_float(EEPROM_k_ADR, voltage_slope_error);
-		eeprom_write_float(EEPROM_d_ADR, voltage_offset);
-		eeprom_write_byte(EEPROM_temp_ADR, temperature_offset);
-	}
-	else if(EEPROM_STATUS==CALLIBRATED)
-	{
-		eeprom_update_byte(EEPROM_STATUS_ADR, CALLIBRATED);
-		eeprom_update_float(EEPROM_k_ADR, voltage_slope_error);
-		eeprom_update_float(EEPROM_d_ADR, voltage_offset);
-		eeprom_update_byte(EEPROM_temp_ADR, temperature_offset);
-	}
-	else
-	{
-
-	}
+	eeprom_update_byte(EEPROM_STATUS_ADR, EEPROM_CALLIBRATED);
+	eeprom_write_float(EEPROM_k_ADR, voltage_slope_error);
+	eeprom_write_float(EEPROM_d_ADR, voltage_offset);
+	eeprom_write_float(EEPROM_temp_ADR, temperature_offset);
 }
 
 int8_t measure_temperature(uint8_t conversions)
@@ -75,9 +59,9 @@ int8_t measure_temperature(uint8_t conversions)
 	temperature = -100;
 	static uint8_t adc_counter_t;
 	static uint16_t adc_value = 0;
-	static uint16_t sort_t; //sort_t algorithm
+	static uint16_t sort_t; // sort_t algorithm
 	adc_value = 0;
-	
+
 	switch (state_t)
 	{
 	case ST_REGISTER:
@@ -153,7 +137,7 @@ uint16_t measure_voltage(uint8_t conversions)
 	static uint16_t adc_values_v[8];
 	static uint8_t adc_counter_v;
 	static uint16_t adc_value = 0;
-	static uint16_t sort_v; //sort_v algorithm
+	static uint16_t sort_v; // sort_v algorithm
 	adc_value = 0;
 
 	switch (state_v)

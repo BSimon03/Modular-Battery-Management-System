@@ -12,19 +12,25 @@
 #ifndef ADC_H
 #define ADC_H
 
+#define EEPROM_3V_ADR (float *)0x01 	//Address of 3v raw value
+#define EEPROM_4V_ADR (float *)0x03 	//Address of 4v raw value
+#define EEPROM_temp_ADR (float *)0x05   //Address of ADC temperature offset
+#define EEPROM_k_ADR (float *)0x07 	    //Address of slope error
+#define EEPROM_d_ADR (float *)0x09 	    //Address of offset error
+
+//Callibration
+#define CAL_VOLTAGE_H 4     //Callibration Voltage 1
+#define CAL_VOLTAGE_L 3     //Callibration Voltage 2
+#define CAL_TEMP 22         //Environment temperature during callibration
+
 #define EEPROM_STATUS_ADR (uint8_t *)0x00   //Address of the status byte
-#define EEPROM_k_ADR (float *)0x01 		//Address of ADC slop coefficient
-#define EEPROM_d_ADR (float *)0x03 		//Address of ADC offset
+//Byte pointers to each status bit in the eeprom status byte
+#define EEPROM_CALLIBRATED 0x01
+#define EEPROM_STATUS_L    0x02 
+#define EEPROM_STATUS_H    0x04
+#define EEPROM_VOLT_RDY    0xFF
+#define EEPROM_STATUS_TEMP 0x08
 
-#define EEPROM_temp_ADR (uint8_t *)0x05 	//Address of ADC temperature offset
-enum EEPROM_STATES{
-    NOT_CALLIBRATED,
-    CALLIBRATED
-};
-
-#define CAL_VOLTAGE_H 4
-#define CAL_VOLTAGE_L 3
-#define CAL_TEMP 22
 
 //--------------MAKROS-----------------------------//
 #define ADC_INTERRUPT ADCSRA&(1<<ADIF)      //ADC interrupt flag set?
@@ -53,7 +59,7 @@ void ADC_get_cal(void);
 
 //Function ADC_callibrate:
     //Set new callibration values
-void ADC_callibrate(float voltage_slope_error, float voltage_offset, uint8_t temperature_offset);
+void ADC_callibrate(float voltage_slope_error, float voltage_offset, float temperature_offset);
 
 //Function measure_temperature:
     //Returns the temperature in degree celsius after at least 3 calls

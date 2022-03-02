@@ -78,109 +78,127 @@ uint16_t top_data = 0; // data received from the upper slave
 
 uint16_t ADC_time = 0; // secs compare value
 
-enum CAL
+enum ADC_STAT
 {
-	MEASURE_L,
-	MEASURE_H,
-	MEASURE_TEMP,
-	CALC_CAL
+	MEASURE_VOLT,
+	MEASURE_TEMP
 };
 
-uint8_t ADCstat = 0;
+uint8_t ADCstat = MEASURE_VOLT;
 // 0  : Set up for Battery Temperature Measurement
 // 1  : Set up for Battery Voltage Measurement
 
 // Measurements
 int8_t battery_temperature;
 uint16_t battery_voltage_raw;
+float battery_voltage = 0;
 float battery_voltage_L = 0;
 float battery_voltage_H = 0;
 
 float voltage_k = 0;
 float voltage_d = 0;
-uint8_t temperature_d = 0;
+float temperature_d = 0;
 
 int8_t buffer_battery_temperature;
 uint16_t buffer_battery_voltage_raw;
+
+uint8_t eeprom_stat = 0;
 
 void bms_slave_init(void);
 
 //--------------MAIN-------------------------------//
 int main(void)
 {
-	bms_slave_init(); // Initiating the MCU, Registers configurated
 	timer_clear_timer(TIMER_MANCH);
 	timer_clear_timer(TIMER_ADC);
 	timer_clear_timer(TIMER_COM);
 
-	while (1)
+	eeprom_stat = eeprom_read_byte(EEPROM_STATUS_ADR);
+	if (!(eeprom_stat & EEPROM_CALLIBRATED))
 	{
-		if (eeprom_read_byte(EEPROM_STATUS_ADR) == 0)
+		while (!battery_voltage_raw)
 		{
-			ADC_time = timer_get_timer(TIMER_ADC);
-			if (ADC_time >= 1)
+			battery_voltage_raw = measure_voltage(ADC_SAMPLES);
+		}
+		battery_voltage = (float)battery_voltage_raw / 400; // divided by 1024 aka 10-bit, multiplied by 2,56 aka internal reference voltage
+
+		if ((battery_voltage <= 3.3) && (!(eeprom_stat & EEPROM_STATUS_L)))
+		{
+			battery_voltage_L = battery_voltage;
+			if (!(eeprom_stat & EEPROM_STATUS_H))
 			{
-				timer_clear_timer(TIMER_ADC);
-				timer_add_time();
-				switch (ADCstat)
-				{
-				case MEASURE_L:
-					battery_voltage_raw = measure_voltage(ADC_SAMPLES);
-					if (battery_voltage_raw) // make sure conversion is done
-					{
-						battery_voltage_L = (float)battery_voltage_raw / 400; // divided by 1024 aka 10-bit, multiplied by 2,56 aka internal reference voltage
-						ADCstat = MEASURE_H;
-					}
-					break;
-				case MEASURE_H:
-					battery_voltage_raw = measure_voltage(ADC_SAMPLES);
-					if (battery_voltage_raw) // make sure conversion is done
-					{
-						battery_voltage_H = (float)battery_voltage_raw / 400; // divided by 1024 aka 10-bit, multiplied by 2,56 aka internal reference voltage
-						ADCstat = MEASURE_TEMP;
-					}
-					break;
-				case MEASURE_TEMP:
-					battery_temperature = measure_temperature(ADC_SAMPLES);
-					if (battery_temperature >= -100) // make sure conversion is done
-					{
-						ADCstat = CALC_CAL;
-					}
-					break;
-				case CALC_CAL:
-					voltage_k = (CAL_VOLTAGE_H - CAL_VOLTAGE_L) / (battery_voltage_H - battery_voltage_L); // calculate voltage slope error
-					voltage_d = CAL_VOLTAGE_H - (battery_voltage_H * voltage_k);						   // calculate voltage offset
-					temperature_d = battery_temperature - CAL_TEMP;										   // calculate temperature offset
-					ADC_callibrate(voltage_k, voltage_d, temperature_d);
-					break;
-				}
+				eeprom_write_float(EEPROM_3V_ADR, battery_voltage_L);
+				eeprom_write_byte(EEPROM_STATUS_ADR, EEPROM_STATUS_L);
+			}
+			else
+			{
+				eeprom_stat = EEPROM_VOLT_RDY;
 			}
 		}
-		//--------------ADC--------------------------------//
+		else if ((battery_voltage >= 3.7) && (!(eeprom_stat & EEPROM_STATUS_H)))
+		{
+			battery_voltage_H = battery_voltage;
+			if (!(eeprom_stat & EEPROM_STATUS_L))
+			{
+				eeprom_write_float(EEPROM_4V_ADR, battery_voltage_H);
+				eeprom_write_byte(EEPROM_STATUS_ADR, EEPROM_STATUS_H);
+			}
+			else
+			{
+				eeprom_stat = EEPROM_VOLT_RDY;
+			}
+		}
+		else
+		{
+			stat_led_red();
+		}
+
+		if (eeprom_stat & EEPROM_VOLT_RDY)
+		{
+			voltage_k = (CAL_VOLTAGE_H - CAL_VOLTAGE_L) / (battery_voltage_H - battery_voltage_L); // calculate voltage slope error
+			voltage_d = CAL_VOLTAGE_H - (battery_voltage_H * voltage_k);						   // calculate voltage offset
+			
+				while(battery_temperature == -100) // make sure conversion is done
+				{
+					battery_temperature = measure_temperature(ADC_SAMPLES);
+				}
+			temperature_d = battery_temperature - CAL_TEMP;										   // calculate temperature offset
+			ADC_callibrate(voltage_k, voltage_d, temperature_d);
+		}
+	}
+
+	bms_slave_init(); // Initiating the MCU, Registers configurated
+
+	//--------------ENDLESS-LOOP-----------------------//
+	while (1)
+	{
 		ADC_time = timer_get_timer(TIMER_ADC);
+
 		if (ADC_time >= 1)
 		{
 			timer_clear_timer(TIMER_ADC);
 			timer_add_time();
-			if (ADCstat)
+			switch (ADCstat)
 			{
+			case MEASURE_TEMP:
 				buffer_battery_temperature = measure_temperature(ADC_SAMPLES);
-				if (buffer_battery_temperature <= -100)
+				if (buffer_battery_temperature >= -100) // make sure conversion is done
 				{
 					battery_temperature = buffer_battery_temperature;
-					ADCstat = 0;
+					ADCstat = MEASURE_VOLT;
 				}
-			}
-			else
-			{
+				break;
+			case MEASURE_VOLT:
 				buffer_battery_voltage_raw = measure_voltage(ADC_SAMPLES);
 				if (buffer_battery_voltage_raw)
 				{
 					battery_voltage_raw = buffer_battery_voltage_raw;
 					ADCstat = 1;
 				}
+				break;
 			}
 		}
+		//--------------ADC--------------------------------//
 		//--------------COMMUNICATION----------------------//
 		if (bot_data & ADDRESS_MASK) // checking if the current slave is addressed
 		{
