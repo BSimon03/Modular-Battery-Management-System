@@ -47,7 +47,9 @@
 	#define COMM_TOP PINA2
 	
 	//PORTB
-	#define DEBUG_PIN PINB5
+	#define DEBUG_DDR DDRB
+	#define DEBUG_PORT PORTB
+	#define DEBUG_PIN PINB5 // PCINT13
 	#define COMM_BOT PINB6
 
 //--------------SETTINGS---------------------------//
@@ -76,6 +78,13 @@ uint16_t top_data = 0;	//data received from the upper slave
 
 uint16_t ADC_time = 0; //secs compare value
 
+enum CAL{
+	MEASURE_L,
+	MEASURE_H,	
+	MEASURE_TEMP,
+	CALC_CAL
+};
+
 uint8_t ADCstat = 0;
 // 0  : Set up for Battery Temperature Measurement
 // 1  : Set up for Battery Voltage Measurement
@@ -83,6 +92,12 @@ uint8_t ADCstat = 0;
 //Measurements
 int8_t battery_temperature;
 uint16_t battery_voltage_raw;
+float battery_voltage_L = 0;
+float battery_voltage_H = 0;
+
+float voltage_k = 0;
+float voltage_d = 0;
+uint8_t temperature_d = 0;
 
 int8_t buffer_battery_temperature;
 uint16_t buffer_battery_voltage_raw;
