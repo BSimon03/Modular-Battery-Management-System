@@ -20,6 +20,12 @@
 #define LEDPORT PORTD
 #define LEDPINR PIND6
 #define LEDPING PIND7
+#define SSRDDR DDRF
+#define SSRPORT PORTF
+#define SSRPIN PINF5
+#define RELAYDDR DDRF
+#define RELAYPORT PORTF
+#define RELAYPIN PINF6
 #endif
 
 //Status LED
@@ -36,12 +42,16 @@ void stat_led_off();
 
 #ifdef __AVR_ATmega32U4__
 //Status Relay
+void stat_rel_init();
+//initialize status relay
 void stat_rel_on();
 //switch status relay on
 void stat_rel_off();
 //switch status relay off
 
 //Status solid state relais
+void stat_ssr_init();
+//initialize status solid state relais
 void stat_ssr_on();
 //switch status solid state relais on
 void stat_ssr_off();
