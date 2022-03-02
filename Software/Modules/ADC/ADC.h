@@ -53,7 +53,7 @@ void ADC_get_cal(void);
 
 //Function ADC_callibrate:
     //Set new callibration values
-void ADC_callibrate(void);
+void ADC_callibrate(float voltage_slope_error, float voltage_offset, uint8_t temperature_offset);
 
 //Function measure_temperature:
     //Returns the temperature in degree celsius after at least 3 calls

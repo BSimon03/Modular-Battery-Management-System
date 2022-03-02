@@ -87,7 +87,11 @@ uint16_t battery_voltage_raw;
 float battery_voltage_L = 0;
 float battery_voltage_H = 0;
 
-void PCINT_setup(void);
+float voltage_k = 0;
+float voltage_d = 0;
+uint8_t temperature_d = 0;
+
+void PCINT_init(void);
 void init_bms_slave(void);
 
 //--------------MAIN-------------------------------//
@@ -134,10 +138,10 @@ int main(void)
 						}
 						break;
 					case CALC_CAL:
-						VOLT_K=(CAL_VOLTAGE_H-CAL_VOLTAGE_L)/(battery_voltage_H-battery_voltage_L);		//calculate voltage slope error
-						VOLT_D=CAL_VOLTAGE_H-(battery_voltage_H*VOLT_K);								//calculate voltage offset
-						TEMP_D=battery_temperature-CAL_TEMP;											//calculate temperature offset
-						ADC_callibrate();
+						voltage_k=(CAL_VOLTAGE_H-CAL_VOLTAGE_L)/(battery_voltage_H-battery_voltage_L);		//calculate voltage slope error
+						voltage_d=CAL_VOLTAGE_H-(battery_voltage_H*voltage_k);								//calculate voltage offset
+						temperature_d=battery_temperature-CAL_TEMP;											//calculate temperature offset
+						ADC_callibrate(voltage_k, voltage_d, temperature_d);
 						break;
 				}
 			}
@@ -153,7 +157,7 @@ ISR(PCINT_vect) 		// Pin change interrupt set up for the chip-select pin
 	}
 }
 
-void PCINT_setup() 		// Pinchange interrupt
+void PCINT_init() 		// Pinchange interrupt
 {
 	DEBUG_DDR &= ~(1<<DEBUG_PIN);	// DEBUG PIN set as input
 	DEBUG_PORT |= (1<<DEBUG_PIN);	//Internal Pullup
@@ -164,9 +168,9 @@ void PCINT_setup() 		// Pinchange interrupt
 void init_bms_slave() 	// Combining all setup functions
 {
 	CLKPR |= CLK_PS_SETTING; 		// Clock presescaler setting
-	PCINT_setup();
+	PCINT_init();
 	timer_init_timer();
-	ADC_setup();
+	ADC_init();
 	stat_led_init(); 				// Status LED initialised
 	sei();			 				// global interrupt enable
 }
