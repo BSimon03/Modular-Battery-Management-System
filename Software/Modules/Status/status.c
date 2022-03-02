@@ -34,18 +34,26 @@ void stat_led_off(){
 
 #ifdef __AVR_ATmega32U4__
 //Status Relay
+void stat_rel_init()
+{
+    RELAYDDR|=(1<<RELAYPIN);
+}
 void stat_rel_on(){
-    PORTF|=(1<<PINF6);
+    RELAYPORT|=(1<<RELAYPIN);
 }
 void stat_rel_off(){
-    PORTF&=~(1<<PINF6);
+    RELAYPORT&=~(1<<RELAYPIN);
 }
 
 //Status solid state relais
+void stat_ssr_init()
+{
+    SSRDDR|=(1<<SSRPIN);
+}
 void stat_ssr_on(){
-    PORTF|=(1<<PINF5);
+    SSRPORT|=(1<<SSRPIN);
 }
 void stat_ssr_off(){
-    PORTF&=~(1<<PINF5);
+    SSRPORT&=~(1<<SSRPIN);
 }
 #endif

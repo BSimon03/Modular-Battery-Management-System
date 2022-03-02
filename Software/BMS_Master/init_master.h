@@ -23,8 +23,6 @@
 #define STAT_G PIND7
 //PORTF
 #define IGNITION_DETECTION PINF4
-#define STAT_SSR PINF5
-#define STAT_RELAY PINF6
 
 #define IGNITION PINF&(1<<PINF4)        //check if ignition is on
 

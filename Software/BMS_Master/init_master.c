@@ -28,9 +28,8 @@ void INT_setup()
 }
 void init_master()
 {
-    DDRD|=(1<<STAT_G)|(1<<STAT_R);      //Set LED pins as output
-    DDRF|=(1<<STAT_RELAY)|(1<<STAT_SSR);        //Set SSR and relay pins as output
     DDRF&=~(1<<IGNITION_DETECTION);     //Set ignition detection Pin as input
+    PORTF&=~(1<<IGNITION_DETECTION);        //enable pulldown resistor on ignition detection pin
     timer_init_timer();
     sei();
     CLK_setup();

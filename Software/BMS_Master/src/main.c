@@ -89,7 +89,7 @@ int main(void)
       }
     }while (com_err);   //repeat if an error occurred while recieving
 
-    //==========Check if there as an overtemperature==========
+    //==========Check if there is as an overtemperature==========
     for (int i=0; i<SLAVE_COUNT; i++)   //check for every slave
     {
       if(data_temp[i]>=MAX_CELL_TEMP)   //if cell temperature is over limit
@@ -120,15 +120,5 @@ int main(void)
     adr_high_volt+=COM_BLC_A;   //calculate adress to send balancing command to
     manch_init_send();
     manch_send(adr_high_volt);    //send adressed balancing command
-
-
-
-
-
-    
-    
-    
-
-    
   }
 }
