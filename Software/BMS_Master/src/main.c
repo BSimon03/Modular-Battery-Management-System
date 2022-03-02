@@ -31,7 +31,11 @@ int main(void)
 {
   timer_init_timer();   //initialize timers
   init_master();    //initialize master
-  uint16_t data_temp[SLAVE_COUNT]={0};
+  stat_ssr_init();
+  stat_rel_init();
+  stat_led_init();
+
+  int16_t data_temp[SLAVE_COUNT]={0};
   float data_volt[SLAVE_COUNT]={0};
   uint16_t *data;
   uint8_t com_stat, com_err=0;
