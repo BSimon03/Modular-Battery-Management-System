@@ -80,7 +80,7 @@ void bms_slave_init(void);
 int main(void)
 {
 	// Data received
-	uint16_t bot_received = 0;  // data received from the lower slave
+	uint16_t bot_received = 0; // data received from the lower slave
 	uint16_t top_received = 0; // data received from the upper slave
 
 	// Send data
@@ -104,64 +104,62 @@ int main(void)
 	uint8_t eeprom_stat = 0;
 	eeprom_stat = eeprom_read_byte(EEPROM_STATUS_ADR);
 	//--------------CALIBRATION------------------------//
-	if (!(eeprom_stat & EEPROM_CALIBRATED))
+	if (!(eeprom_stat & EEPROM_CALIBRATED)) // if EEPROM not calibrated
 	{
-		while (!battery_voltage)
+		while (!battery_voltage) // Measure SUPPLY voltage
 		{
 			battery_voltage = measure_voltage(ADC_SAMPLES);
 		}
-		while (battery_temperature == -100) // make sure conversion is done
+		while (battery_temperature == -100) // Measure ambient temperature
 		{
 			battery_temperature = measure_temperature(ADC_SAMPLES);
 		}
-		if (!(eeprom_stat & EEPROM_STATUS_TEMP))
+		if (!(eeprom_stat & EEPROM_STATUS_TEMP)) // if neither 3V or 4V are measured
 		{
 			eeprom_write_word(EEPROM_3V_ADR, (uint16_t)battery_temperature);
 		}
-		if ((battery_voltage <= CAL_VOLTAGE_LB) && (!(eeprom_stat & EEPROM_STATUS_L)))
+		if ((battery_voltage <= CAL_VOLTAGE_LB) && (!(eeprom_stat & EEPROM_STATUS_L))) // battery voltage smaller than lower max voltage and not calibrated yet
 		{
-			if (!(eeprom_stat & EEPROM_STATUS_L))
-			{
-				eeprom_write_word(EEPROM_3V_ADR, battery_voltage);
-				if (!(eeprom_stat & EEPROM_STATUS_H))
-					eeprom_write_byte(EEPROM_STATUS_ADR, EEPROM_STATUS_L);
-				else
-					eeprom_update_byte(EEPROM_STATUS_ADR, EEPROM_CALIBRATED);
-			}
+			eeprom_write_word(EEPROM_3V_ADR, battery_voltage);
+			if (!(eeprom_stat & EEPROM_STATUS_H)) // high voltage not calibrated yet
+				eeprom_write_byte(EEPROM_STATUS_ADR, EEPROM_STATUS_L);
+			else
+				eeprom_update_byte(EEPROM_STATUS_ADR, EEPROM_CALIBRATED);
 		}
-		else if ((battery_voltage >= CAL_VOLTAGE_HB) && (!(eeprom_stat & EEPROM_STATUS_H)))
+		else if ((battery_voltage >= CAL_VOLTAGE_HB) && (!(eeprom_stat & EEPROM_STATUS_H))) // battery voltage smaller than high min voltage and not calibrated yet
 		{
-			if (!(eeprom_stat & EEPROM_STATUS_H))
-			{
-				eeprom_write_word(EEPROM_4V_ADR, battery_voltage);
-				if (!(eeprom_stat & EEPROM_STATUS_L))
-					eeprom_write_byte(EEPROM_STATUS_ADR, EEPROM_STATUS_H);
-				else
-					eeprom_update_byte(EEPROM_STATUS_ADR, EEPROM_CALIBRATED);
-			}
+			eeprom_write_word(EEPROM_4V_ADR, battery_voltage);
+			if (!(eeprom_stat & EEPROM_STATUS_L)) // low voltage not calibrated yet
+				eeprom_write_byte(EEPROM_STATUS_ADR, EEPROM_STATUS_H);
+			else
+				eeprom_update_byte(EEPROM_STATUS_ADR, EEPROM_CALIBRATED);
 		}
 		else
 		{
-			stat_led_red();
+			stat_led_red(); // battery voltage out of predefined borders
 		}
 	}
 
+	bms_slave_init(); // Initiating the MCU, Registers configurated
+	ADC_get_calibration();
+
+	// clear timers after startup
 	timer_clear_timer(TIMER_MANCH);
 	timer_clear_timer(TIMER_ADC);
 	timer_clear_timer(TIMER_COM);
 
-	bms_slave_init(); // Initiating the MCU, Registers configurated
-	ADC_get_calibration();
 	//--------------ENDLESS-LOOP-----------------------//
 	while (1)
 	{
 		//--------------ADC--------------------------------//
-		ADC_time = timer_get_timer(TIMER_ADC);
+		timer_add_time();// executed after max 32ms
 
-		if (ADC_time >= 1)
+		ADC_time = timer_get_timer(TIMER_ADC); 
+
+		if (ADC_time >= 1)	//once every ms
 		{
-			timer_clear_timer(TIMER_ADC);
-			timer_add_time();
+			timer_clear_timer(TIMER_ADC);	//reset timer compare value
+
 			switch (ADCstat)
 			{
 			case MEASURE_TEMP:
@@ -174,7 +172,7 @@ int main(void)
 				break;
 			case MEASURE_VOLT:
 				buffer_battery_voltage = measure_voltage(ADC_SAMPLES);
-				if (buffer_battery_voltage)
+				if (buffer_battery_voltage) // make sure conversion is done
 				{
 					battery_voltage = buffer_battery_voltage;
 					ADCstat = MEASURE_TEMP;
@@ -185,12 +183,12 @@ int main(void)
 		//--------------COMMUNICATION----------------------//
 		if (bot_received & ADDRESS_MASK) // checking if the current slave is addressed
 		{
-			top_send = bot_received - 1;	// count down address by 1
-			top_send ^= PARITY_BIT_COM_A; 	// Toggle the parity bit
+			top_send = bot_received - 1;  // count down address by 1
+			top_send ^= PARITY_BIT_COM_A; // Toggle the parity bit
 		}
-		top_received=bot_send;
+		top_received = bot_send;
 		//--------------BALANCING--------------------------//
-		if (bot_received == COM_BLC_A)
+		if (bot_received == COM_BLC_A)	//if Master sent balancing command
 		{
 			start_balancing();
 			stat_led_orange();
