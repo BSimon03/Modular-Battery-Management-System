@@ -15,19 +15,17 @@
 #define EEPROM_3V_ADR (uint16_t *)0x01   // Address of 3v raw value
 #define EEPROM_4V_ADR (uint16_t *)0x03   // Address of 4v raw value
 #define EEPROM_temp_ADR (uint16_t *)0x05 // Address of ADC temperature offset
-#define EEPROM_k_ADR (uint16_t *)0x07    // Address of slope error
-#define EEPROM_d_ADR (uint16_t *)0x09    // Address of offset error
 
 // Callibration
 #define CAL_VOLTAGE_H 0x0640 // Callibration Voltage HIGH    -> 4V
 #define CAL_VOLTAGE_HB 0x05C8//                              -> 3.7
 #define CAL_VOLTAGE_L 0x04B0 // Callibration Voltage LOW     -> 3V
 #define CAL_VOLTAGE_LB 0x0528//                              -> 3.3
-#define CAL_TEMP 22          // Environment temperature during callibration
+#define CAL_TEMP 22          // Environment temperature during calibration
 
 #define EEPROM_STATUS_ADR (uint8_t *)0x00 // Address of the status byte
 // Byte pointers to each status bit in the eeprom status byte
-#define EEPROM_CALLIBRATED 0x01
+#define EEPROM_CALIBRATED 0x01
 #define EEPROM_STATUS_L 0x02
 #define EEPROM_STATUS_H 0x04
 #define EEPROM_STATUS_TEMP 0x06
@@ -56,7 +54,7 @@ void ADC_init(void);
 
 // Function ADC_get_cal:
 // Retrieving calibration data from the eeprom
-void ADC_get_callibration(void);
+void ADC_get_calibration(void);
 
 // Function measure_temperature:
 // Returns the temperature in degree celsius after at least 3 calls

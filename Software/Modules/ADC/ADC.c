@@ -36,10 +36,10 @@ void ADC_init()
 	// When its completed the channel can safely be changed. The next conversion takes 25 clock cycles.
 }
 
-void ADC_get_callibration()
+void ADC_get_calibration()
 {
 	uint8_t status = eeprom_read_byte(EEPROM_STATUS_ADR);
-	if (status&EEPROM_CALLIBRATED)
+	if (status&EEPROM_CALIBRATED)
 	{
 		uint16_t voltage_h = eeprom_read_word(EEPROM_4V_ADR);
 		uint16_t voltage_l = eeprom_read_word(EEPROM_3V_ADR);

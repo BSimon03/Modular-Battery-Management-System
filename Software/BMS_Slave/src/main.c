@@ -57,6 +57,7 @@
 #include <stdint.h>
 #include <avr/interrupt.h>
 #include <avr/eeprom.h>
+#include <avr/sleep.h>
 
 //--------------SOURCE-FILES-----------------------//
 // These are stored outside of the project folder, but will still be compiled
@@ -79,8 +80,12 @@ void bms_slave_init(void);
 int main(void)
 {
 	// Data received
-	uint16_t bot_data = 0; // data received from the lower slave
-	uint16_t top_data = 0; // data received from the upper slave
+	uint16_t bot_received = 0;  // data received from the lower slave
+	uint16_t top_received = 0; // data received from the upper slave
+
+	// Send data
+	uint16_t bot_send = 0;
+	uint16_t top_send = 0;
 
 	uint16_t ADC_time = 0; // secs compare value
 
@@ -99,7 +104,7 @@ int main(void)
 	uint8_t eeprom_stat = 0;
 	eeprom_stat = eeprom_read_byte(EEPROM_STATUS_ADR);
 	//--------------CALIBRATION------------------------//
-	if (!(eeprom_stat & EEPROM_CALLIBRATED))
+	if (!(eeprom_stat & EEPROM_CALIBRATED))
 	{
 		while (!battery_voltage)
 		{
@@ -110,18 +115,18 @@ int main(void)
 			battery_temperature = measure_temperature(ADC_SAMPLES);
 		}
 		if (!(eeprom_stat & EEPROM_STATUS_TEMP))
-			{
-				eeprom_write_word(EEPROM_3V_ADR, (uint16_t)battery_temperature);
-			}
+		{
+			eeprom_write_word(EEPROM_3V_ADR, (uint16_t)battery_temperature);
+		}
 		if ((battery_voltage <= CAL_VOLTAGE_LB) && (!(eeprom_stat & EEPROM_STATUS_L)))
 		{
 			if (!(eeprom_stat & EEPROM_STATUS_L))
 			{
 				eeprom_write_word(EEPROM_3V_ADR, battery_voltage);
-				if(!(eeprom_stat & EEPROM_STATUS_H))
-				eeprom_write_byte(EEPROM_STATUS_ADR, EEPROM_STATUS_L);
+				if (!(eeprom_stat & EEPROM_STATUS_H))
+					eeprom_write_byte(EEPROM_STATUS_ADR, EEPROM_STATUS_L);
 				else
-				eeprom_update_byte(EEPROM_STATUS_ADR, EEPROM_CALLIBRATED);
+					eeprom_update_byte(EEPROM_STATUS_ADR, EEPROM_CALIBRATED);
 			}
 		}
 		else if ((battery_voltage >= CAL_VOLTAGE_HB) && (!(eeprom_stat & EEPROM_STATUS_H)))
@@ -129,10 +134,10 @@ int main(void)
 			if (!(eeprom_stat & EEPROM_STATUS_H))
 			{
 				eeprom_write_word(EEPROM_4V_ADR, battery_voltage);
-				if(!(eeprom_stat & EEPROM_STATUS_L))
-				eeprom_write_byte(EEPROM_STATUS_ADR, EEPROM_STATUS_H);
+				if (!(eeprom_stat & EEPROM_STATUS_L))
+					eeprom_write_byte(EEPROM_STATUS_ADR, EEPROM_STATUS_H);
 				else
-				eeprom_update_byte(EEPROM_STATUS_ADR, EEPROM_CALLIBRATED);
+					eeprom_update_byte(EEPROM_STATUS_ADR, EEPROM_CALIBRATED);
 			}
 		}
 		else
@@ -146,7 +151,7 @@ int main(void)
 	timer_clear_timer(TIMER_COM);
 
 	bms_slave_init(); // Initiating the MCU, Registers configurated
-	ADC_get_callibration();
+	ADC_get_calibration();
 	//--------------ENDLESS-LOOP-----------------------//
 	while (1)
 	{
@@ -178,13 +183,14 @@ int main(void)
 			}
 		}
 		//--------------COMMUNICATION----------------------//
-		if (bot_data & ADDRESS_MASK) // checking if the current slave is addressed
+		if (bot_received & ADDRESS_MASK) // checking if the current slave is addressed
 		{
-			bot_data -= 1;				  // count down address by 1
-			bot_data ^= PARITY_BIT_COM_A; // Toggle the parity bit
+			top_send = bot_received - 1;	// count down address by 1
+			top_send ^= PARITY_BIT_COM_A; 	// Toggle the parity bit
 		}
+		top_received=bot_send;
 		//--------------BALANCING--------------------------//
-		if (bot_data == COM_BLC_A)
+		if (bot_received == COM_BLC_A)
 		{
 			start_balancing();
 			stat_led_orange();
