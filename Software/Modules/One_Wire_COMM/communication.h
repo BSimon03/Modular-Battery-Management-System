@@ -22,5 +22,7 @@
 uint16_t bal_com (uint8_t);
 //calculate parity for adressed command. argument is address.
 
+uint8_t calc_parity(uint16_t);
+
 #endif //COMM_H
 //"I geh ned mit ins gym. I hob duachfall. I hob mi a bissl ogschissn." -kati 23.02.2022

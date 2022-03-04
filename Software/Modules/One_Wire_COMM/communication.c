@@ -23,3 +23,22 @@ uint16_t bal_com (uint8_t address)
         return COM_BLC_A + address;
     }
 }
+uint8_t calc_parity(uint16_t data)
+{
+    uint8_t par_cnt=0;
+    for(int i=0; i<16;i++)
+    {
+        if(data&(1<<i))
+        {
+            par_cnt++;
+        }
+    }
+    if(par_cnt%2)
+    {
+        return 1;
+    }
+    else
+    {
+        return 0;
+    }
+}
