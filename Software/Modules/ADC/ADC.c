@@ -15,9 +15,9 @@
 #include "ADC.h"
 
 // EEPROM
-static float VOLT_K = 0;
-static float VOLT_D = 0;
-static uint8_t TEMP_D = 0;
+static uint16_t VOLT_K = 0;
+static uint16_t VOLT_D = 0;
+static uint16_t TEMP_D = 0;
 
 void ADC_init()
 {
@@ -36,19 +36,18 @@ void ADC_init()
 	// When its completed the channel can safely be changed. The next conversion takes 25 clock cycles.
 }
 
-void ADC_get_cal()
+void ADC_get_calibration()
 {
-	VOLT_K = eeprom_read_float(EEPROM_k_ADR);
-	VOLT_D = eeprom_read_float(EEPROM_d_ADR);
-	TEMP_D = eeprom_read_float(EEPROM_temp_ADR);
-}
-
-void ADC_callibrate(float voltage_slope_error, float voltage_offset, float temperature_offset)
-{
-	eeprom_update_byte(EEPROM_STATUS_ADR, EEPROM_CALLIBRATED);
-	eeprom_write_float(EEPROM_k_ADR, voltage_slope_error);
-	eeprom_write_float(EEPROM_d_ADR, voltage_offset);
-	eeprom_write_float(EEPROM_temp_ADR, temperature_offset);
+	uint8_t status = eeprom_read_byte(EEPROM_STATUS_ADR);
+	if (status&EEPROM_CALIBRATED)
+	{
+		uint16_t voltage_h = eeprom_read_word(EEPROM_4V_ADR);
+		uint16_t voltage_l = eeprom_read_word(EEPROM_3V_ADR);
+		uint16_t temp_cal = eeprom_read_word(EEPROM_temp_ADR);
+		VOLT_K = (CAL_VOLTAGE_H - CAL_VOLTAGE_L) / (voltage_h - voltage_l); // calculate voltage slope error
+		VOLT_D = CAL_VOLTAGE_H - (voltage_h * VOLT_K);						// calculate voltage offset
+		TEMP_D = temp_cal - CAL_TEMP;										// calculate temperature offset
+	}
 }
 
 int8_t measure_temperature(uint8_t conversions)

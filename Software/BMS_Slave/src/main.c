@@ -43,25 +43,21 @@
 #endif
 
 //--------------PIN-DEFINITIONS--------------------//
-// PORTA
-#define COMM_TOP PINA2
-
-// PORTB
 #define DEBUG_DDR DDRB
 #define DEBUG_PORT PORTB
 #define DEBUG_PIN PINB5 // PCINT13
-#define COMM_BOT PINB6
 
 //--------------SETTINGS---------------------------//
-#define MIN_VOLTAGE 3 // Minimum voltage for the battery
-#define ADC_FILTER 1  // Enable ADC filtering  0:OFF  1:ON
-#define ADC_SAMPLES 6 // Averaging samples
+#define MIN_VOLTAGE 0x04B0 // Minimum voltage for the battery
+#define ADC_FILTER 1	   // Enable ADC filtering  0:OFF  1:ON
+#define ADC_SAMPLES 6	   // Averaging samples
 
 //--------------LIBRARY-INCLUDES-------------------//
 #include <avr/io.h>
 #include <stdint.h>
 #include <avr/interrupt.h>
 #include <avr/eeprom.h>
+#include <avr/sleep.h>
 
 //--------------SOURCE-FILES-----------------------//
 // These are stored outside of the project folder, but will still be compiled
@@ -72,112 +68,98 @@
 #include "status.h"
 #include "balancing.h"
 
-// Data received
-uint16_t bot_data = 0; // data received from the lower slave
-uint16_t top_data = 0; // data received from the upper slave
-
-uint16_t ADC_time = 0; // secs compare value
-
 enum ADC_STAT
 {
 	MEASURE_VOLT,
 	MEASURE_TEMP
 };
 
-uint8_t ADCstat = MEASURE_VOLT;
-// 0  : Set up for Battery Temperature Measurement
-// 1  : Set up for Battery Voltage Measurement
-
-// Measurements
-int8_t battery_temperature;
-uint16_t battery_voltage_raw;
-float battery_voltage = 0;
-float battery_voltage_L = 0;
-float battery_voltage_H = 0;
-
-float voltage_k = 0;
-float voltage_d = 0;
-float temperature_d = 0;
-
-int8_t buffer_battery_temperature;
-uint16_t buffer_battery_voltage_raw;
-
-uint8_t eeprom_stat = 0;
-
 void bms_slave_init(void);
 
 //--------------MAIN-------------------------------//
 int main(void)
 {
-	timer_clear_timer(TIMER_MANCH);
-	timer_clear_timer(TIMER_ADC);
-	timer_clear_timer(TIMER_COM);
+	// Data received
+	uint16_t bot_received = 0; // data received from the lower slave
+	uint16_t top_received = 0; // data received from the upper slave
 
+	// Send data
+	uint16_t bot_send = 0;
+	uint16_t top_send = 0;
+
+	uint16_t ADC_time = 0; // secs compare value
+
+	uint8_t ADCstat = MEASURE_VOLT;
+	// 0  : Set up for Battery Temperature Measurement
+	// 1  : Set up for Battery Voltage Measurement
+
+	// Measurements
+	int8_t battery_temperature;
+	int8_t buffer_battery_temperature;
+
+	uint16_t battery_voltage;
+	uint16_t buffer_battery_voltage;
+	// battery_voltage = (float)battery_voltage / 400; // divided by 1024 aka 10-bit, multiplied by 2,56 aka internal reference voltage
+
+	uint8_t eeprom_stat = 0;
 	eeprom_stat = eeprom_read_byte(EEPROM_STATUS_ADR);
-	if (!(eeprom_stat & EEPROM_CALLIBRATED))
+	//--------------CALIBRATION------------------------//
+	if (!(eeprom_stat & EEPROM_CALIBRATED)) // if EEPROM not calibrated
 	{
-		while (!battery_voltage_raw)
+		while (!battery_voltage) // Measure SUPPLY voltage
 		{
-			battery_voltage_raw = measure_voltage(ADC_SAMPLES);
+			battery_voltage = measure_voltage(ADC_SAMPLES);
 		}
-		battery_voltage = (float)battery_voltage_raw / 400; // divided by 1024 aka 10-bit, multiplied by 2,56 aka internal reference voltage
-
-		if ((battery_voltage <= 3.3) && (!(eeprom_stat & EEPROM_STATUS_L)))
+		while (battery_temperature == -100) // Measure ambient temperature
 		{
-			battery_voltage_L = battery_voltage;
-			if (!(eeprom_stat & EEPROM_STATUS_H))
-			{
-				eeprom_write_float(EEPROM_3V_ADR, battery_voltage_L);
+			battery_temperature = measure_temperature(ADC_SAMPLES);
+		}
+		if (!(eeprom_stat & EEPROM_STATUS_TEMP)) // if neither 3V or 4V are measured
+		{
+			eeprom_write_word(EEPROM_3V_ADR, (uint16_t)battery_temperature);
+		}
+		if ((battery_voltage <= CAL_VOLTAGE_LB) && (!(eeprom_stat & EEPROM_STATUS_L))) // battery voltage smaller than lower max voltage and not calibrated yet
+		{
+			eeprom_write_word(EEPROM_3V_ADR, battery_voltage);
+			if (!(eeprom_stat & EEPROM_STATUS_H)) // high voltage not calibrated yet
 				eeprom_write_byte(EEPROM_STATUS_ADR, EEPROM_STATUS_L);
-			}
 			else
-			{
-				eeprom_stat = EEPROM_VOLT_RDY;
-			}
+				eeprom_update_byte(EEPROM_STATUS_ADR, EEPROM_CALIBRATED);
 		}
-		else if ((battery_voltage >= 3.7) && (!(eeprom_stat & EEPROM_STATUS_H)))
+		else if ((battery_voltage >= CAL_VOLTAGE_HB) && (!(eeprom_stat & EEPROM_STATUS_H))) // battery voltage smaller than high min voltage and not calibrated yet
 		{
-			battery_voltage_H = battery_voltage;
-			if (!(eeprom_stat & EEPROM_STATUS_L))
-			{
-				eeprom_write_float(EEPROM_4V_ADR, battery_voltage_H);
+			eeprom_write_word(EEPROM_4V_ADR, battery_voltage);
+			if (!(eeprom_stat & EEPROM_STATUS_L)) // low voltage not calibrated yet
 				eeprom_write_byte(EEPROM_STATUS_ADR, EEPROM_STATUS_H);
-			}
 			else
-			{
-				eeprom_stat = EEPROM_VOLT_RDY;
-			}
+				eeprom_update_byte(EEPROM_STATUS_ADR, EEPROM_CALIBRATED);
 		}
 		else
 		{
-			stat_led_red();
-		}
-
-		if (eeprom_stat & EEPROM_VOLT_RDY)
-		{
-			voltage_k = (CAL_VOLTAGE_H - CAL_VOLTAGE_L) / (battery_voltage_H - battery_voltage_L); // calculate voltage slope error
-			voltage_d = CAL_VOLTAGE_H - (battery_voltage_H * voltage_k);						   // calculate voltage offset
-			
-				while(battery_temperature == -100) // make sure conversion is done
-				{
-					battery_temperature = measure_temperature(ADC_SAMPLES);
-				}
-			temperature_d = battery_temperature - CAL_TEMP;										   // calculate temperature offset
-			ADC_callibrate(voltage_k, voltage_d, temperature_d);
+			stat_led_red(); // battery voltage out of predefined borders
 		}
 	}
 
 	bms_slave_init(); // Initiating the MCU, Registers configurated
+	ADC_get_calibration();
+
+	// clear timers after startup
+	timer_clear_timer(TIMER_MANCH);
+	timer_clear_timer(TIMER_ADC);
+	timer_clear_timer(TIMER_COM);
 
 	//--------------ENDLESS-LOOP-----------------------//
 	while (1)
 	{
-		ADC_time = timer_get_timer(TIMER_ADC);
+		//--------------ADC--------------------------------//
+		timer_add_time();// executed after max 32ms
 
-		if (ADC_time >= 1)
+		ADC_time = timer_get_timer(TIMER_ADC); 
+
+		if (ADC_time >= 1)	//once every ms
 		{
-			timer_clear_timer(TIMER_ADC);
-			timer_add_time();
+			timer_clear_timer(TIMER_ADC);	//reset timer compare value
+
 			switch (ADCstat)
 			{
 			case MEASURE_TEMP:
@@ -189,24 +171,24 @@ int main(void)
 				}
 				break;
 			case MEASURE_VOLT:
-				buffer_battery_voltage_raw = measure_voltage(ADC_SAMPLES);
-				if (buffer_battery_voltage_raw)
+				buffer_battery_voltage = measure_voltage(ADC_SAMPLES);
+				if (buffer_battery_voltage) // make sure conversion is done
 				{
-					battery_voltage_raw = buffer_battery_voltage_raw;
-					ADCstat = 1;
+					battery_voltage = buffer_battery_voltage;
+					ADCstat = MEASURE_TEMP;
 				}
 				break;
 			}
 		}
-		//--------------ADC--------------------------------//
 		//--------------COMMUNICATION----------------------//
-		if (bot_data & ADDRESS_MASK) // checking if the current slave is addressed
+		if (bot_received & ADDRESS_MASK) // checking if the current slave is addressed
 		{
-			bot_data -= 1;				  // count down address by 1
-			bot_data ^= PARITY_BIT_COM_A; // Toggle the parity bit
+			top_send = bot_received - 1;  // count down address by 1
+			top_send ^= PARITY_BIT_COM_A; // Toggle the parity bit
 		}
+		top_received = bot_send;
 		//--------------BALANCING--------------------------//
-		if (bot_data == COM_BLC_A)
+		if (bot_received == COM_BLC_A)	//if Master sent balancing command
 		{
 			start_balancing();
 			stat_led_orange();
@@ -220,7 +202,6 @@ void bms_slave_init() // Combining all init functions
 	timer_init_timer();
 	timer_add_time();
 	ADC_init();
-	ADC_get_cal();
 	stat_led_init(); // Status LED initialised
 	balancing_init();
 	sei(); // global interrupt enable
