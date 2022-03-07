@@ -14,7 +14,7 @@
 #endif // __AVR_ATmega32u4__
 #ifdef __AVR_ATtiny261A__
 #define CLOCK_PR 256
-#endif // __AVR_ATtiny261a__
+#endif              // __AVR_ATtiny261a__
 #define MANCHESTER1 // 2. manchester-übertragung
 
 //========= definitionen des verwendeten port und pins =============
@@ -26,22 +26,22 @@
 // verwendet timer1: ocr1b-int und overflow-int
 //          zum empfangen pinchange-interrupt
 #ifdef __AVR_ATmega32U4__
-#define DDRMANCH DDRB   // port der übertragungsleitung
+#define DDRMANCH DDRB // port der übertragungsleitung
 #define PORTMANCH PORTB
 #define PINMANCH PINB
-#define PN_MANCH_SEND (1<<PINB6)   // pin zum senden
-#define PN_MANCH_REC (1<<PINB5)     //pin zum empfangen
+#define PN_MANCH_SEND (1 << PINB6) // pin zum senden
+#define PN_MANCH_REC (1 << PINB5)  // pin zum empfangen
 #elif __AVR_ATtiny261A__
-#define DDRMANCH DDRB   // port der übertragungsleitung
+#define DDRMANCH DDRB // port der übertragungsleitung
 #define PORTMANCH PORTB
 #define PINMANCH PINB
-#define PN_MANCH_SEND (1<<PINB6)   // pin zum senden
-#define PN_MANCH_REC (1<<PINB6)     //pin zum empfangen
+#define PN_MANCH_SEND (1 << PINB6) // pin zum senden
+#define PN_MANCH_REC (1 << PINB6)  // pin zum empfangen
 #endif
-#define CLRMANCH (PORTMANCH&=~PN_MANCH_SEND)
-#define SETMANCH (PORTMANCH|=PN_MANCH_SEND)
-#define TOGMANCH (PINMANCH=PN_MANCH_SEND)
-#define READMANCH (PINMANCH&PN_MANCH_REC)
+#define CLRMANCH (PORTMANCH &= ~PN_MANCH_SEND)
+#define SETMANCH (PORTMANCH |= PN_MANCH_SEND)
+#define TOGMANCH (PINMANCH = PN_MANCH_SEND)
+#define READMANCH (PINMANCH & PN_MANCH_REC)
 
 //=========== 2. schnittstelle ====================================
 // zur übertragung "nach oben"
@@ -52,25 +52,21 @@
 //          zum empfangen externer-interrupt
 #ifdef MANCHESTER1
 #ifdef __AVR_ATmega32u4__
-    #define DDRMANCH1 DDRD   // port der übertragungsleitung
-    #define PORTMANCH1 PORTD
-    #define PINMANCH1 PIND
-    #define PN_MANCH1 0x01   // pin zum übertrage: z.B. 0x10 => bit 5
-    #define CLRMANCH1 (PORTMANCH1&=~PN_MANCH1)
-    #define SETMANCH1 (PORTMANCH1|=PN_MANCH1)
-    #define TOGMANCH1 (PINMANCH1=PN_MANCH1)
-    #define READMANCH1 (PINMANCH1&PN_MANCH1)
-#endif //__AVR_ATmega32u4
+#define DDRMANCH1 DDRD // port der übertragungsleitung
+#define PORTMANCH1 PORTD
+#define PINMANCH1 PIND
+#define PN_MANCH1 0x01 // pin zum übertrage: z.B. 0x10 => bit 5
+#endif                 //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
-    #define DDRMANCH1 DDRA
-    #define PORTMANCH1 PORTA
-    #define PINMANCH1 PINA
-    #define PN_MANCH1 PINA2
-    #define CLRMANCH1 (PORTMANCH1&=~PN_MANCH1)
-    #define SETMANCH1 (PORTMANCH1|=PN_MANCH1)
-    #define TOGMANCH1 (PINMANCH1=PN_MANCH1)
-    #define READMANCH1 (PINMANCH1&PN_MANCH1)
+#define DDRMANCH1 DDRA
+#define PORTMANCH1 PORTA
+#define PINMANCH1 PINA
+#define PN_MANCH1 PINA2
 #endif //__AVR_ATtiny261A__
+#define CLRMANCH1 (PORTMANCH1 &= ~PN_MANCH1)
+#define SETMANCH1 (PORTMANCH1 |= PN_MANCH1)
+#define TOGMANCH1 (PINMANCH1 = PN_MANCH1)
+#define READMANCH1 (PINMANCH1 & PN_MANCH1)
 #endif // MANCHESTER1
 
 //=========== prototypen =======================================
@@ -88,23 +84,21 @@ uint8_t manch_receive(uint16_t *data);
 // return 1: daten empfangen, in *data copiert
 // return 2: fehlerhafter empfang, empfang abgebrochen, muss neu gestartet werden
 
-
-
 #ifdef MANCHESTER1
-    void manch_init_send1(void);
-    // zum senden nach "oben"
-    // initialisiert nur das sendeport.
-    // danach manch_init_send() aufrufen!
-    void manch_send1(uint16_t data);
-    // copiert nur die sendedaten für senden nach "oben",
-    // danach mach_send() zum starten aufrufen!
-    void manch_init_receive1();
-   // initialisieren zum empfang von "oben"
-   // vor jedem empfangen aufrufen
-    uint8_t manch_receive1(uint16_t *data);
-    // return 0: wartet noch auf daten
-   // return 1: daten empfangen, in *data copiert
-   // return 2: fehlerhafter empfang, empfang abgebrochen, muss neu gestartet werden
+void manch_init_send1(void);
+// zum senden nach "oben"
+// initialisiert nur das sendeport.
+// danach manch_init_send() aufrufen!
+void manch_send1(uint16_t data);
+// copiert nur die sendedaten für senden nach "oben",
+// danach mach_send() zum starten aufrufen!
+void manch_init_receive1();
+// initialisieren zum empfang von "oben"
+// vor jedem empfangen aufrufen
+uint8_t manch_receive1(uint16_t *data);
+// return 0: wartet noch auf daten
+// return 1: daten empfangen, in *data copiert
+// return 2: fehlerhafter empfang, empfang abgebrochen, muss neu gestartet werden
 
 #endif // MANCHESTER1
-#endif //MANCH_H
+#endif // MANCH_H
