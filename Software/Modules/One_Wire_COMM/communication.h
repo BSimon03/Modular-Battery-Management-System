@@ -19,10 +19,11 @@
 #define PARITY_BIT_COM_A (1<<7) //Position of the Parity bit in an addressed command
 #define ADDRESS_MASK 0x007F     //Mask to isolate the address 0000 0000 0111 1111
 
-uint16_t bal_com (uint8_t);
+uint16_t calc_data_bal (uint8_t);
 //calculate parity for adressed command. argument is address.
 
 uint8_t calc_parity(uint16_t);
+//calculate parity based on data input. Returns 1 if uneven numer of "1" returns 0 if even number
 
 #endif //COMM_H
 //"I geh ned mit ins gym. I hob duachfall. I hob mi a bissl ogschissn." -kati 23.02.2022
