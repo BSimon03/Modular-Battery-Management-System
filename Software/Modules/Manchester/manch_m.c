@@ -11,10 +11,10 @@
 #include <util/delay.h>
 #include "manch_m.h"
 
-volatile uint8_t manch_i;
-volatile uint8_t manch_d, manch_d1;
-volatile uint8_t manch1_d, manch1_d1;
-volatile uint8_t manch_x, manch_res;
+static uint8_t manch_i;    //manch_i: counter
+static uint8_t manch_d, manch_d1;   //manch_d: manchester data
+static uint8_t manch1_d, manch1_d1; 
+static uint8_t manch_x, manch_res;  //manch_x: differs betwenn long and short    manch_res: status of transmission
 
 void manch_init_send(void)
 {
@@ -22,12 +22,12 @@ void manch_init_send(void)
    CLRMANCH;                  // und auf 0
    TCCR1A = 0x02;             // mode 14, fast pwm, top is icr1
    TCCR1B = 0x18;             //  - " -
-   OCR1B = F_CPU / BAUDRATE + 18;
+   OCR1B = F_CPU / BAUDRATE / CLOCK_PR + 18;
 #ifdef __AVR_ATmega32u4__
    ICR1 = 2 * F_CPU / BAUDRATE;
 #endif //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
-   OCR1C = 2 * F_CPU / BAUDRATE;
+   OCR1C = 2 * F_CPU / BAUDRATE / CLOCK_PR;
 #endif //__AVR_ATtiny261A__
 #ifdef __AVR_ATmega32u4__
    TIMSK1 = 0x05; // ocr1b match und overflow interrupt;
@@ -45,7 +45,7 @@ void manch_init_receive()
    // timer OCRA für receive error, timeout, wenn keine flanke kommt
    TCCR1A = 0x02;                     // mode 14, fast pwm, top is icr1
    TCCR1B = 0x18;                     //  - " -
-   OCR1A = 3 * F_CPU / BAUDRATE + 18; // timeout => bit zu lang
+   OCR1A = 3 * F_CPU / BAUDRATE / CLOCK_PR + 18; // timeout => bit zu lang
 #ifdef __AVR_ATmega32u4__
    ICR1 = 0xffff;
    TIMSK1 = 0x02; // ocr1a match interrupt;
@@ -72,7 +72,7 @@ void manch_send(uint16_t data)
    manch_i = 0;
    manch_d = (uint8_t)(data >> 8) | 0x80; // msb als startbit immer 1
    manch_d1 = (uint8_t)(data & 0x00ff);
-   TCNT1 = F_CPU / BAUDRATE + 5;
+   TCNT1 = F_CPU / BAUDRATE / CLOCK_PR + 5;
 #ifdef __AVR_ATmega32u4__
    TIFR1 = 0x00; // flags löschen
 #endif           //__AVR_ATmega32u4
@@ -80,7 +80,7 @@ void manch_send(uint16_t data)
 // flags löschen
 #endif                            //__AVR_ATtiny261A__
    TCCR1B |= 0x01;                // timer starten
-   TCNT1 = F_CPU / BAUDRATE + 20; // nur fürs simulieren!!
+   TCNT1 = F_CPU / BAUDRATE / CLOCK_PR + 20; // nur fürs simulieren!!
 }
 
 uint8_t manch_receive(uint16_t *data)
@@ -109,7 +109,12 @@ uint8_t manch_receive(uint16_t *data)
 }
 
 // fürs empfangen
-ISR(PCINT0_vect)
+#ifdef __AVR_ATmega32u4__
+  ISR(PCINT0_vect)
+#endif           //__AVR_ATmega32u4
+#ifdef __AVR_ATtiny261A__
+   ISR(PCINT_vect)
+#endif                            //__AVR_ATtiny261A__
 {
    // PORTD = 0x01;
    uint16_t tim;
@@ -127,7 +132,7 @@ ISR(PCINT0_vect)
    {
       tim = TCNT1;
       TCNT1 = 0x0000;                                                           // reset timer
-      if ((F_CPU / BAUDRATE * 2) / 3 < tim && tim < (F_CPU / BAUDRATE * 4) / 3) //
+      if ((F_CPU / BAUDRATE /CLOCK_PR * 2) / 3 < tim && tim < (F_CPU / BAUDRATE / CLOCK_PR * 4) / 3) //
       {
          if (manch_x == 'l') // weiter
             manch_x = 'k';
@@ -165,7 +170,7 @@ ISR(PCINT0_vect)
             }
          }
       }
-      else if ((F_CPU / BAUDRATE * 4) / 3 < tim && tim < (F_CPU / BAUDRATE * 8) / 3) //
+      else if ((F_CPU / BAUDRATE / CLOCK_PR * 4) / 3 < tim && tim < (F_CPU / BAUDRATE / CLOCK_PR * 8) / 3) //
       {
          if (manch_x == 'l') // bit einlesen
          {
@@ -284,7 +289,7 @@ void manch_init_receive1()
    // timer OCRA für receive error, timeout, wenn keine flanke kommt
    TCCR1A = 0x02; // mode 14, fast pwm, top is icr1
    TCCR1B = 0x18; //  - " -
-   OCR1A = 3 * F_CPU / BAUDRATE + 18;
+   OCR1A = 3 * F_CPU / BAUDRATE / CLOCK_PR + 18;
    #ifdef __AVR_ATmega32u4__
 ICR1 = 0xffff;
    TIMSK1 = 0x02; // ocr1a match interrupt;
@@ -357,7 +362,7 @@ ISR(INT0_vect)
    {
       tim = TCNT1;
       TCNT1 = 0x0000;                                                           // reset timer
-      if ((F_CPU / BAUDRATE * 2) / 3 < tim && tim < (F_CPU / BAUDRATE * 4) / 3) //
+      if ((F_CPU / BAUDRATE / CLOCK_PR * 2) / 3 < tim && tim < (F_CPU / BAUDRATE / CLOCK_PR * 4) / 3) //
       {
          if (manch_x == 'l') // weiter
             manch_x = 'k';
@@ -395,7 +400,7 @@ TIMSK =0x00;
             }
          }
       }
-      else if ((F_CPU / BAUDRATE * 4) / 3 < tim && tim < (F_CPU / BAUDRATE * 8) / 3) //
+      else if ((F_CPU / BAUDRATE / CLOCK_PR * 4) / 3 < tim && tim < (F_CPU / BAUDRATE / CLOCK_PR * 8) / 3) //
       {
          if (manch_x == 'l') // bit einlesen
          {

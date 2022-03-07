@@ -88,7 +88,9 @@ int main(void)
 	uint16_t bot_send = 0;
 	uint16_t top_send = 0;
 
-	uint16_t ADC_time = 0; // secs compare value
+	//Timing
+	uint16_t ADC_time = 0; // compare value
+	uint16_t COMM_time = 0; // compare value
 
 	uint8_t ADCstat = MEASURE_VOLT;
 	// 0  : Set up for Battery Temperature Measurement
@@ -104,7 +106,7 @@ int main(void)
 
 	uint8_t eeprom_stat = 0;
 	eeprom_stat = eeprom_read_byte(EEPROM_STATUS_ADR);
-	//--------------CALIBRATION------------------------//
+	//--------------CALIBRATION------------------------// 210 Bytes
 	if (!(eeprom_stat & EEPROM_CALIBRATED)) // if EEPROM not calibrated
 	{
 		while (!battery_voltage) // Measure SUPPLY voltage
@@ -147,15 +149,15 @@ int main(void)
 	// clear timers after startup
 	timer_clear_timer(TIMER_MANCH);
 	timer_clear_timer(TIMER_ADC);
-	timer_clear_timer(TIMER_COM);
 
 	//--------------ENDLESS-LOOP-----------------------//
 	while (1)
 	{
-		//--------------ADC--------------------------------//
+		//--------------ADC--------------------------------// 604 more Bytes
 		timer_add_time(); // executed after max 32ms
 
 		ADC_time = timer_get_timer(TIMER_ADC);
+		COMM_time = timer_get_timer(TIMER_MANCH);
 
 		if (ADC_time >= 1) // once every ms
 		{
@@ -191,7 +193,7 @@ int main(void)
 		{
 			top_send = bot_received;
 			bot_send = battery_temperature;
-			bot_send |= (calc_parity(battery_temperature) << 14);
+			bot_send |= (calc_parity(battery_temperature) << 14)|(1<<15);
 		}
 		else if (bot_received & REQ_VOLT_G)
 		{
@@ -203,7 +205,7 @@ int main(void)
 			top_send = calc_data_bal(address_received - 1);
 		}
 		//--------------BALANCING--------------------------//
-		/*								TEST								*/
+		/*								TEST											*/
 		manch_init_send();
 		manch_send(top_send);
 		manch_init_receive();
@@ -212,7 +214,7 @@ int main(void)
 		manch_send1(bot_send);
 		manch_init_receive1();
 		manch_receive1(&bot_received);
-		/*								TEST								*/
+		/*								TEST-Result: 1100 Bytes of Flash required		*/
 	}
 }
 

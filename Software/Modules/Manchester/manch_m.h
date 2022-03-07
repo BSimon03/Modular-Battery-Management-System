@@ -9,6 +9,12 @@
 #define MANCH_H
 
 #define BAUDRATE 15625
+#ifdef __AVR_ATmega32u4__
+#define CLOCK_PR 1
+#endif // __AVR_ATmega32u4__
+#ifdef __AVR_ATtiny261A__
+#define CLOCK_PR 256
+#endif // __AVR_ATtiny261a__
 #define MANCHESTER1 // 2. manchester-übertragung
 
 //========= definitionen des verwendeten port und pins =============
@@ -25,22 +31,17 @@
 #define PINMANCH PINB
 #define PN_MANCH_SEND (1<<PINB6)   // pin zum senden
 #define PN_MANCH_REC (1<<PINB5)     //pin zum empfangen
-#define CLRMANCH (PORTMANCH&=~PN_MANCH_SEND)
-#define SETMANCH (PORTMANCH|=PN_MANCH_SEND)
-#define TOGMANCH (PINMANCH=PN_MANCH_SEND)
-#define READMANCH (PINMANCH&PN_MANCH_REC)
 #elif __AVR_ATtiny261A__
 #define DDRMANCH DDRB   // port der übertragungsleitung
 #define PORTMANCH PORTB
 #define PINMANCH PINB
 #define PN_MANCH_SEND (1<<PINB6)   // pin zum senden
 #define PN_MANCH_REC (1<<PINB6)     //pin zum empfangen
+#endif
 #define CLRMANCH (PORTMANCH&=~PN_MANCH_SEND)
 #define SETMANCH (PORTMANCH|=PN_MANCH_SEND)
 #define TOGMANCH (PINMANCH=PN_MANCH_SEND)
 #define READMANCH (PINMANCH&PN_MANCH_REC)
-#endif
-
 
 //=========== 2. schnittstelle ====================================
 // zur übertragung "nach oben"
