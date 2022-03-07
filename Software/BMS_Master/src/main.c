@@ -80,7 +80,14 @@ int main(void)
           com_stat=manch_receive(data);    //get status from recieving
           if(com_stat==1)   //if recievig done
           {
-            data_temp[i]=*data;   //copy data into array
+            if(calc_parity(*data))   //if parity wrong
+            {
+              com_err=1;
+            }
+            else if (!calc_parity(*data))    //if parity right
+            {
+              data_temp[i]=*data-0x8000;   //copy data into array and cut off startbit
+            }
           }
           else if(com_stat==2)  //if recieving error
           {
@@ -104,7 +111,14 @@ int main(void)
           com_stat=manch_receive(data);    //get status from recieving
           if(com_stat==1)   //if recievig done
           {
-            data_volt[i]=*data/400;   //copy data into array
+            if (calc_parity(*data))    //if parity wrong
+            {
+              com_err=1;
+            }
+            else if (!calc_parity(*data))    //if parity right
+            {
+              data_volt[i]=(*data-0x8000)/400;   //copy data into array and cutoff startbit
+            }
           }
           else if(com_stat==2)  //if recieving error
           {
@@ -142,7 +156,7 @@ int main(void)
     {
       stat_ssr_on();
     }
-    adr_high_volt+=COM_BLC_A;   //calculate adress to send balancing command to
+    adr_high_volt+=COM_BLC_A;   //calculate address to send balancing command to
     manch_init_send();
     manch_send(adr_high_volt);    //send adressed balancing command
   }
