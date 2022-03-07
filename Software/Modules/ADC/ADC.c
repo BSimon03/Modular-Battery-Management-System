@@ -43,7 +43,7 @@ void ADC_get_calibration()
 	{
 		uint16_t voltage_h = eeprom_read_word(EEPROM_4V_ADR);
 		uint16_t voltage_l = eeprom_read_word(EEPROM_3V_ADR);
-		uint16_t temp_cal = eeprom_read_word(EEPROM_temp_ADR);
+		int8_t temp_cal = (int8_t)eeprom_read_word(EEPROM_temp_ADR);
 		VOLT_K = (CAL_VOLTAGE_H - CAL_VOLTAGE_L) / (voltage_h - voltage_l); // calculate voltage slope error
 		VOLT_D = CAL_VOLTAGE_H - (voltage_h * VOLT_K);						// calculate voltage offset
 		TEMP_D = temp_cal - CAL_TEMP;										// calculate temperature offset

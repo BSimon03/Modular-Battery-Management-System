@@ -8,7 +8,7 @@
 #ifndef MANCH_H
 #define MANCH_H
 
-#define BAUDRATE 10000
+#define BAUDRATE 15625
 #define MANCHESTER1 // 2. manchester-übertragung
 
 //========= definitionen des verwendeten port und pins =============
@@ -34,7 +34,7 @@
 #define PORTMANCH PORTB
 #define PINMANCH PINB
 #define PN_MANCH_SEND (1<<PINB6)   // pin zum senden
-#define PN_MANCH_REC (1<<PINB5)     //pin zum empfangen
+#define PN_MANCH_REC (1<<PINB6)     //pin zum empfangen
 #define CLRMANCH (PORTMANCH&=~PN_MANCH_SEND)
 #define SETMANCH (PORTMANCH|=PN_MANCH_SEND)
 #define TOGMANCH (PINMANCH=PN_MANCH_SEND)
@@ -50,6 +50,7 @@
 // verwendet timer1, wie MANCHESTER
 //          zum empfangen externer-interrupt
 #ifdef MANCHESTER1
+#ifdef __AVR_ATmega32u4__
     #define DDRMANCH1 DDRD   // port der übertragungsleitung
     #define PORTMANCH1 PORTD
     #define PINMANCH1 PIND
@@ -58,6 +59,17 @@
     #define SETMANCH1 (PORTMANCH1|=PN_MANCH1)
     #define TOGMANCH1 (PINMANCH1=PN_MANCH1)
     #define READMANCH1 (PINMANCH1&PN_MANCH1)
+#endif //__AVR_ATmega32u4
+#ifdef __AVR_ATtiny261A__
+    #define DDRMANCH1 DDRA
+    #define PORTMANCH1 PORTA
+    #define PINMANCH1 PINA
+    #define PN_MANCH1 PINA2
+    #define CLRMANCH1 (PORTMANCH1&=~PN_MANCH1)
+    #define SETMANCH1 (PORTMANCH1|=PN_MANCH1)
+    #define TOGMANCH1 (PINMANCH1=PN_MANCH1)
+    #define READMANCH1 (PINMANCH1&PN_MANCH1)
+#endif //__AVR_ATtiny261A__
 #endif // MANCHESTER1
 
 //=========== prototypen =======================================

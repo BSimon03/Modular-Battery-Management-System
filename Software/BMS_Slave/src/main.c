@@ -199,7 +199,7 @@ int main(void)
 		}
 		else
 		{
-			address_received=bot_received&ADDRESS_MASK;
+			address_received=(uint8_t)bot_received&ADDRESS_MASK;
 			top_send = bal_com(address_received);
 		}
 		//--------------BALANCING--------------------------//
