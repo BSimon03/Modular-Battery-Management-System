@@ -64,7 +64,7 @@
 #include "ADC.h"
 #include "communication.h"
 #include "timer.h"
-//#include "manch_m.h"
+#include "manch_m.h"
 #include "status.h"
 #include "balancing.h"
 
@@ -153,13 +153,13 @@ int main(void)
 	while (1)
 	{
 		//--------------ADC--------------------------------//
-		timer_add_time();// executed after max 32ms
+		timer_add_time(); // executed after max 32ms
 
-		ADC_time = timer_get_timer(TIMER_ADC); 
+		ADC_time = timer_get_timer(TIMER_ADC);
 
-		if (ADC_time >= 1)	//once every ms
+		if (ADC_time >= 1) // once every ms
 		{
-			timer_clear_timer(TIMER_ADC);	//reset timer compare value
+			timer_clear_timer(TIMER_ADC); // reset timer compare value
 
 			switch (ADCstat)
 			{
@@ -182,7 +182,7 @@ int main(void)
 			}
 		}
 		//--------------COMMUNICATION----------------------//
-		if ((!(bot_received & ADDRESS_MASK))&&(bot_received&COM_BLC_A)) // checking if the current slave is addressed and command is balancing
+		if ((!(bot_received & ADDRESS_MASK)) && (bot_received & COM_BLC_A)) // checking if the current slave is addressed and command is balancing
 		{
 			start_balancing();
 			stat_led_orange();
@@ -191,7 +191,7 @@ int main(void)
 		{
 			top_send = bot_received;
 			bot_send = battery_temperature;
-			bot_send |= (calc_parity(battery_temperature)<<14);
+			bot_send |= (calc_parity(battery_temperature) << 14);
 		}
 		else if (bot_received & REQ_VOLT_G)
 		{
@@ -199,10 +199,20 @@ int main(void)
 		}
 		else
 		{
-			address_received=(uint8_t)bot_received&ADDRESS_MASK;
-			top_send = bal_com(address_received);
+			address_received = (uint8_t)bot_received & ADDRESS_MASK;
+			top_send = calc_data_bal(address_received - 1);
 		}
 		//--------------BALANCING--------------------------//
+		/*								TEST								*/
+		manch_init_send();
+		manch_send(top_send);
+		manch_init_receive();
+		manch_receive(&top_received);
+		manch_init_send1();
+		manch_send1(bot_send);
+		manch_init_receive1();
+		manch_receive1(&bot_received);
+		/*								TEST								*/
 	}
 }
 
