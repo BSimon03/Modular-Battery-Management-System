@@ -81,6 +81,7 @@ int main(void)
 {
 	// Data received
 	uint16_t bot_received = 0; // data received from the lower slave
+	uint8_t address_received = 0;
 	uint16_t top_received = 0; // data received from the upper slave
 
 	// Send data
@@ -181,18 +182,27 @@ int main(void)
 			}
 		}
 		//--------------COMMUNICATION----------------------//
-		if (bot_received & ADDRESS_MASK) // checking if the current slave is addressed
-		{
-			top_send = bot_received - 1;  // count down address by 1
-			top_send ^= PARITY_BIT_COM_A; // Toggle the parity bit
-		}
-		top_received = bot_send;
-		//--------------BALANCING--------------------------//
-		if (bot_received == COM_BLC_A)	//if Master sent balancing command
+		if ((!(bot_received & ADDRESS_MASK))&&(bot_received&COM_BLC_A)) // checking if the current slave is addressed and command is balancing
 		{
 			start_balancing();
 			stat_led_orange();
 		}
+		else if (bot_received & REQ_TEMP_G)
+		{
+			top_send = bot_received;
+			bot_send = battery_temperature;
+			bot_send |= (calc_parity(battery_temperature)<<14);
+		}
+		else if (bot_received & REQ_VOLT_G)
+		{
+			top_send = bot_received;
+		}
+		else
+		{
+			address_received=bot_received&ADDRESS_MASK;
+			top_send = bal_com(address_received);
+		}
+		//--------------BALANCING--------------------------//
 	}
 }
 
