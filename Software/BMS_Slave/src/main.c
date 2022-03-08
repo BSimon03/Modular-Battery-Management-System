@@ -52,6 +52,15 @@
 #define ADC_FILTER 1	   // Enable ADC filtering  0:OFF  1:ON
 #define ADC_SAMPLES 6	   // Averaging samples
 
+//--------------BALANCING--------------------------//
+#define BALANCING_DDR DDRB
+#define BALANCING_PORT PORTB
+#define BALANCING_PIN PINB4
+
+#define START_BALANCING() BALANCING_PORT |= (1<<BALANCING_PIN)
+
+#define STOP_BALANCING() BALANCING_PORT &= ~(1<<BALANCING_PIN)
+
 //--------------LIBRARY-INCLUDES-------------------//
 #include <avr/io.h>
 #include <stdint.h>
@@ -66,7 +75,6 @@
 #include "timer.h"
 #include "manch_m.h"
 #include "status.h"
-#include "balancing.h"
 
 enum ADC_STAT
 {
@@ -186,8 +194,9 @@ int main(void)
 		//--------------COMMUNICATION----------------------//
 		if ((!(bot_received & ADDRESS_MASK)) && (bot_received & COM_BLC_A)) // checking if the current slave is addressed and command is balancing
 		{
-			start_balancing();
+			START_BALANCING();
 			stat_led_orange();
+			STOP_BALANCING();
 		}
 		else if (bot_received & REQ_TEMP_G)
 		{
@@ -233,6 +242,6 @@ void bms_slave_init() // Combining all init functions
 	timer_add_time();
 	ADC_init();
 	stat_led_init(); // Status LED initialised
-	balancing_init();
+	BALANCING_DDR |= (1<<BALANCING_PIN);
 	sei(); // global interrupt enable
 }
