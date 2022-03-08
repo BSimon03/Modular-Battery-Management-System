@@ -14,8 +14,8 @@
 #endif // __AVR_ATmega32u4__
 #ifdef __AVR_ATtiny261A__
 #define CLOCK_PR 256
-#endif              // __AVR_ATtiny261a__
 #define MANCHESTER1 // 2. manchester-übertragung
+#endif              // __AVR_ATtiny261a__
 
 //========= definitionen des verwendeten port und pins =============
 // zur übertragung in nur eine richtung: vom master oder slave nach unten
