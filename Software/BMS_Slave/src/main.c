@@ -57,9 +57,9 @@
 #define BALANCING_PORT PORTB
 #define BALANCING_PIN PINB4
 
-#define START_BALANCING() BALANCING_PORT |= (1<<BALANCING_PIN)
+#define START_BALANCING() BALANCING_PORT |= (1 << BALANCING_PIN)
 
-#define STOP_BALANCING() BALANCING_PORT &= ~(1<<BALANCING_PIN)
+#define STOP_BALANCING() BALANCING_PORT &= ~(1 << BALANCING_PIN)
 
 //--------------LIBRARY-INCLUDES-------------------//
 #include <avr/io.h>
@@ -97,8 +97,9 @@ int main(void)
 	uint16_t top_send = 0;
 
 	// Timing
-	uint16_t ADC_time = 0;	// compare value
-	uint16_t MANCH_time = 0; // compare value
+	uint16_t ADC_time = 0;	   // compare value
+	uint16_t COMM_time = 0;	   // compare value
+	uint16_t BALANCE_time = 0; // compare value
 
 	uint8_t ADCstat = MEASURE_VOLT;
 	// 0  : Set up for Battery Temperature Measurement
@@ -155,8 +156,9 @@ int main(void)
 	ADC_get_calibration();
 
 	// clear timers after startup
-	timer_clear_timer(TIMER_MANCH);
+	timer_clear_timer(TIMER_COMM);
 	timer_clear_timer(TIMER_ADC);
+	timer_clear_timer(TIMER_BALANCE);
 
 	//--------------ENDLESS-LOOP-----------------------//
 	while (1)
@@ -165,7 +167,8 @@ int main(void)
 		timer_add_time(); // executed after max 32ms
 
 		ADC_time = timer_get_timer(TIMER_ADC);
-		MANCH_time = timer_get_timer(TIMER_MANCH);
+		COMM_time = timer_get_timer(TIMER_COMM);
+		BALANCE_time = timer_get_timer(TIMER_BALANCE);
 
 		if (ADC_time >= 1) // once every ms
 		{
@@ -196,7 +199,6 @@ int main(void)
 		{
 			START_BALANCING();
 			stat_led_orange();
-			STOP_BALANCING();
 		}
 		else if (bot_received & REQ_TEMP_G)
 		{
@@ -213,11 +215,16 @@ int main(void)
 			address_received = (uint8_t)bot_received & ADDRESS_MASK;
 			top_send = calc_data_bal(address_received - 1);
 		}
-		//--------------BALANCING--------------------------//
-		/*								TEST											*/
-		if (MANCH_time >= 1)
+		//--------------BALANCING-TIMING---------------------//
+		if(BALANCE_time>=10000)
 		{
-			timer_clear_timer(TIMER_MANCH);
+			STOP_BALANCING();
+			timer_clear_timer(TIMER_BALANCE);
+		}
+		/*								TEST											*/
+		if (COMM_time >= 1)
+		{
+			timer_clear_timer(TIMER_COMM);
 
 			manch_init_send();
 			manch_send(top_send);
@@ -242,6 +249,6 @@ void bms_slave_init() // Combining all init functions
 	timer_add_time();
 	ADC_init();
 	stat_led_init(); // Status LED initialised
-	BALANCING_DDR |= (1<<BALANCING_PIN);
+	BALANCING_DDR |= (1 << BALANCING_PIN);
 	sei(); // global interrupt enable
 }

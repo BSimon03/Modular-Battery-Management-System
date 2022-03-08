@@ -16,8 +16,9 @@
 // #define TIME_MAX_TIMER 2
 
 enum TIMER_NR {
-   TIMER_MANCH,
+   TIMER_COMM,
    TIMER_ADC,
+   TIMER_BALANCE,
 // letzte eintrag, neue timer davor!
    TIMER_MAX_TIMER};
 
