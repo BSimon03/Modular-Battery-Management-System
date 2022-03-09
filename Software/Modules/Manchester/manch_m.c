@@ -144,13 +144,13 @@ ISR(PCINT_vect)
             }
             else if (manch_i == 17) // fertig, empfang stoppen
             {
-               #ifdef __AVR_ATmega32U4__
-TCCR1B &= ~0x01; // timer stoppen
-#endif //__AVR_ATmega32u4
+#ifdef __AVR_ATmega32U4__
+               TCCR1B &= ~0x01; // timer stoppen
+#endif                          //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
-TCCR1B &= ~0x09; // timer stoppen
-#endif //__AVR_ATtiny261A__
-               
+               TCCR1B &= ~0x09; // timer stoppen
+#endif                          //__AVR_ATtiny261A__
+
 #ifdef __AVR_ATmega32U4__
                TIMSK1 = 0x00; // overflow interrupt stoppen
                PCICR = 0x00;  // flankeninterrupt stoppen
@@ -185,12 +185,12 @@ TCCR1B &= ~0x09; // timer stoppen
             else if (manch_i == 17) // fertig, empfang stoppen
             {
 #ifdef __AVR_ATmega32U4__
-TCCR1B &= ~0x01; // timer stoppen
-               TIMSK1 = 0x00; // overflow interrupt stoppen
-               PCICR = 0x00;  // flankeninterrupt stoppen
-#endif                        //__AVR_ATmega32u4
+               TCCR1B &= ~0x01; // timer stoppen
+               TIMSK1 = 0x00;   // overflow interrupt stoppen
+               PCICR = 0x00;    // flankeninterrupt stoppen
+#endif                          //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
-TCCR1B &= ~0x09; // timer stoppen
+               TCCR1B &= ~0x09;        // timer stoppen
                TIMSK = 0x00;           // overflow interrupt stoppen
                GIMSK &= ~(1 << PCIE0); // stop pcint...
 #endif                                 //__AVR_ATtiny261A__
@@ -200,23 +200,23 @@ TCCR1B &= ~0x09; // timer stoppen
          else // es hätte nur ein kurzer sein sollen! neu beginnen
          {
             manch_i = 0; // von vorne!
-            #ifdef __AVR_ATmega32U4__
-TCCR1B &= ~0x01; // timer stoppen
-#endif //__AVR_ATmega32u4
+#ifdef __AVR_ATmega32U4__
+            TCCR1B &= ~0x01; // timer stoppen
+#endif                       //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
-TCCR1B &= ~0x09; // timer stoppen
-#endif //__AVR_ATtiny261A__
+            TCCR1B &= ~0x09; // timer stoppen
+#endif                       //__AVR_ATtiny261A__
          }
       }
       else // fehler, flanke nicht zum richtigen zeitpunkt! neu beginnen
       {
          manch_i = 0; // von vorne!
-         #ifdef __AVR_ATmega32U4__
-TCCR1B &= ~0x01; // timer stoppen
-#endif //__AVR_ATmega32u4
+#ifdef __AVR_ATmega32U4__
+         TCCR1B &= ~0x01; // timer stoppen
+#endif                    //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
-TCCR1B &= ~0x09; // timer stoppen
-#endif //__AVR_ATtiny261A__
+         TCCR1B &= ~0x09; // timer stoppen
+#endif                    //__AVR_ATtiny261A__
       }
    }
 }
@@ -225,12 +225,12 @@ ISR(TIMER1_COMPA_vect) // timeout, eine erwartete flanke ist nicht gekommen
 // gilt für beide empfänger!!
 {
    manch_i = 0; // von vorne!
-   #ifdef __AVR_ATmega32U4__
-TCCR1B &= ~0x01; // timer stoppen
-#endif //__AVR_ATmega32u4
+#ifdef __AVR_ATmega32U4__
+   TCCR1B &= ~0x01; // timer stoppen
+#endif              //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
-TCCR1B &= ~0x09; // timer stoppen
-#endif //__AVR_ATtiny261A__
+   TCCR1B &= ~0x09; // timer stoppen
+#endif              //__AVR_ATtiny261A__
 }
 
 // fürs senden
@@ -356,12 +356,12 @@ ISR(INT0_vect)
    {
       if (READMANCH1 == 0) // 1 als startbit! (neg.logik)
       {
-         #ifdef __AVR_ATmega32U4__
-TCCR1B |= 0x01; // timer starten
-#endif //__AVR_ATmega32u4
+#ifdef __AVR_ATmega32U4__
+         TCCR1B |= 0x01; // timer starten
+#endif                   //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
-TCCR1B |= 0x09; // timer starten
-#endif //__AVR_ATtiny261A__
+         TCCR1B |= 0x09; // timer starten
+#endif                   //__AVR_ATtiny261A__
          TCNT1 = 0x0000;
          manch_x = 'k';
          manch_i++;
@@ -395,12 +395,12 @@ TCCR1B |= 0x09; // timer starten
             else if (manch_i == 17) // fertig, empfang stoppen
             {
 #ifdef __AVR_ATmega32U4__
-TCCR1B &= ~0x01; // timer stoppen
-               TIMSK1 = 0x00; // overflow interrupt stoppen
-               EIMSK = 0x00;  // ext. interrupt disable
-#endif                        //__AVR_ATmega32u4
+               TCCR1B &= ~0x01; // timer stoppen
+               TIMSK1 = 0x00;   // overflow interrupt stoppen
+               EIMSK = 0x00;    // ext. interrupt disable
+#endif                          //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
-TCCR1B &= ~0x09; // timer stoppen
+               TCCR1B &= ~0x09; // timer stoppen
                TIMSK = 0x00;
                GIMSK &= ~0xF0; // enable interrupt
 #endif                         //__AVR_ATtiny261A__
@@ -430,12 +430,12 @@ TCCR1B &= ~0x09; // timer stoppen
             else if (manch_i == 17) // fertig, empfang stoppen
             {
 #ifdef __AVR_ATmega32U4__
-TCCR1B &= ~0x01; // timer stoppen
-               TIMSK1 = 0x00; // overflow interrupt stoppen
-               EIMSK = 0x00;  // flankeninterrupt stoppen
-#endif                        //__AVR_ATmega32u4
+               TCCR1B &= ~0x01; // timer stoppen
+               TIMSK1 = 0x00;   // overflow interrupt stoppen
+               EIMSK = 0x00;    // flankeninterrupt stoppen
+#endif                          //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
-TCCR1B &= ~0x09; // timer stoppen
+               TCCR1B &= ~0x09; // timer stoppen
                TIMSK = 0x00;
                GIMSK &= ~0xF0; // enable interrupt
 #endif                         //__AVR_ATtiny261A__
@@ -446,23 +446,23 @@ TCCR1B &= ~0x09; // timer stoppen
          else // es hätte nur ein kurzer sein sollen! neu beginnen
          {
             manch_i = 0; // von vorne!
-            #ifdef __AVR_ATmega32U4__
-TCCR1B &= ~0x01; // timer stoppen
-#endif //__AVR_ATmega32u4
+#ifdef __AVR_ATmega32U4__
+            TCCR1B &= ~0x01; // timer stoppen
+#endif                       //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
-TCCR1B &= ~0x09; // timer stoppen
-#endif //__AVR_ATtiny261A__
+            TCCR1B &= ~0x09; // timer stoppen
+#endif                       //__AVR_ATtiny261A__
          }
       }
       else // fehler, flanke nicht zum richtigen zeitpunkt! neu beginnen
       {
          manch_i = 0; // von vorne!
-         #ifdef __AVR_ATmega32U4__
-TCCR1B &= ~0x01; // timer stoppen
-#endif //__AVR_ATmega32u4
+#ifdef __AVR_ATmega32U4__
+         TCCR1B &= ~0x01; // timer stoppen
+#endif                    //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
-TCCR1B &= ~0x09; // timer stoppen
-#endif //__AVR_ATtiny261A__
+         TCCR1B &= ~0x09; // timer stoppen
+#endif                    //__AVR_ATtiny261A__
       }
    }
 }
