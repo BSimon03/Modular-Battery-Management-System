@@ -115,7 +115,7 @@ int main(void)
 
 	uint8_t eeprom_stat = 0;
 	eeprom_stat = eeprom_read_byte(EEPROM_STATUS_ADR);
-	//--------------CALIBRATION------------------------// 210 Bytes
+	//--------------CALIBRATION------------------------//
 	if (!(eeprom_stat & EEPROM_CALIBRATED)) // if EEPROM not calibrated
 	{
 		while (!battery_voltage) // Measure SUPPLY voltage
@@ -132,6 +132,7 @@ int main(void)
 		}
 		if ((battery_voltage <= CAL_VOLTAGE_LB) && (!(eeprom_stat & EEPROM_STATUS_L))) // battery voltage smaller than lower max voltage and not calibrated yet
 		{
+			stat_led_green();
 			eeprom_write_word(EEPROM_3V_ADR, battery_voltage);
 			if (!(eeprom_stat & EEPROM_STATUS_H)) // high voltage not calibrated yet
 				eeprom_write_byte(EEPROM_STATUS_ADR, EEPROM_STATUS_L);
@@ -140,6 +141,7 @@ int main(void)
 		}
 		else if ((battery_voltage >= CAL_VOLTAGE_HB) && (!(eeprom_stat & EEPROM_STATUS_H))) // battery voltage smaller than high min voltage and not calibrated yet
 		{
+			stat_led_orange();
 			eeprom_write_word(EEPROM_4V_ADR, battery_voltage);
 			if (!(eeprom_stat & EEPROM_STATUS_L)) // low voltage not calibrated yet
 				eeprom_write_byte(EEPROM_STATUS_ADR, EEPROM_STATUS_H);
@@ -160,10 +162,9 @@ int main(void)
 	timer_clear_timer(TIMER_ADC);
 	timer_clear_timer(TIMER_BALANCE);
 
-	//--------------ENDLESS-LOOP-----------------------//
 	while (1)
 	{
-		//--------------ADC--------------------------------// 604 more Bytes
+		//--------------ADC--------------------------------//
 		timer_add_time(); // executed after max 32ms
 
 		ADC_time = timer_get_timer(TIMER_ADC);
@@ -182,6 +183,7 @@ int main(void)
 				{
 					battery_temperature = buffer_battery_temperature;
 					ADCstat = MEASURE_VOLT;
+					stat_led_green();
 				}
 				break;
 			case MEASURE_VOLT:
@@ -190,15 +192,16 @@ int main(void)
 				{
 					battery_voltage = buffer_battery_voltage;
 					ADCstat = MEASURE_TEMP;
+					stat_led_off();
 				}
 				break;
 			}
 		}
-		//--------------COMMUNICATION----------------------//
+		//--------------PACKAGE-HANDLING-------------------//
 		if ((!(bot_received & ADDRESS_MASK)) && (bot_received & COM_BLC_A)) // checking if the current slave is addressed and command is balancing
 		{
 			START_BALANCING();
-			stat_led_orange();
+			//stat_led_orange();
 		}
 		else if (bot_received & REQ_TEMP_G)
 		{
@@ -215,30 +218,32 @@ int main(void)
 			address_received = (uint8_t)bot_received & ADDRESS_MASK;
 			top_send = calc_data_bal(address_received - 1);
 		}
+		//--------------COMMUNICATION----------------------//
+		if (COMM_time >= 1)
+		{
+			timer_clear_timer(TIMER_COMM);
+		}
+
+		manch_init_receive();			  // init receive from bot device
+		if (manch_receive(&bot_received)) // receive form bot
+		{
+			manch_init_send1();
+			manch_send1(top_send);
+		}
+
+		manch_init_receive1();			   // init receive from top device
+		if (manch_receive1(&top_received)) // receive form top
+		{
+			manch_init_send();
+			manch_send(bot_send);
+		}
+
 		//--------------BALANCING-TIMING---------------------//
-		if(BALANCE_time>=10000)
+		if (BALANCE_time >= 10000) // Balancing Timeout of 10 000 ms
 		{
 			STOP_BALANCING();
 			timer_clear_timer(TIMER_BALANCE);
 		}
-		/*								TEST											*/
-		if (COMM_time >= 1)
-		{
-			timer_clear_timer(TIMER_COMM);
-
-			manch_init_send();
-			manch_send(top_send);
-
-			manch_init_receive();
-			manch_receive(&top_received);
-
-			manch_init_send1();
-			manch_send1(bot_send);
-
-			manch_init_receive1();
-			manch_receive1(&bot_received);
-		}
-		/*								TEST-Result: 1100 Bytes of Flash required		*/
 	}
 }
 
