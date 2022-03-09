@@ -33,7 +33,6 @@ void manch_init_send(void)
    OCR1C = 2 * F_CPU / BAUDRATE / CLOCK_PR;
    TIMSK = 0x24; // enable output compare interrupts
 #endif           //__AVR_ATtiny261A__
-   //    TCCR1B|=0x01; //timer starten????
 }
 
 void manch_init_receive()
@@ -71,11 +70,11 @@ void manch_send(uint16_t data)
    TCNT1 = F_CPU / BAUDRATE / CLOCK_PR + 5;
 #ifdef __AVR_ATmega32U4__
    TIFR1 = 0x00; // flags löschen
+   TCCR1B |= 0x01;       // timer starten
 #endif           //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
    TIFR = 0x00;
 #endif //__AVR_ATtiny261A__
-   // TCCR1B |= 0x01;                           // timer starten
 }
 
 uint8_t manch_receive(uint16_t *data)
@@ -211,8 +210,10 @@ ISR(TIMER1_OVF_vect)
 {
    if (manch_i == 16) // ende
    {
-      // TCCR1B &= 0xFE; // timer stoppen
       CLRMANCH;
+      #ifdef __AVR_ATmega32U4__
+      TCCR1B &= 0xFE; // timer stoppen
+      #endif __AVR_ATmega32U4__
 #ifdef MANCHESTER1
       CLRMANCH1;
 #endif // MANCHESTER1

@@ -13,7 +13,7 @@
 
 //Status LED
 void stat_led_init(){
-    LEDDDR|=(1<<LEDPINR)|(LEDPING);
+    LEDDDR|=(1<<LEDPINR)|(1<<LEDPING);
 }
 void stat_led_red(){
     LEDPORT|=(1<<LEDPINR);
