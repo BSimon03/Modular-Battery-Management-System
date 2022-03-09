@@ -62,6 +62,7 @@ int main(void)
   uint16_t *data;
   uint8_t com_stat, com_err=0;
   uint8_t adr_high_volt=0,val_high_volt=0,val_low_volt=5;
+  uint16_t heartbeat_tim=0;
 
   enum STATE {
     SEND_TEMP_R,
@@ -74,7 +75,8 @@ int main(void)
     FIND_HIGHEST_VOLT,
     FIND_LOWEST_VOLT,
     CHECK_EOC_VOLT,
-    SEND_BAL_COM
+    SEND_BAL_COM,
+    HEARTBEAT
   };
   uint8_t state = SEND_TEMP_R;
   uint8_t recieve_cnt=0, pos_cnt=0;
@@ -191,12 +193,12 @@ int main(void)
           if(data_temp[pos_cnt]>=MAX_CELL_TEMP)   //if cell temperature is over limit
           {
             stat_rel_on();    //switch on status relay
-            stat_led_red();   //turn status led red
+            //stat_led_red();   //turn status led red
             //eventual communication with Motor controller could be inserted here
           }
           else if(data_temp[pos_cnt]<=MAX_CELL_TEMP)    //if cell temperature is under limit
           {
-            stat_led_green();   //turn status led green
+            //stat_led_green();   //turn status led green
           }
           pos_cnt++;
         }
@@ -239,7 +241,7 @@ int main(void)
           pos_cnt=0;
         }
         break;
-        
+
       case CHECK_EOC_VOLT:
         if(data_volt[adr_high_volt]>=EOC_VOLTAGE)   //if end-of-charge voltage is reached, switch on status SSR
         {
@@ -251,14 +253,26 @@ int main(void)
       case SEND_BAL_COM:
         if(IGNITION)    //if ignition is on
         {
-          if ((val_high_volt-val_low_volt)>=MAX_VOLT_DIFF)
+          if ((val_high_volt-val_low_volt)>=MAX_VOLT_DIFF)    //if difference between highest and lowest cell is over a limit
           {
             manch_init_send();
             manch_send(calc_data_bal(adr_high_volt));    //send adressed balancing command
           }
         }
+        state=HEARTBEAT;
+        break;
+
+      case HEARTBEAT:
+        heartbeat_tim+=timer_get_timer(HEARTBEAT);
+        timer_clear_timer(HEARTBEAT);
+        if(heartbeat_tim>=500)
+        {
+          heartbeat_tim=0;
+          stat_led_toggle_green();
+        }
         state=SEND_TEMP_R;
         break;
+
     }
   }
 }
@@ -266,7 +280,7 @@ int main(void)
 void init_master()
 {
     DDRF&=~(1<<IGNITION_DETECTION);     //Set ignition detection Pin as input
-    PORTF&=~(1<<IGNITION_DETECTION);        //enable pulldown resistor on ignition detection pin
+    PORTF&=~(1<<IGNITION_DETECTION);    //enable pulldown resistor on ignition detection pin
     EIMSK|=(1<<INT0);       //Enable External Interrupt (INT0) for communication
     EICRA|=(1<<ISC01);      //INT0 triggers at falling edge
     EICRA&=~(1<<ISC00);

@@ -39,6 +39,10 @@ void stat_led_orange();
 //make status LED light up ORANGE
 void stat_led_off();
 //turn off status LED
+void stat_led_toggle_green();
+//toggle green status LED
+void stat_led_toggle_red();
+//toggle red status LED
 
 #ifdef __AVR_ATmega32U4__
 //Status Relay

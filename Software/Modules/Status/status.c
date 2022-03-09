@@ -31,6 +31,12 @@ void stat_led_off(){
     LEDPORT&=~(1<<LEDPING);
     LEDPORT&=~(1<<LEDPINR);
 }
+void stat_led_toggle_green(){
+    LEDPORT^=(1<<LEDPING);
+}
+void stat_led_toggle_red(){
+    LEDPORT^=(1<<LEDPINR);
+}
 
 #ifdef __AVR_ATmega32U4__
 //Status Relay
