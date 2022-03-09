@@ -35,6 +35,7 @@
 #define SLAVE_COUNT 13      //number of used slaves
 #define MAX_CELL_TEMP 60        //maximum temperature a battery cell is allowed to have
 #define EOC_VOLTAGE 4.2
+#define MAX_VOLT_DIFF 0.1
 
 #include <stdio.h>
 #include <avr/io.h>
@@ -60,7 +61,7 @@ int main(void)
   float data_volt[SLAVE_COUNT]={0};
   uint16_t *data;
   uint8_t com_stat, com_err=0;
-  uint8_t adr_high_volt=0,val_high_volt=0;
+  uint8_t adr_high_volt=0,val_high_volt=0,val_low_volt=5;
 
   enum STATE {
     SEND_TEMP_R,
@@ -71,6 +72,7 @@ int main(void)
     RECIEVE_VOLT,
     CHECK_TEMP,
     FIND_HIGHEST_VOLT,
+    FIND_LOWEST_VOLT,
     CHECK_EOC_VOLT,
     SEND_BAL_COM
   };
@@ -219,9 +221,25 @@ int main(void)
         else
         {
           state=CHECK_EOC_VOLT;
+          pos_cnt=0;
         }
         break;
-
+      case FIND_LOWEST_VOLT:
+        if(pos_cnt<SLAVE_COUNT)
+        {
+          if(data_volt[pos_cnt]<val_high_volt)   
+          {
+            val_low_volt=data_volt[pos_cnt];
+          }
+          pos_cnt++;
+        }
+        else
+        {
+          state=CHECK_EOC_VOLT;
+          pos_cnt=0;
+        }
+        break;
+        
       case CHECK_EOC_VOLT:
         if(data_volt[adr_high_volt]>=EOC_VOLTAGE)   //if end-of-charge voltage is reached, switch on status SSR
         {
@@ -233,8 +251,11 @@ int main(void)
       case SEND_BAL_COM:
         if(IGNITION)    //if ignition is on
         {
-          manch_init_send();
-          manch_send(calc_data_bal(adr_high_volt));    //send adressed balancing command
+          if ((val_high_volt-val_low_volt)>=MAX_VOLT_DIFF)
+          {
+            manch_init_send();
+            manch_send(calc_data_bal(adr_high_volt));    //send adressed balancing command
+          }
         }
         state=SEND_TEMP_R;
         break;
