@@ -29,7 +29,7 @@ void manch_init_send(void)
 #endif            //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
    TCCR1A = 0x03; // Mode 2, Fast PWM
-   TCCR1B = 0x09; // Prescaler 256
+   //TCCR1B = 0x09; // Prescaler 256
    OCR1C = 2 * F_CPU / BAUDRATE / CLOCK_PR;
    TIMSK = 0x24; // enable output compare interrupts
 #endif           //__AVR_ATtiny261A__
@@ -74,6 +74,7 @@ void manch_send(uint16_t data)
 #endif           //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
    TIFR = 0x00;
+   TCCR1B = 0x09;    //timer starten prescaler 256
 #endif //__AVR_ATtiny261A__
 }
 
@@ -213,7 +214,10 @@ ISR(TIMER1_OVF_vect)
       CLRMANCH;
       #ifdef __AVR_ATmega32U4__
       TCCR1B &= 0xFE; // timer stoppen
-      #endif __AVR_ATmega32U4__
+      #endif
+      #ifdef __AVR_ATtiny261A__
+      TCCR1B = 0x00;    //timer stoppen
+      #endif
 #ifdef MANCHESTER1
       CLRMANCH1;
 #endif // MANCHESTER1
