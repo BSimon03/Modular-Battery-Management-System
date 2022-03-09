@@ -20,7 +20,7 @@ void manch_init_send(void)
 {
    DDRMANCH |= PN_MANCH_SEND; // pin als ausgang
    CLRMANCH;                  // und auf 0
-#ifdef __AVR_ATmega32u4__
+#ifdef __AVR_ATmega32U4__
    TCCR1A = 0x02; // mode 14, fast pwm, top is icr1
    TCCR1B = 0x18; //  - " -
    OCR1B = F_CPU / BAUDRATE / CLOCK_PR + 18;
@@ -40,7 +40,7 @@ void manch_init_receive()
 {
    DDRMANCH &= ~PN_MANCH_REC; // pin als Eingang
    CLRMANCH;                  // no pull-up
-#ifdef __AVR_ATmega32u4__
+#ifdef __AVR_ATmega32U4__
    // timer OCRA für receive error, timeout, wenn keine flanke kommt
    TCCR1A = 0x02;                                // mode 14, fast pwm, top is icr1
    TCCR1B = 0x18;                                //  - " -
@@ -69,7 +69,7 @@ void manch_send(uint16_t data)
    manch_d = (uint8_t)(data >> 8) | 0x80; // msb als startbit immer 1
    manch_d1 = (uint8_t)(data & 0x00ff);
    TCNT1 = F_CPU / BAUDRATE / CLOCK_PR + 5;
-#ifdef __AVR_ATmega32u4__
+#ifdef __AVR_ATmega32U4__
    TIFR1 = 0x00; // flags löschen
 #endif           //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
@@ -94,7 +94,7 @@ uint8_t manch_receive(uint16_t *data)
 }
 
 // fürs empfangen
-#ifdef __AVR_ATmega32u4__
+#ifdef __AVR_ATmega32U4__
 ISR(PCINT0_vect)
 #endif //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
@@ -140,7 +140,7 @@ ISR(PCINT_vect)
             else if (manch_i == 17) // fertig, empfang stoppen
             {
                // TCCR1B &= ~0x01; // timer stoppen
-#ifdef __AVR_ATmega32u4__
+#ifdef __AVR_ATmega32U4__
                TIMSK1 = 0x00; // overflow interrupt stoppen
                PCICR = 0x00;  // flankeninterrupt stoppen
 #endif                        //__AVR_ATmega32u4
@@ -174,7 +174,7 @@ ISR(PCINT_vect)
             else if (manch_i == 17) // fertig, empfang stoppen
             {
                // TCCR1B &= ~0x01; // timer stoppen
-#ifdef __AVR_ATmega32u4__
+#ifdef __AVR_ATmega32U4__
                TIMSK1 = 0x00; // overflow interrupt stoppen
                PCICR = 0x00;  // flankeninterrupt stoppen
 #endif                        //__AVR_ATmega32u4
@@ -266,7 +266,7 @@ void manch_init_receive1()
    CLRMANCH1;               // no pull-up
    // timer OCRA für receive error, timeout, wenn keine flanke kommt
 
-#ifdef __AVR_ATmega32u4__
+#ifdef __AVR_ATmega32U4__
    ICR1 = 0xffff;
    TIMSK1 = 0x02; // ocr1a match interrupt;
    TCCR1A = 0x02; // mode 14, fast pwm, top is icr1
@@ -283,7 +283,7 @@ void manch_init_receive1()
 
    manch_i = 0;
    manch_res = 0;
-#ifdef __AVR_ATmega32u4__
+#ifdef __AVR_ATmega32U4__
    EICRA = 0x01 << 2 * (PN_MANCH1 - 1); // ext. interrupt bei jeder flanke
    EIFR = 0xff;                         // clear all ints
    EIMSK = PN_MANCH1;                   // enable interrupt
@@ -356,7 +356,7 @@ ISR(INT0_vect)
             else if (manch_i == 17) // fertig, empfang stoppen
             {
                // TCCR1B &= ~0x01; // timer stoppen
-#ifdef __AVR_ATmega32u4__
+#ifdef __AVR_ATmega32U4__
                TIMSK1 = 0x00; // overflow interrupt stoppen
                EIMSK = 0x00;  // ext. interrupt disable
 #endif                        //__AVR_ATmega32u4
@@ -390,7 +390,7 @@ ISR(INT0_vect)
             else if (manch_i == 17) // fertig, empfang stoppen
             {
                // TCCR1B &= ~0x01; // timer stoppen
-#ifdef __AVR_ATmega32u4__
+#ifdef __AVR_ATmega32U4__
                TIMSK1 = 0x00; // overflow interrupt stoppen
                EIMSK = 0x00;  // flankeninterrupt stoppen
 #endif                        //__AVR_ATmega32u4

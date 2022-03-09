@@ -9,7 +9,7 @@
 #define MANCH_H
 
 #define BAUDRATE 15625
-#ifdef __AVR_ATmega32u4__
+#ifdef __AVR_ATmega32U4__
 #define CLOCK_PR 1
 #endif // __AVR_ATmega32u4__
 #ifdef __AVR_ATtiny261A__
