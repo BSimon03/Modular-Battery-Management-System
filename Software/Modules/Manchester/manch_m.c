@@ -31,8 +31,8 @@ void manch_init_send(void)
    TCCR1A = 0x03; // Mode 2, Fast PWM
    TCCR1B = 0x09; // Prescaler 256
    OCR1C = 2 * F_CPU / BAUDRATE / CLOCK_PR;
-   TIMSK = 0x24;
-#endif //__AVR_ATtiny261A__
+   TIMSK = 0x24; // enable output compare interrupts
+#endif           //__AVR_ATtiny261A__
    //    TCCR1B|=0x01; //timer starten????
 }
 
@@ -54,12 +54,12 @@ void manch_init_receive()
    TCCR1B = 0x09;                                // prescaler 256
    OCR1A = 3 * F_CPU / BAUDRATE / CLOCK_PR + 18; // timeout => bit zu lang
    OCR1C = 0xFF;
-   TIMSK = 0x40; // ocr1a match interrupt;
-   // PCINT...
-#endif //__AVR_ATtiny261A__
+   TIMSK = 0x40;  // ocr1a match interrupt;
+   GIMSK |= 0x10; // PCINT0 enable
+#endif            //__AVR_ATtiny261A__
    manch_i = 0;
    manch_res = 0;
-   PCMSK0 = PN_MANCH_REC;
+   PCMSK0 = PN_MANCH_REC; // enable pcint on receive pin
 }
 
 void manch_send(uint16_t data)
@@ -145,9 +145,9 @@ ISR(PCINT_vect)
                PCICR = 0x00;  // flankeninterrupt stoppen
 #endif                        //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
-               TIMSK = 0x00;
-               // PCINT...
-#endif //__AVR_ATtiny261A__
+               TIMSK = 0x00;           // overflow interrupt stoppen
+               GIMSK &= ~(1 << PCIE0); // flankeninterrupt stoppen
+#endif                                 //__AVR_ATtiny261A__
 
                manch_res = 1;
             }
@@ -179,9 +179,9 @@ ISR(PCINT_vect)
                PCICR = 0x00;  // flankeninterrupt stoppen
 #endif                        //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
-               TIMSK = 0x00; // overflow interrupt stoppen
-                             // stop pcint...
-#endif                       //__AVR_ATtiny261A__
+               TIMSK = 0x00;           // overflow interrupt stoppen
+               GIMSK &= ~(1 << PCIE0); // stop pcint...
+#endif                                 //__AVR_ATtiny261A__
                manch_res = 1;
             }
          }
@@ -289,8 +289,10 @@ void manch_init_receive1()
    EIMSK = PN_MANCH1;                   // enable interrupt
 #endif                                  //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
-// EXTERNAL INTERRUPT...
-#endif //__AVR_ATtiny261A__
+   MCUCR = 0x01;  // ext. interrupt bei jeder flanke
+   GIFR = 0xFF;   // clear all ints
+   GIMSK |= 0xF0; // enable interrupt
+#endif            //__AVR_ATtiny261A__
 }
 
 void manch_send1(uint16_t data)
@@ -362,8 +364,8 @@ ISR(INT0_vect)
 #endif                        //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
                TIMSK = 0x00;
-// ext int disable
-#endif //__AVR_ATtiny261A__
+               GIMSK &= ~0xF0; // enable interrupt
+#endif                         //__AVR_ATtiny261A__
 
                manch_res = 1;
             }
@@ -396,8 +398,8 @@ ISR(INT0_vect)
 #endif                        //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
                TIMSK = 0x00;
-// interrupt stoppen...
-#endif //__AVR_ATtiny261A__
+               GIMSK &= ~0xF0; // enable interrupt
+#endif                         //__AVR_ATtiny261A__
 
                manch_res = 1;
             }
