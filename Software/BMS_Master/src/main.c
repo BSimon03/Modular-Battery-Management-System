@@ -62,103 +62,183 @@ int main(void)
   uint8_t com_stat, com_err=0;
   uint8_t adr_high_volt=0,val_high_volt=0;
 
+  enum STATE {
+    SEND_TEMP_R,
+    INIT_RECIEVE_TEMP,
+    RECIEVE_TEMP,
+    SEND_VOLT_R,
+    INIT_RECIEVE_VOLT,
+    RECIEVE_VOLT,
+    CHECK_TEMP,
+    FIND_HIGHEST_VOLT,
+    CHECK_EOC_VOLT,
+    SEND_BAL_COM
+  };
+  uint8_t state = SEND_TEMP_R;
+  uint8_t recieve_cnt=0, pos_cnt=0;
+
   while(1)
   {
     timer_add_time();
+    stat_ssr_off();
 
-    //==========get temperature of battery cells==========
-    do
+    switch(state)
     {
-      manch_init_send();
-      manch_send(REQ_TEMP_G);
+      //==========get temperature of battery cells==========
+      case SEND_TEMP_R:
+        manch_init_send();
+        manch_send(REQ_TEMP_G); //send request for temp
+        recieve_cnt=0;
+        state=INIT_RECIEVE_TEMP;
+        break;
 
-      for(int i=0; i<SLAVE_COUNT; i++)    //ammount of slaves determines number of passes
-      {
+      case INIT_RECIEVE_TEMP:
         manch_init_receive();   //initialize recieving
-        do    //wait for recieve complete
+        state=RECIEVE_TEMP;
+        break;
+      
+      case RECIEVE_TEMP:
+        if(recieve_cnt<SLAVE_COUNT)   //if there is still data to be recieved
         {
           com_stat=manch_receive(data);    //get status from recieving
           if(com_stat==1)   //if recievig done
           {
+            state=INIT_RECIEVE_TEMP;
+            recieve_cnt++;
             if(calc_parity(*data))   //if parity wrong
             {
-              com_err=1;
+              com_err=1;    //set error flag
             }
             else if (!calc_parity(*data))    //if parity right
             {
-              data_temp[i]=*data-0x8000;   //copy data into array and cut off startbit
+              data_temp[recieve_cnt]=*data-0x8000;   //copy data into array and cut off startbit
             }
           }
           else if(com_stat==2)  //if recieving error
           {
+            state=INIT_RECIEVE_TEMP;
+            recieve_cnt++;
             com_err=1;    //set error flag
-          } 
-        }while (!com_stat);
-      }
-    }while (com_err);   //repeat if an error occurred while recieving
+          }
+          break;  
+        }
+        else if((recieve_cnt==SLAVE_COUNT)&&com_err) //if done recieving and an error occurred
+        {
+          state=SEND_TEMP_R;    //request temperature again
+          break;
+        }
+        else if((recieve_cnt==SLAVE_COUNT)&&(!com_err))    //if recieving was successfull
+        {
+          state=SEND_VOLT_R;   //proceed to get voltages
+          break;
+        }
 
-    //==========get voltage of battery cells==========
-    do
-    {
-      manch_init_send();
-      manch_send(REQ_VOLT_G);
+      //==========get voltage of battery cells==========
+      case SEND_VOLT_R:
+        manch_init_send();
+        manch_send(REQ_VOLT_G); //send request for temp
+        recieve_cnt=0;
+        state=INIT_RECIEVE_VOLT;
+        break;
 
-      for(int i=0; i<SLAVE_COUNT; i++)    //ammount of slaves determines number of passes
-      {
+      case INIT_RECIEVE_VOLT:
         manch_init_receive();   //initialize recieving
-        do    //wait for recieve complete
+        state=RECIEVE_VOLT;
+        break;
+      
+      case RECIEVE_VOLT:
+        if(recieve_cnt<SLAVE_COUNT)   //if there is still data to be recieved
         {
           com_stat=manch_receive(data);    //get status from recieving
           if(com_stat==1)   //if recievig done
           {
-            if (calc_parity(*data))    //if parity wrong
+            state=INIT_RECIEVE_VOLT;
+            recieve_cnt++;
+            if(calc_parity(*data))   //if parity wrong
             {
-              com_err=1;
+              com_err=1;    //set error flag
             }
             else if (!calc_parity(*data))    //if parity right
             {
-              data_volt[i]=(*data-0x8000)/400;   //copy data into array and cutoff startbit
+              data_volt[recieve_cnt]=*data-0x8000;   //copy data into array and cut off startbit
             }
           }
           else if(com_stat==2)  //if recieving error
           {
+            state=INIT_RECIEVE_VOLT;
+            recieve_cnt++;
             com_err=1;    //set error flag
-          } 
-        }while (!com_stat);
-      }
-    }while (com_err);   //repeat if an error occurred while recieving
+          }
+          break;  
+        }
+        else if((recieve_cnt==SLAVE_COUNT)&&com_err) //if done recieving and an error occurred
+        {
+          state=SEND_VOLT_R;    //request voltage again
+          break;
+        }
+        else if((recieve_cnt==SLAVE_COUNT)&&(!com_err))    //if recieving was successfull
+        {
+          state=SEND_VOLT_R;   //proceed to get voltages
+          break;
+        }
 
-    //==========Check if there is as an overtemperature==========
-    for (int i=0; i<SLAVE_COUNT; i++)   //check for every slave
-    {
-      if(data_temp[i]>=MAX_CELL_TEMP)   //if cell temperature is over limit
-      {
-        stat_rel_on();    //switch on status relay
-        stat_led_red();   //turn status led red
-      }
-      else if(data_temp[i]<=MAX_CELL_TEMP)    //if cell temperature is under limit
-      {
-        stat_led_green();   //turn status led green
-      }
-    }
+      //==========Check if there is as an overtemperature==========
+      case CHECK_TEMP:
+        if(pos_cnt<SLAVE_COUNT)
+        {
+          if(data_temp[pos_cnt]>=MAX_CELL_TEMP)   //if cell temperature is over limit
+          {
+            stat_rel_on();    //switch on status relay
+            stat_led_red();   //turn status led red
+            //eventual communication with Motor controller could be inserted here
+          }
+          else if(data_temp[pos_cnt]<=MAX_CELL_TEMP)    //if cell temperature is under limit
+          {
+            stat_led_green();   //turn status led green
+          }
+          pos_cnt++;
+        }
+        else
+        {
+          state=FIND_HIGHEST_VOLT;
+          pos_cnt=0;
+        }
+        break;
 
-    //==========find highest voltage cell and send command to discharge that cell or while charging disable charging if voltage is over charge limit==========
-    for (int i=0; i<SLAVE_COUNT; i++)   //find highest voltage cell
-    {
-      if(data_volt[i]>val_high_volt)    
-      {
-        val_high_volt=data_volt[i];
-        adr_high_volt=i;
-      }
+      //==========find highest voltage cell and send command to discharge that cell or while charging disable charging if voltage is over charge limit==========  
+      case FIND_HIGHEST_VOLT:
+        if(pos_cnt<SLAVE_COUNT)
+        {
+          if(data_volt[pos_cnt]>val_high_volt)   
+          {
+            val_high_volt=data_volt[pos_cnt];
+            adr_high_volt=pos_cnt;
+          }
+          pos_cnt++;
+        }
+        else
+        {
+          state=CHECK_EOC_VOLT;
+        }
+        break;
+
+      case CHECK_EOC_VOLT:
+        if(data_volt[adr_high_volt]>=EOC_VOLTAGE)   //if end-of-charge voltage is reached, switch on status SSR
+        {
+          stat_ssr_on();
+        }
+        state=SEND_BAL_COM;
+        break;
+
+      case SEND_BAL_COM:
+        if(IGNITION)    //if ignition is on
+        {
+          manch_init_send();
+          manch_send(calc_data_bal(adr_high_volt));    //send adressed balancing command
+        }
+        state=SEND_TEMP_R;
+        break;
     }
-    stat_ssr_off();
-    if(data_volt[adr_high_volt]>=EOC_VOLTAGE)   //if end-of-charge voltage is reached, switch on status SSR
-    {
-      stat_ssr_on();
-    }
-    adr_high_volt+=COM_BLC_A;   //calculate address to send balancing command to
-    manch_init_send();
-    manch_send(adr_high_volt);    //send adressed balancing command
   }
 }
 
