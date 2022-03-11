@@ -88,22 +88,23 @@ void bms_slave_init(void);
 int main(void)
 {
   bms_slave_init();
-  stat_led_red();
   float voltage;
   uint16_t adc;
-  int8_t temp;
   while (1)
   {
-    temp = measure_temperature(6);
-    if (temp > -100)
+    adc=measure_voltage(6);
+    if (adc)
     {
-      if (temp > 50)
+      voltage = (float)adc/200;
+      if(voltage>4)
       {
         stat_led_green();
+        STOP_BALANCING();
       }
-      else if (temp < 50)
+      else if(voltage>3)
       {
         stat_led_orange();
+        START_BALANCING();
       }
       else
       {
