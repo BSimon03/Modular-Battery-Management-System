@@ -106,8 +106,8 @@ int main(void)
 	// 1  : Set up for Battery Voltage Measurement
 
 	// Measurements
-	int8_t battery_temperature;
-	int8_t buffer_battery_temperature;
+	uint16_t battery_temperature;
+	uint16_t buffer_battery_temperature;
 
 	uint16_t battery_voltage;
 	uint16_t buffer_battery_voltage;
@@ -120,15 +120,15 @@ int main(void)
 	{
 		while (!battery_voltage) // Measure SUPPLY voltage
 		{
-			battery_voltage = measure_voltage(ADC_SAMPLES);
+			battery_voltage = ADC_measure(ADC_SAMPLES, 'v');
 		}
 		while (battery_temperature == -100) // Measure ambient temperature
 		{
-			battery_temperature = measure_temperature(ADC_SAMPLES);
+			battery_temperature = ADC_measure(ADC_SAMPLES, 't');
 		}
 		if (!(eeprom_stat & EEPROM_STATUS_TEMP)) // if neither 3V or 4V are measured
 		{
-			eeprom_write_word(EEPROM_3V_ADR, (uint16_t)battery_temperature);
+			eeprom_write_word(EEPROM_temp_ADR, battery_temperature);
 		}
 		if ((battery_voltage <= CAL_VOLTAGE_LB) && (!(eeprom_stat & EEPROM_STATUS_L))) // battery voltage smaller than lower max voltage and not calibrated yet
 		{
@@ -177,8 +177,8 @@ int main(void)
 			switch (ADCstat)
 			{
 			case MEASURE_TEMP:
-				buffer_battery_temperature = measure_temperature(ADC_SAMPLES);
-				if (buffer_battery_temperature >= -100) // make sure conversion is done
+				buffer_battery_temperature = ADC_measure(ADC_SAMPLES, 't');
+				if (buffer_battery_temperature) // make sure conversion is done
 				{
 					battery_temperature = buffer_battery_temperature;
 					ADCstat = MEASURE_VOLT;
@@ -186,7 +186,7 @@ int main(void)
 				}
 				break;
 			case MEASURE_VOLT:
-				buffer_battery_voltage = measure_voltage(ADC_SAMPLES);
+				buffer_battery_voltage = ADC_measure(ADC_SAMPLES, 'v');
 				if (buffer_battery_voltage) // make sure conversion is done
 				{
 					battery_voltage = buffer_battery_voltage;

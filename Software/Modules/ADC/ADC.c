@@ -56,91 +56,29 @@ void ADC_get_calibration()
 	}
 }
 
-int8_t measure_temperature(uint8_t conversions)
-{
-	int8_t temperature = -100;
-	adc_value = 0;
+//temperature = 1.1 * adc_value - 273 - TEMP_D;
+//voltage = (float)adc_value / 200; //divided by 1024 aka 10-bit, multiplied by 2,56 aka internal reference voltage and by 2 (voltage divider)
+		
 
-	switch (state)
-	{
-	case ST_REGISTER:
-		ADMUX = (1 << REFS1) | (1 << REFS0);										  // Internal Reference Voltage 1.1V
-		ADCSRB = 0x0F;																  // clearing REFS2, mux 5 bit set
-		ADMUX |= (1 << MUX0) | (1 << MUX1) | (1 << MUX2) | (1 << MUX3) | (1 << MUX4); // Attaching Channel 11 to the ADC... Temperature
-		state = ST_MEASURE;
-		adc_counter = 0;
-		ADC_START_CONVERSION();
-		break;
-	case ST_MEASURE:
-		if (ADC_INTERRUPT)
-		{
-			ADC_CLEAR_INT();
-			if (adc_counter < conversions)
-			{
-				adc_values[adc_counter] = 0; // current position in the array set to 0
-				adc_values[adc_counter] |= (ADCH << 8) | ADCL;
-				adc_counter++;
-				ADC_START_CONVERSION();
-			}
-			else
-			{
-				state = ST_FILTER;
-			}
-		}
-		break;
-	case ST_FILTER:
-		if (ADC_FILTER) // filters out the greatest and the smallest value measured for higher precision
-		{
-			// shifting the greatest value to the right
-			for (adc_counter = 0; adc_counter <= conversions; adc_counter++)
-			{
-				if (adc_values[adc_counter - 1] > adc_values[adc_counter])
-				{
-					sort = adc_values[adc_counter + 1];
-					adc_values[adc_counter + 1] = adc_values[adc_counter];
-					adc_values[adc_counter] = sort;
-				}
-			}
-
-			// shifting the lowest value to the left
-			for (adc_counter = conversions; adc_counter >= 0; adc_counter--)
-			{
-				if (adc_values[adc_counter] < adc_values[adc_counter - 1])
-				{
-					sort = adc_values[adc_counter - 1];
-					adc_values[adc_counter - 1] = adc_values[adc_counter];
-					adc_values[adc_counter] = sort;
-				}
-			}
-
-			// Adding all measured values to variable, except the outer ones
-			for (adc_counter = 1; adc_counter < (conversions - 1); adc_counter++)
-				adc_value += adc_values[adc_counter];
-			adc_value /= (conversions - 2);
-		}
-		else
-		{
-			// Adding all measured values to variable
-			for (adc_counter = 0; adc_counter < conversions; adc_counter++)
-				adc_value += adc_values[adc_counter];
-			adc_value /= (conversions);
-		}
-		temperature = 1.1 * adc_value - 273 - TEMP_D;
-		state = ST_REGISTER;
-		break;
-	}
-	return temperature;
-}
-
-uint16_t measure_voltage(uint8_t conversions)
+uint16_t ADC_measure(uint8_t conversions, uint8_t type)
 {
 	adc_value = 0;
 
 	switch (state)
 	{
 	case ST_REGISTER:
-		ADMUX = 0x86;			// Internal Reference Voltage 2.56V, ADC attached to Channel 6 aka PA7
-		ADCSRB |= (1 << REFS2); // Internal Reference Voltage 2.56V
+		if (type == 'v') // voltage measurement
+		{
+			ADMUX = 0x86;			// Internal Reference Voltage 2.56V, ADC attached to Channel 6 aka PA7
+			ADCSRB |= (1 << REFS2); // Internal Reference Voltage 2.56V
+		}
+		else // temperature measurement
+		{
+			ADMUX = (1 << REFS1) | (1 << REFS0);										  // Internal Reference Voltage 1.1V
+			ADCSRB = 0x0F;																  // clearing REFS2, mux 5 bit set
+			ADMUX |= (1 << MUX0) | (1 << MUX1) | (1 << MUX2) | (1 << MUX3) | (1 << MUX4); // Attaching Channel 11 to the ADC... Temperature
+		}
+
 		state = ST_MEASURE;
 		adc_counter = 0;
 		ADC_START_CONVERSION();
@@ -199,7 +137,6 @@ uint16_t measure_voltage(uint8_t conversions)
 				adc_value += adc_values[adc_counter];
 			adc_value /= (conversions);
 		}
-		// voltage = (float)adc_value / 400; //divided by 1024 aka 10-bit, multiplied by 2,56 aka internal reference voltage
 		state = ST_REGISTER;
 		break;
 	}
