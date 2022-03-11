@@ -209,13 +209,13 @@ int main(void)
 			{
 				top_send = bot_received; // handout global command to next module
 				bot_send = battery_voltage;
-				bot_send |= (calc_parity(battery_voltage) << 15) | (1 << 16); // add parity to data
+				bot_send |= (calc_parity(battery_voltage) << 14) | (1 << 15); // add parity to data
 			}
 			else if (bot_received & REQ_TEMP_G) /*BOT-X*/ // checking if battery temperature is requested
 			{
 				top_send = bot_received; // handout global command to next module
 				bot_send = battery_temperature;
-				bot_send |= (calc_parity(battery_temperature) << 15) | (1 << 16); // add parity to data
+				bot_send |= (calc_parity(battery_temperature) << 14) | (1 << 15); // add parity to data
 			}
 			else if ((!(bot_received & ADDRESS_MASK)) && (bot_received & COM_BLC_A)) // checking if the current slave is addressed and command is balancing
 			{
