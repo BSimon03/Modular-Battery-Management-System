@@ -91,17 +91,17 @@ int main(void)
   stat_led_red();
   float voltage;
   uint16_t adc;
+  int8_t temp;
   while (1)
   {
-    adc=measure_voltage(6);
-    if (adc)
+    temp = measure_temperature(6);
+    if (temp > -100)
     {
-      voltage = (float)adc/200;
-      if(voltage>4)
+      if (temp > 50)
       {
         stat_led_green();
       }
-      else if(voltage>3)
+      else if (temp < 50)
       {
         stat_led_orange();
       }

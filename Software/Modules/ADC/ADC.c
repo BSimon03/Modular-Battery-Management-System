@@ -128,7 +128,7 @@ int8_t measure_temperature(uint8_t conversions)
 				adc_value += adc_values[adc_counter];
 			adc_value /= (conversions);
 		}
-		temperature = adc_value - TEMP_D;
+		temperature = 1.1 * adc_value - 273 - TEMP_D;
 		state = ST_REGISTER;
 		break;
 	}
