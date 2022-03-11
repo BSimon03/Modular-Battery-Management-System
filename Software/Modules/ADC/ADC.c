@@ -28,7 +28,7 @@ static uint16_t sort; // sort algorithm
 void ADC_init()
 {
 	// ADC5 : Temperature Sensor NTC
-	ADCSRA |= (1 << ADEN);				  // ADC enabled
+	ADCSRA |= (1 << ADEN) | (1 << ADATE); // ADC enabled
 	ADCSRA |= (1 << ADPS2) | (1 << ADIE); // Clock Prescaler of 16, ADC Interrupt enabled
 
 	ADMUX |= (1 << REFS1);	// Internal Reference Voltage 2.56V
@@ -36,10 +36,11 @@ void ADC_init()
 
 	// Result is right adjusted
 
-	// ADATE is not enabled, which means we drive the ADC in Single Conversion Mode.
-	// By setting ADSC (ADC Start Conversion) to a logic 1, the conversion is getting started.
-	// Once the conversion is done, ADSC is cleared and the ADIF flag will be set.
-	// When its completed the channel can safely be changed. The next conversion takes 25 clock cycles.
+	// Single Conversion mode (currently disabled)
+	//  ADATE is not enabled, which means we drive the ADC in Single Conversion Mode.
+	//  By setting ADSC (ADC Start Conversion) to a logic 1, the conversion is getting started.
+	//  Once the conversion is done, ADSC is cleared and the ADIF flag will be set.
+	//  When its completed the channel can safely be changed. The next conversion takes 25 clock cycles.
 }
 
 void ADC_get_calibration()

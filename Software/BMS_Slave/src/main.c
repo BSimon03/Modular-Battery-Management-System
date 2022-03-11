@@ -87,6 +87,7 @@ void bms_slave_init(void);
 //--------------MAIN-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
 int main(void)
 {
+	bms_slave_init(); // Initiating the MCU, Registers configurated
 	// Data received
 	uint16_t bot_received = 0; // data received from the lower slave
 	uint8_t address_received = 0;
@@ -116,7 +117,7 @@ int main(void)
 	uint8_t eeprom_stat = 0;
 	eeprom_stat = eeprom_read_byte(EEPROM_STATUS_ADR);
 	//--------------CALIBRATION----------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
-	if (!(eeprom_stat & EEPROM_CALIBRATED)) // if EEPROM not calibrated
+	if (eeprom_stat != EEPROM_CALIBRATED) // if EEPROM not calibrated
 	{
 		while (!battery_voltage) // Measure SUPPLY voltage
 		{
@@ -152,9 +153,8 @@ int main(void)
 		{
 			stat_led_red(); // battery voltage out of predefined borders
 		}
+		while(1);
 	}
-
-	bms_slave_init(); // Initiating the MCU, Registers configurated
 	ADC_get_calibration();
 
 	// clear timers after startup
@@ -166,7 +166,7 @@ int main(void)
 	{
 		//--------------ADC------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
 		timer_add_time(); // executed after max 32ms
-
+		stat_led_off();
 		ADC_time = timer_get_timer(TIMER_ADC);
 		COMM_time = timer_get_timer(TIMER_COMM);
 		BALANCE_time = timer_get_timer(TIMER_BALANCE);
