@@ -88,6 +88,8 @@ void bms_slave_init(void);
 int main(void)
 {
   bms_slave_init();
+  uint16_t* EEP = 0x0000;
+  eeprom_update_word(EEP, 0x0000);
   float voltage;
   uint16_t adc;
   while (1)
@@ -123,9 +125,4 @@ void bms_slave_init() // Combining all init functions
   stat_led_init(); // Status LED initialised
   BALANCING_DDR |= (1 << BALANCING_PIN);
   sei(); // global interrupt enable
-}
-
-ISR(ADC_vect)
-{
-  stat_led_orange();
 }
