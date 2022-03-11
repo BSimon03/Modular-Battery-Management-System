@@ -28,19 +28,18 @@ static uint16_t sort; // sort algorithm
 void ADC_init()
 {
 	// ADC5 : Temperature Sensor NTC
-	ADCSRA |= (1 << ADEN) | (1 << ADATE); // ADC enabled
-	ADCSRA |= (1 << ADPS2) | (1 << ADIE); // Clock Prescaler of 16, ADC Interrupt enabled
-
-	ADMUX |= (1 << REFS1);	// Internal Reference Voltage 2.56V
-	ADCSRB |= (1 << REFS2); // Internal Reference Voltage 2.56V
+	ADCSRA |= (1 << ADEN);	// ADC enabled
+	ADCSRA |= (1 << ADPS2); // Clock Prescaler of 16
 
 	// Result is right adjusted
 
-	// Single Conversion mode (currently disabled)
+	// Single Conversion mode
 	//  ADATE is not enabled, which means we drive the ADC in Single Conversion Mode.
 	//  By setting ADSC (ADC Start Conversion) to a logic 1, the conversion is getting started.
 	//  Once the conversion is done, ADSC is cleared and the ADIF flag will be set.
 	//  When its completed the channel can safely be changed. The next conversion takes 25 clock cycles.
+	//  ADIE is not set as ADIF gets set when the conversion is done
+	//  ADIF must be written to 1 in order to clear it
 }
 
 void ADC_get_calibration()
@@ -65,19 +64,24 @@ int8_t measure_temperature(uint8_t conversions)
 	switch (state)
 	{
 	case ST_REGISTER:
-		ADMUX |= (1 << MUX0) | (1 << MUX1) | (1 << MUX2) | (1 << MUX3) | (1 << MUX4) | (1 << MUX5); // Attaching Channel 11 to the ADC... Temperature
+		ADMUX = (1 << REFS1) | (1 << REFS0);										  // Internal Reference Voltage 1.1V
+		ADCSRB = 0x0F;																  // clearing REFS2, mux 5 bit set
+		ADMUX |= (1 << MUX0) | (1 << MUX1) | (1 << MUX2) | (1 << MUX3) | (1 << MUX4); // Attaching Channel 11 to the ADC... Temperature
 		state = ST_MEASURE;
 		adc_counter = 0;
+		ADC_START_CONVERSION();
 		break;
 	case ST_MEASURE:
 		if (ADC_INTERRUPT)
 		{
+			ADC_CLEAR_INT();
 			if (adc_counter < conversions)
 			{
 				adc_values[adc_counter] = 0;					 // current position in the array set to 0
 				adc_values[adc_counter] |= ADCL;				 // save ADCL in the array
 				adc_values[adc_counter] |= ((ADCH & 0x03) << 8); // save ADCH at the right position in the array
 				adc_counter++;
+				ADC_START_CONVERSION();
 			}
 			else
 			{
@@ -138,19 +142,23 @@ uint16_t measure_voltage(uint8_t conversions)
 	switch (state)
 	{
 	case ST_REGISTER:
-		ADMUX &= ~(1 << MUX0) | (1 << MUX3) | (1 << MUX4) | (1 << MUX5); // Clearing all important bits of the ADMUX register
+		ADMUX = 0x86;			// Internal Reference Voltage 2.56V, ADC attached to Channel 6 aka PA7
+		ADCSRB |= (1 << REFS2); // Internal Reference Voltage 2.56V
 		state = ST_MEASURE;
 		adc_counter = 0;
+		ADC_START_CONVERSION();
 		break;
 	case ST_MEASURE:
 		if (ADC_INTERRUPT)
 		{
+			ADC_CLEAR_INT();
 			if (adc_counter < conversions)
 			{
 				adc_values[adc_counter] = 0;					 // current position in the array set to 0
 				adc_values[adc_counter] |= ADCL;				 // save ADCL in the array
 				adc_values[adc_counter] |= ((ADCH & 0x03) << 8); // save ADCH at the right position in the array
 				adc_counter++;
+				ADC_START_CONVERSION();
 			}
 			else
 			{

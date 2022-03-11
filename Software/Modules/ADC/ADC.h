@@ -17,11 +17,11 @@
 #define EEPROM_temp_ADR (uint16_t *)0x05 // Address of ADC temperature offset
 
 // Callibration
-#define CAL_VOLTAGE_H 0x0640 // Callibration Voltage HIGH    -> 4V
-#define CAL_VOLTAGE_HB 0x05C8//                              -> 3.7
-#define CAL_VOLTAGE_L 0x04B0 // Callibration Voltage LOW     -> 3V
-#define CAL_VOLTAGE_LB 0x0528//                              -> 3.3
-#define CAL_TEMP 22          // Environment temperature during calibration
+#define CAL_VOLTAGE_H 0x0640  // Callibration Voltage HIGH    -> 4V
+#define CAL_VOLTAGE_HB 0x05C8 //                              -> 3.7
+#define CAL_VOLTAGE_L 0x04B0  // Callibration Voltage LOW     -> 3V
+#define CAL_VOLTAGE_LB 0x0528 //                              -> 3.3
+#define CAL_TEMP 22           // Environment temperature during calibration
 
 #define EEPROM_STATUS_ADR (uint8_t *)0x00 // Address of the status byte
 // Byte pointers to each status bit in the eeprom status byte
@@ -31,7 +31,9 @@
 #define EEPROM_STATUS_TEMP 0x06
 
 //--------------MAKROS-----------------------------//
-#define ADC_INTERRUPT ADCSRA &(1 << ADIF) // ADC interrupt flag set?
+#define ADC_INTERRUPT ADCSRA &(1 << ADIF)            // ADC interrupt flag set?
+#define ADC_START_CONVERSION() ADCSRA |= (1 << ADSC) // ADC start conversion
+#define ADC_CLEAR_INT() ADCSRA |= (1 << ADIF)        // clear interrupt flag
 
 // Setting a default value for the ADC_FILTER if nobody defines it in the main.c
 #ifndef ADC_FILTER
