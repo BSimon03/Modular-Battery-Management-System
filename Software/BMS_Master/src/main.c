@@ -218,14 +218,14 @@ int main(void)
         }
         else
         {
-          state=CHECK_EOC_VOLT;
+          state=FIND_LOWEST_VOLT;
           pos_cnt=0;
         }
         break;
       case FIND_LOWEST_VOLT:
         if(pos_cnt<SLAVE_COUNT)
         {
-          if(data_volt[pos_cnt]<val_high_volt)   
+          if(data_volt[pos_cnt]<val_low_volt)   
           {
             val_low_volt=data_volt[pos_cnt];
           }
