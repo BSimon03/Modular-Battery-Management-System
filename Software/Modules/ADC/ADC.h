@@ -21,7 +21,7 @@
 #define CAL_VOLTAGE_HB 0x05C8 //                              -> 3.7
 #define CAL_VOLTAGE_L 0x04B0  // Callibration Voltage LOW     -> 3V
 #define CAL_VOLTAGE_LB 0x0528 //                              -> 3.3
-#define CAL_TEMP 22           // Environment temperature during calibration
+#define CAL_TEMP 0x012C       // Callibration Temperature     -> 25°C
 
 #define EEPROM_STATUS_ADR (uint8_t *)0x00 // Address of the status byte
 // Byte pointers to each status bit in the eeprom status byte
@@ -52,11 +52,8 @@ enum ADC_STATES
 
 // Function ADC_setup:
 // setting all important bits of the ADC register
-void ADC_init(void);
-
-// Function ADC_get_cal:
 // Retrieving calibration data from the eeprom
-void ADC_get_calibration(void);
+void ADC_init(void);
 
 // Function ADC_measure:
 // Returns the voltage raw value after at least 3 calls

@@ -15,15 +15,13 @@
 #include "ADC.h"
 
 // EEPROM
-static uint16_t VOLT_K = 0;
-static uint16_t VOLT_D = 0;
-static uint16_t TEMP_D = 0;
+float VOLT_K = 0;
+int16_t VOLT_D = 0;
+int16_t TEMP_D = 0;
 
-static uint8_t state = ST_REGISTER;
-static uint16_t adc_values[6];
-static uint8_t adc_counter;
-static uint16_t adc_value = 0;
-static uint16_t sort; // sort algorithm
+uint8_t state = ST_REGISTER;
+uint16_t adc_values[6];
+uint8_t adc_counter;
 
 void ADC_init()
 {
@@ -40,10 +38,7 @@ void ADC_init()
 	//  When its completed the channel can safely be changed. The next conversion takes 25 clock cycles.
 	//  ADIE is not set as ADIF gets set when the conversion is done
 	//  ADIF must be written to 1 in order to clear it
-}
 
-void ADC_get_calibration()
-{
 	uint8_t status = eeprom_read_byte(EEPROM_STATUS_ADR);
 	if (status & EEPROM_CALIBRATED)
 	{
@@ -56,29 +51,24 @@ void ADC_get_calibration()
 	}
 }
 
-//temperature = 1.1 * adc_value - 273 - TEMP_D;
-//voltage = (float)adc_value / 200; //divided by 1024 aka 10-bit, multiplied by 2,56 aka internal reference voltage and by 2 (voltage divider)
-		
-
 uint16_t ADC_measure(uint8_t conversions, uint8_t type)
 {
-	adc_value = 0;
+	uint16_t adc_value = 0;
+	uint16_t sort;
 
 	switch (state)
 	{
 	case ST_REGISTER:
 		if (type == 'v') // voltage measurement
 		{
-			ADMUX = 0x86;			// Internal Reference Voltage 2.56V, ADC attached to Channel 6 aka PA7
-			ADCSRB |= (1 << REFS2); // Internal Reference Voltage 2.56V
+			ADMUX = 0x86;  // Internal Reference Voltage 2.56V, ADC attached to Channel 6 aka PA7
+			ADCSRB = 0x01; // Internal Reference Voltage 2.56V
 		}
 		else // temperature measurement
 		{
-			ADMUX = (1 << REFS1) | (1 << REFS0);										  // Internal Reference Voltage 1.1V
-			ADCSRB = 0x0F;																  // clearing REFS2, mux 5 bit set
-			ADMUX |= (1 << MUX0) | (1 << MUX1) | (1 << MUX2) | (1 << MUX3) | (1 << MUX4); // Attaching Channel 11 to the ADC... Temperature
+			ADMUX = 0xDF;  // Internal Reference Voltage 1.1V & Attaching Channel 11 to the ADC... Temperature
+			ADCSRB = 0x0F; // clearing REFS2, mux 5 bit set
 		}
-
 		state = ST_MEASURE;
 		adc_counter = 0;
 		ADC_START_CONVERSION();
@@ -127,15 +117,27 @@ uint16_t ADC_measure(uint8_t conversions, uint8_t type)
 
 			// Adding all measured values to variable, except the outer ones
 			for (adc_counter = 1; adc_counter < (conversions - 1); adc_counter++)
+			{
 				adc_value += adc_values[adc_counter];
+			}
 			adc_value /= (conversions - 2);
 		}
 		else
 		{
 			// Adding all measured values to variable
 			for (adc_counter = 0; adc_counter < conversions; adc_counter++)
+			{
 				adc_value += adc_values[adc_counter];
-			adc_value /= (conversions);
+			}
+			adc_value /= conversions;
+			if (type == 'v')
+			{
+				adc_value = VOLT_K * adc_value + VOLT_D;
+			}
+			else
+			{
+				adc_value += TEMP_D;
+			}
 		}
 		state = ST_REGISTER;
 		break;
