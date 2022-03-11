@@ -77,9 +77,8 @@ int8_t measure_temperature(uint8_t conversions)
 			ADC_CLEAR_INT();
 			if (adc_counter < conversions)
 			{
-				adc_values[adc_counter] = 0;					 // current position in the array set to 0
-				adc_values[adc_counter] |= ADCL;				 // save ADCL in the array
-				adc_values[adc_counter] |= ((ADCH & 0x03) << 8); // save ADCH at the right position in the array
+				adc_values[adc_counter] = 0; // current position in the array set to 0
+				adc_values[adc_counter] |= (ADCH << 8) | ADCL;
 				adc_counter++;
 				ADC_START_CONVERSION();
 			}
@@ -115,7 +114,6 @@ int8_t measure_temperature(uint8_t conversions)
 			}
 
 			// Adding all measured values to variable, except the outer ones
-			adc_value = 0; // Resetting variable
 			for (adc_counter = 1; adc_counter < (conversions - 1); adc_counter++)
 				adc_value += adc_values[adc_counter];
 			adc_value /= (conversions - 2);
@@ -123,7 +121,6 @@ int8_t measure_temperature(uint8_t conversions)
 		else
 		{
 			// Adding all measured values to variable
-			adc_value = 0; // Resetting variable
 			for (adc_counter = 0; adc_counter < conversions; adc_counter++)
 				adc_value += adc_values[adc_counter];
 			adc_value /= (conversions);
@@ -154,9 +151,8 @@ uint16_t measure_voltage(uint8_t conversions)
 			ADC_CLEAR_INT();
 			if (adc_counter < conversions)
 			{
-				adc_values[adc_counter] = 0;					 // current position in the array set to 0
-				adc_values[adc_counter] |= ADCL;				 // save ADCL in the array
-				adc_values[adc_counter] |= ((ADCH & 0x03) << 8); // save ADCH at the right position in the array
+				adc_values[adc_counter] = 0; // current position in the array set to 0
+				adc_values[adc_counter] |= (ADCH << 8) | ADCL;
 				adc_counter++;
 				ADC_START_CONVERSION();
 			}
@@ -192,7 +188,6 @@ uint16_t measure_voltage(uint8_t conversions)
 			}
 
 			// Adding all measured values to variable, except the outer ones
-			adc_value = 0; // Resetting variable
 			for (adc_counter = 1; adc_counter < (conversions - 1); adc_counter++)
 				adc_value += adc_values[adc_counter];
 			adc_value /= (conversions - 2);
@@ -200,7 +195,6 @@ uint16_t measure_voltage(uint8_t conversions)
 		else
 		{
 			// Adding all measured values to variable
-			adc_value = 0; // Resetting variable
 			for (adc_counter = 0; adc_counter < conversions; adc_counter++)
 				adc_value += adc_values[adc_counter];
 			adc_value /= (conversions);

@@ -35,9 +35,9 @@
 #define ADC_START_CONVERSION() ADCSRA |= (1 << ADSC) // ADC start conversion
 #define ADC_CLEAR_INT() ADCSRA |= (1 << ADIF)        // clear interrupt flag
 
-// Setting a default value for the ADC_FILTER if nobody defines it in the main.c
+// Enable ADC filtering  0:OFF  1:ON
 #ifndef ADC_FILTER
-#define ADC_FILTER 0
+#define ADC_FILTER 1
 #endif
 
 // Giving Names to Numbers

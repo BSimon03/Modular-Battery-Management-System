@@ -49,7 +49,6 @@
 
 //--------------SETTINGS-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
 #define MIN_VOLTAGE 0x04B0 // Minimum voltage for the battery: ADC value = voltage x 400
-#define ADC_FILTER 1	   // Enable ADC filtering  0:OFF  1:ON
 #define ADC_SAMPLES 6	   // Averaging samples
 
 //--------------BALANCING------------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
@@ -117,7 +116,7 @@ int main(void)
 	uint8_t eeprom_stat = 0;
 	eeprom_stat = eeprom_read_byte(EEPROM_STATUS_ADR);
 	//--------------CALIBRATION----------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
-	if (eeprom_stat != EEPROM_CALIBRATED) // if EEPROM not calibrated
+	if (!eeprom_stat & EEPROM_CALIBRATED) // if EEPROM not calibrated
 	{
 		while (!battery_voltage) // Measure SUPPLY voltage
 		{
@@ -205,13 +204,13 @@ int main(void)
 
 		if (manch_receive(&bot_received)) // if received from bot
 		{
-			if (bot_received & REQ_VOLT_G) /*BOT-X*/ // checking if battery voltage is requested
+			if (bot_received & REQ_VOLT_G) // BOT-X // checking if battery voltage is requested
 			{
 				top_send = bot_received; // handout global command to next module
 				bot_send = battery_voltage;
 				bot_send |= (calc_parity(battery_voltage) << 14) | (1 << 15); // add parity to data
 			}
-			else if (bot_received & REQ_TEMP_G) /*BOT-X*/ // checking if battery temperature is requested
+			else if (bot_received & REQ_TEMP_G) // BOT-X // checking if battery temperature is requested
 			{
 				top_send = bot_received; // handout global command to next module
 				bot_send = battery_temperature;
@@ -222,7 +221,7 @@ int main(void)
 				START_BALANCING();
 				stat_led_orange();
 			}
-			else /*BOT-TOP*/ // current module not addressed... pass through addressed command
+			else // BOT_TOP // current module not addressed... pass through addressed command
 			{
 				address_received = (uint8_t)bot_received & ADDRESS_MASK;
 				top_send = calc_data_bal(address_received - 1);
@@ -230,7 +229,7 @@ int main(void)
 		}
 		//--------------TOP-PACKAGE-HANDLING-------------------------------------------------------------------------------------------------------------------------------------------------------------------//
 		manch_init_receive1();						  // init receive from top device
-		if (manch_receive(&top_received)) /*TOP-BOT*/ // if received from top
+		if (manch_receive(&top_received)) //TOP-BOT // if received from top
 		{
 			bot_send = top_received;
 		}
@@ -241,13 +240,13 @@ int main(void)
 			timer_clear_timer(TIMER_COMM);
 		}
 
-		if (top_send) /*BOT-TOP*/ // if package for top ready
+		if (top_send) //BOT-TOP // if package for top ready
 		{
 			manch_init_send1();
 			manch_send1(top_send);
 		}
 
-		if (bot_send) /*X-BOT*/ // if package for bot ready
+		if (bot_send) //X-BOT // if package for bot ready
 		{
 			manch_init_send();
 			manch_send(bot_send);
@@ -255,7 +254,7 @@ int main(void)
 
 		// package received from top gets immediately send further down, no collision is expected
 		manch_init_receive1();						   // init receive from top device
-		if (manch_receive1(&top_received)) /*TOP-BOT*/ // receive from top
+		if (manch_receive1(&top_received)) //TOP-BOT // receive from top
 		{
 			manch_init_send();
 			manch_send(top_received);
