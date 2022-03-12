@@ -14,7 +14,7 @@
 #include <avr/eeprom.h>
 #include "ADC.h"
 
-uint8_t state = ST_MEASURE;
+uint8_t state = ST_REGISTER;
 uint16_t adc_values[6];
 uint8_t adc_counter;
 uint16_t adc_value = 0;
@@ -37,26 +37,19 @@ void ADC_init()
 	//  ADIF must be written to 1 in order to clear it
 }
 
-void ADC_set_volt()
-{
-	ADMUX = 0x86;  // Internal Reference Voltage 2.56V, ADC attached to Channel 6 aka PA7
-	ADCSRB = 0x01; // Internal Reference Voltage 2.56V
-	ADC_START_CONVERSION();
-}
-
-void ADC_set_temp()
-{
-	ADMUX = 0xDF;  // Internal Reference Voltage 1.1V & Attaching Channel 11 to the ADC... Temperature
-	ADCSRB = 0x0F; // clearing REFS2, mux 5 bit set
-	ADC_START_CONVERSION();
-}
-
-uint16_t ADC_measure(uint8_t conversions)
+uint16_t ADC_measure_volt(uint8_t conversions)
 {
 	adc_value = 0;
 
-	if (state)
+	switch (state)
 	{
+	case ST_REGISTER:
+		adc_counter = 0;
+		ADMUX = 0x86;  // Internal Reference Voltage 2.56V, ADC attached to Channel 6 aka PA7
+		ADCSRB = 0x01; // Internal Reference Voltage 2.56V
+		ADC_START_CONVERSION();
+		break;
+	case ST_MEASURE:
 		if (ADC_INTERRUPT)
 		{
 			ADC_CLEAR_INT();
@@ -72,9 +65,8 @@ uint16_t ADC_measure(uint8_t conversions)
 				state = ST_FILTER;
 			}
 		}
-	}
-	else
-	{
+		break;
+	case ST_FILTER:
 #if ADC_FILTER == 1 // filters out the greatest and the smallest value measured for higher precision
 		// shifting the greatest value to the right
 		for (adc_counter = 0; adc_counter <= conversions; adc_counter++)
@@ -107,8 +99,74 @@ uint16_t ADC_measure(uint8_t conversions)
 		adc_value /= (conversions);
 #endif
 		// voltage = (float)adc_value / 400; //divided by 1024 aka 10-bit, multiplied by 2,56 aka internal reference voltage
-		state = ST_MEASURE;
+		state = ST_REGISTER;
+	}
+	return adc_value;
+}
+
+uint16_t ADC_measure_temp(uint8_t conversions)
+{
+	adc_value = 0;
+
+	switch (state)
+	{
+	case ST_REGISTER:
 		adc_counter = 0;
+		ADMUX = 0xDF;  // Internal Reference Voltage 1.1V & Attaching Channel 11 to the ADC... Temperature
+		ADCSRB = 0x0F; // clearing REFS2, mux 5 bit set
+		ADC_START_CONVERSION();
+		break;
+	case ST_MEASURE:
+		if (ADC_INTERRUPT)
+		{
+			ADC_CLEAR_INT();
+			if (adc_counter < conversions)
+			{
+				adc_values[adc_counter] = 0; // current position in the array set to 0
+				adc_values[adc_counter] |= (ADCH << 8) | ADCL;
+				adc_counter++;
+				ADC_START_CONVERSION();
+			}
+			else
+			{
+				state = ST_FILTER;
+			}
+		}
+		break;
+	case ST_FILTER:
+#if ADC_FILTER == 1 // filters out the greatest and the smallest value measured for higher precision
+		// shifting the greatest value to the right
+		for (adc_counter = 0; adc_counter <= conversions; adc_counter++)
+		{
+			if (adc_values[adc_counter + 1] < adc_values[adc_counter])
+			{
+				sort = adc_values[adc_counter + 1];
+				adc_values[adc_counter + 1] = adc_values[adc_counter];
+				adc_values[adc_counter] = sort;
+			}
+		}
+		// shifting the lowest value to the left
+		for (adc_counter = conversions; adc_counter > 0; adc_counter--)
+		{
+			if (adc_values[adc_counter] < adc_values[adc_counter - 1])
+			{
+				sort = adc_values[adc_counter - 1];
+				adc_values[adc_counter - 1] = adc_values[adc_counter];
+				adc_values[adc_counter] = sort;
+			}
+		}
+		// Adding all measured values to variable, except the outer ones
+		for (adc_counter = 1; adc_counter < (conversions - 1); adc_counter++)
+			adc_value += adc_values[adc_counter];
+		adc_value /= (conversions - 2);
+#else
+		// Adding all measured values to variable
+		for (adc_counter = 0; adc_counter < conversions; adc_counter++)
+			adc_value += adc_values[adc_counter];
+		adc_value /= (conversions);
+#endif
+		// voltage = (float)adc_value / 400; //divided by 1024 aka 10-bit, multiplied by 2,56 aka internal reference voltage
+		state = ST_REGISTER;
 	}
 	return adc_value;
 }
