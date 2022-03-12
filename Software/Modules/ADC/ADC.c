@@ -14,7 +14,6 @@
 #include <avr/eeprom.h>
 #include "ADC.h"
 
-uint8_t state = ST_MEASURE;
 uint16_t adc_values[6];
 uint8_t adc_counter;
 
@@ -50,37 +49,26 @@ void ADC_set_temp()
 uint16_t ADC_measure(uint8_t conversions)
 {
 	uint16_t adc_value = 0;
-
-	switch (state)
+	if (ADC_INTERRUPT)
 	{
-	case ST_MEASURE:
-		if (ADC_INTERRUPT)
+		ADC_CLEAR_INT();
+		if (adc_counter < conversions)
 		{
-			ADC_CLEAR_INT();
-			if (adc_counter < conversions)
-			{
-				adc_values[adc_counter] = 0; // current position in the array set to 0
-				adc_values[adc_counter] |= (ADCH << 8) | ADCL;
-				adc_counter++;
-				ADC_START_CONVERSION();
-			}
-			else
-			{
-				state = ST_AVERAGE;
-			}
+			adc_values[adc_counter] = 0; // current position in the array set to 0
+			adc_values[adc_counter] |= (ADCH << 8) | ADCL;
+			adc_counter++;
+			ADC_START_CONVERSION();
 		}
-		break;
-	case ST_AVERAGE:
-		// Adding all measured values to variable, except the outer ones
-		for (adc_counter = 1; adc_counter < (conversions - 1); adc_counter++)
+		else
 		{
-			adc_value += adc_values[adc_counter];
+			for (adc_counter = 0; adc_counter < conversions; adc_counter++)
+			{
+				adc_value += adc_values[adc_counter];
+			}
+			adc_value /= conversions;
+			adc_counter = 0;
+			ADC_START_CONVERSION();
 		}
-		adc_value /= conversions;
-		state = ST_MEASURE;
-		adc_counter = 0;
-		ADC_START_CONVERSION();
-		break;
 	}
 	return adc_value;
 }

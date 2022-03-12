@@ -35,13 +35,6 @@
 #define ADC_START_CONVERSION() ADCSRA |= (1 << ADSC) // ADC start conversion
 #define ADC_CLEAR_INT() ADCSRA |= (1 << ADIF)        // clear interrupt flag
 
-// Giving Names to Numbers
-enum ADC_STATES
-{
-    ST_MEASURE,
-    ST_AVERAGE,
-};
-
 //--------------FUNCTION-DEKLARATIONS--------------//
 
 // Function ADC_setup:

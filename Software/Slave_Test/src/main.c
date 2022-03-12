@@ -88,13 +88,12 @@ void bms_slave_init(void);
 int main(void)
 {
   bms_slave_init();
-  uint16_t* EEP = 0x0000;
-  eeprom_update_word(EEP, 0x0000);
   float voltage;
   uint16_t adc;
+  ADC_set_volt();
   while (1)
   {
-    adc=measure_voltage(6);
+    adc=ADC_measure(6);
     if (adc)
     {
       voltage = (float)adc/200;
