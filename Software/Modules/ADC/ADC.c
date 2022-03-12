@@ -55,8 +55,9 @@ uint16_t ADC_measure_volt(uint8_t conversions)
 			ADC_CLEAR_INT();
 			if (adc_counter < conversions)
 			{
-				adc_values[adc_counter] = 0; // current position in the array set to 0
-				adc_values[adc_counter] |= (ADCH << 8) | ADCL;
+				adc_values[adc_counter] = 0;					 // current position in the array set to 0
+				adc_values[adc_counter] |= ADCL;				 // save ADCL in the array
+				adc_values[adc_counter] |= ((ADCH & 0x03) << 8); // save ADCH at the right position in the array
 				adc_counter++;
 				ADC_START_CONVERSION();
 			}
@@ -77,16 +78,44 @@ uint16_t ADC_measure_volt(uint8_t conversions)
 				adc_values[adc_counter + 1] = adc_values[adc_counter];
 				adc_values[adc_counter] = sort;
 			}
+<<<<<<< HEAD
+=======
+
+			// shifting the lowest value to the left
+			for (adc_counter = conversions; adc_counter >= 0; adc_counter--)
+			{
+				if (adc_values[adc_counter] < adc_values[adc_counter - 1])
+				{
+					sort = adc_values[adc_counter - 1];
+					adc_values[adc_counter - 1] = adc_values[adc_counter];
+					adc_values[adc_counter] = sort;
+				}
+			}
+
+			// Adding all measured values to variable, except the outer ones
+			adc_value = 0; // Resetting variable
+			for (adc_counter = 1; adc_counter < (conversions - 1); adc_counter++)
+				adc_value += adc_values[adc_counter];
+			adc_value /= (conversions - 2);
+>>>>>>> parent of 176fba6 (small changes)
 		}
 		// shifting the lowest value to the left
 		for (adc_counter = conversions; adc_counter > 0; adc_counter--)
 		{
+<<<<<<< HEAD
 			if (adc_values[adc_counter] < adc_values[adc_counter - 1])
 			{
 				sort = adc_values[adc_counter - 1];
 				adc_values[adc_counter - 1] = adc_values[adc_counter];
 				adc_values[adc_counter] = sort;
 			}
+=======
+			// Adding all measured values to variable
+			adc_value = 0; // Resetting variable
+			for (adc_counter = 0; adc_counter < conversions; adc_counter++)
+				adc_value += adc_values[adc_counter];
+			adc_value /= (conversions);
+>>>>>>> parent of 176fba6 (small changes)
 		}
 		// Adding all measured values to variable, except the outer ones
 		for (adc_counter = 1; adc_counter < (conversions - 1); adc_counter++)
@@ -122,8 +151,9 @@ uint16_t ADC_measure_temp(uint8_t conversions)
 			ADC_CLEAR_INT();
 			if (adc_counter < conversions)
 			{
-				adc_values[adc_counter] = 0; // current position in the array set to 0
-				adc_values[adc_counter] |= (ADCH << 8) | ADCL;
+				adc_values[adc_counter] = 0;					 // current position in the array set to 0
+				adc_values[adc_counter] |= ADCL;				 // save ADCL in the array
+				adc_values[adc_counter] |= ((ADCH & 0x03) << 8); // save ADCH at the right position in the array
 				adc_counter++;
 				ADC_START_CONVERSION();
 			}
@@ -144,16 +174,44 @@ uint16_t ADC_measure_temp(uint8_t conversions)
 				adc_values[adc_counter + 1] = adc_values[adc_counter];
 				adc_values[adc_counter] = sort;
 			}
+<<<<<<< HEAD
+=======
+
+			// shifting the lowest value to the left
+			for (adc_counter = conversions; adc_counter > 0; adc_counter--)
+			{
+				if (adc_values[adc_counter] < adc_values[adc_counter - 1])
+				{
+					sort = adc_values[adc_counter - 1];
+					adc_values[adc_counter - 1] = adc_values[adc_counter];
+					adc_values[adc_counter] = sort;
+				}
+			}
+
+			// Adding all measured values to variable, except the outer ones
+			adc_value = 0; // Resetting variable
+			for (adc_counter = 1; adc_counter < (conversions - 1); adc_counter++)
+				adc_value += adc_values[adc_counter];
+			adc_value /= (conversions - 2);
+>>>>>>> parent of 176fba6 (small changes)
 		}
 		// shifting the lowest value to the left
 		for (adc_counter = conversions; adc_counter > 0; adc_counter--)
 		{
+<<<<<<< HEAD
 			if (adc_values[adc_counter] < adc_values[adc_counter - 1])
 			{
 				sort = adc_values[adc_counter - 1];
 				adc_values[adc_counter - 1] = adc_values[adc_counter];
 				adc_values[adc_counter] = sort;
 			}
+=======
+			// Adding all measured values to variable
+			adc_value = 0; // Resetting variable
+			for (adc_counter = 0; adc_counter < conversions; adc_counter++)
+				adc_value += adc_values[adc_counter];
+			adc_value /= (conversions);
+>>>>>>> parent of 176fba6 (small changes)
 		}
 		// Adding all measured values to variable, except the outer ones
 		for (adc_counter = 1; adc_counter < (conversions - 1); adc_counter++)
