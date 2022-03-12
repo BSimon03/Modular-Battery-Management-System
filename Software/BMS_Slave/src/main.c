@@ -49,7 +49,8 @@
 
 //--------------SETTINGS-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
 #define MIN_VOLTAGE 0x04B0 // Minimum voltage for the battery: ADC value = voltage x 400
-#define ADC_SAMPLES 6	   // Averaging samples
+#define ADC_SAMPLES_V 4	   // Averaging samples
+#define ADC_SAMPLES_T 4	   // Averaging samples
 
 //--------------BALANCING------------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
 #define BALANCING_DDR DDRB
@@ -97,7 +98,6 @@ int main(void)
 	uint16_t top_send = 0;
 
 	// Timing
-	uint16_t ADC_time = 0;	   // compare value
 	uint16_t COMM_time = 0;	   // compare value
 	uint16_t BALANCE_time = 0; // compare value
 
@@ -108,23 +108,21 @@ int main(void)
 	// Measurements
 	uint16_t adc_raw = 0;
 
-	uint16_t battery_temperature; // battery_temperature = adc_value - 273; // K to degree C
-	int8_t battery_voltage;	  // battery_voltage = (float)adc_value / 200; // divided by 1024 aka 10-bit, multiplied by 2,56 aka internal reference voltage * 2 (voltage divider)
+	int8_t battery_temperature; // battery_temperature = adc_value - 273; // K to degree C
+	uint16_t battery_voltage;	// battery_voltage = (float)adc_value / 200; // divided by 1024 aka 10-bit, multiplied by 2,56 aka internal reference voltage * 2 (voltage divider)
 
 	uint8_t eeprom_stat = 0;
 	eeprom_stat = eeprom_read_byte(EEPROM_STATUS_ADR);
 	//--------------CALIBRATION----------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
 	if (!eeprom_stat & EEPROM_CALIBRATED) // if EEPROM not calibrated
 	{
-		ADC_set_volt();
 		while (!battery_voltage) // Measure SUPPLY voltage
 		{
-			battery_voltage = ADC_measure(ADC_SAMPLES);
+			battery_voltage = measure_voltage(ADC_SAMPLES_V);
 		}
-		ADC_set_temp();
 		while (battery_temperature == -100) // Measure ambient temperature
 		{
-			battery_temperature = ADC_measure(ADC_SAMPLES);
+			battery_temperature = measure_temperature(ADC_SAMPLES_T);
 		}
 		if (!(eeprom_stat & EEPROM_STATUS_TEMP)) // if neither 3V or 4V are measured
 		{
@@ -159,12 +157,11 @@ int main(void)
 	uint16_t voltage_l = eeprom_read_word(EEPROM_3V_ADR);
 	int8_t temp_cal = (int8_t)eeprom_read_word(EEPROM_temp_ADR);
 	float VOLT_K = (CAL_VOLTAGE_H - CAL_VOLTAGE_L) / (voltage_h - voltage_l); // calculate voltage slope error
-	int16_t VOLT_D = CAL_VOLTAGE_H - (voltage_h * VOLT_K);					  // calculate voltage offset
-	int16_t TEMP_D = temp_cal - CAL_TEMP;									  // calculate temperature offset
+	int8_t VOLT_D = CAL_VOLTAGE_H - (voltage_h * VOLT_K);					  // calculate voltage offset
+	int8_t TEMP_D = temp_cal - CAL_TEMP;									  // calculate temperature offset
 
 	// clear timers after startup
 	timer_clear_timer(TIMER_COMM);
-	timer_clear_timer(TIMER_ADC);
 	timer_clear_timer(TIMER_BALANCE);
 
 	while (1)
@@ -172,37 +169,29 @@ int main(void)
 		//--------------ADC------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
 		timer_add_time(); // executed after max 32ms
 		stat_led_off();
-		ADC_time = timer_get_timer(TIMER_ADC);
 		COMM_time = timer_get_timer(TIMER_COMM);
 		BALANCE_time = timer_get_timer(TIMER_BALANCE);
 
-		if (ADC_time >= 1) // once every ms
+		switch (ADCstat)
 		{
-			timer_clear_timer(TIMER_ADC); // reset timer compare value
-
-			switch (ADCstat)
+		case MEASURE_VOLT:
+			adc_raw = VOLT_K * measure_voltage(ADC_SAMPLES_V);
+			if (adc_raw) // make sure conversion is done
 			{
-			case MEASURE_VOLT:
-				adc_raw = ADC_measure(ADC_SAMPLES);
-				if (adc_raw) // make sure conversion is done
-				{
-					battery_voltage = adc_raw;
-					ADCstat = MEASURE_TEMP;
-					ADC_set_temp();
-					stat_led_off();
-				}
-				break;
-			case MEASURE_TEMP:
-				adc_raw = ADC_measure(ADC_SAMPLES);
-				if (adc_raw) // make sure conversion is done
-				{
-					battery_temperature = adc_raw - 273;
-					ADCstat = MEASURE_VOLT;
-					ADC_set_volt();
-					stat_led_green();
-				}
-				break;
+				battery_voltage = VOLT_D+adc_raw;
+				ADCstat = MEASURE_TEMP;
+				stat_led_off();
 			}
+			break;
+		case MEASURE_TEMP:
+			adc_raw = measure_temperature(ADC_SAMPLES_T);
+			if (adc_raw) // make sure conversion is done
+			{
+				battery_temperature = adc_raw + TEMP_D;
+				ADCstat = MEASURE_VOLT;
+				stat_led_green();
+			}
+			break;
 		}
 		//--------------BOT-PACKAGE-HANDLING-------------------------------------------------------------------------------------------------------------------------------------------------------------------//
 		manch_init_receive(); // init receive from bot device

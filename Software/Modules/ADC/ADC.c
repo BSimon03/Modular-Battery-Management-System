@@ -14,11 +14,6 @@
 #include <avr/eeprom.h>
 #include "ADC.h"
 
-// EEPROM
-static uint16_t VOLT_K = 0;
-static uint16_t VOLT_D = 0;
-static uint16_t TEMP_D = 0;
-
 static uint8_t state = ST_REGISTER;
 static uint16_t adc_values[6];
 static uint8_t adc_counter;
@@ -76,7 +71,7 @@ int8_t measure_temperature(uint8_t conversions)
 		}
 		break;
 	case ST_FILTER:
-		#if ADC_FILTER == 1 // filters out the greatest and the smallest value measured for higher precision
+		#if ADC_FILTER_T == 1 // filters out the greatest and the smallest value measured for higher precision
 		
 			// shifting the greatest value to the right
 			for (adc_counter = 0; adc_counter <= conversions; adc_counter++)
@@ -112,7 +107,7 @@ int8_t measure_temperature(uint8_t conversions)
 				adc_value += adc_values[adc_counter];
 			adc_value /= (conversions);
 		#endif
-				temperature = adc_value - TEMP_D;
+				temperature = adc_value - 275;
 		state = ST_REGISTER;
 		break;
 	}
@@ -151,9 +146,9 @@ uint16_t measure_voltage(uint8_t conversions)
 		}
 		break;
 	case ST_FILTER:
-#if ADC_FILTER == 1 // filters out the greatest and the smallest value measured for higher precision
+#if ADC_FILTER_V == 1 // filters out the greatest and the smallest value measured for higher precision
 		// shifting the greatest value to the right
-		for (adc_counter = 0; adc_counter <= conversions; adc_counter++)
+		for (adc_counter = 0; adc_counter < conversions; adc_counter++)
 		{
 			if (adc_values[adc_counter + 1] < adc_values[adc_counter])
 			{
@@ -176,7 +171,7 @@ uint16_t measure_voltage(uint8_t conversions)
 
 		// Adding all measured values to variable, except the outer ones
 		adc_value = 0; // Resetting variable
-		for (adc_counter = 1; adc_counter < (conversions - 1); adc_counter++)
+		for (adc_counter = 1; adc_counter <= (conversions - 1); adc_counter++)
 			adc_value += adc_values[adc_counter];
 		adc_value /= (conversions - 2);
 #else

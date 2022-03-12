@@ -36,9 +36,8 @@
 #define ADC_CLEAR_INT() ADCSRA |= (1 << ADIF)        // clear interrupt flag
 
 // Setting a default value for the ADC_FILTER if nobody defines it in the main.c
-#ifndef ADC_FILTER
-#define ADC_FILTER 0
-#endif
+#define ADC_FILTER_V 0
+#define ADC_FILTER_T 0
 
 // Giving Names to Numbers
 enum ADC_STATES
