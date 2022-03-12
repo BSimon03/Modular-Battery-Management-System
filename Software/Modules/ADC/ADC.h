@@ -54,10 +54,6 @@ enum ADC_STATES
 // setting all important bits of the ADC register
 void ADC_init(void);
 
-// Function ADC_get_cal:
-// Retrieving calibration data from the eeprom
-void ADC_get_calibration(void);
-
 // Function measure_temperature:
 // Returns the temperature in degree celsius after at least 3 calls
 // ADC filtering can be enabled by defining FILTER as 1
