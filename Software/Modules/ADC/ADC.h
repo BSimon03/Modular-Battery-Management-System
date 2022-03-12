@@ -43,7 +43,6 @@
 // Giving Names to Numbers
 enum ADC_STATES
 {
-    ST_REGISTER,
     ST_MEASURE,
     ST_FILTER
 };
@@ -54,22 +53,21 @@ enum ADC_STATES
 // setting all important bits of the ADC register
 void ADC_init(void);
 
-// Function ADC_get_cal:
-// Retrieving calibration data from the eeprom
-void ADC_get_calibration(void);
+//Function ADC_set_volt:
+//Setting voltage specific bits
+//Has to be called before voltage measurement
+void ADC_set_volt(void);
 
-// Function measure_temperature:
+//Function ADC_set_temp:
+//Setting temperatere specific bits
+//Has to be called before temperature measurement
+void ADC_set_temp(void);
+
+// Function ADC_measure:
 // Returns the temperature in degree celsius after at least 3 calls
 // ADC filtering can be enabled by defining FILTER as 1
 // Filtering cuts lowest and highest value and averages the remaining ones.
 // It's recommended to make at least 6 measurements when using ADC filtering
-int8_t measure_temperature(uint8_t);
-
-// Function measure_voltage:
-// Returns the voltage raw value after at least 3 calls
-// ADC filtering can be enabled by defining FILTER as 1
-// Filtering cuts lowest and highest value and averages the remaining ones.
-// It's recommended to make at least 6 measurements when using ADC filtering
-uint16_t measure_voltage(uint8_t);
+uint16_t ADC_measure(uint8_t conversions);
 
 #endif // ADC_H
