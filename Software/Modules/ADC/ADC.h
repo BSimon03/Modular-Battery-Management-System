@@ -21,7 +21,7 @@
 #define CAL_VOLTAGE_HB 0x05C8 //                              -> 3.7
 #define CAL_VOLTAGE_L 0x04B0  // Callibration Voltage LOW     -> 3V
 #define CAL_VOLTAGE_LB 0x0528 //                              -> 3.3
-#define CAL_TEMP 0x012C       // Callibration Temperature     -> 25°C
+#define CAL_TEMP 22           // Environment temperature during calibration
 
 #define EEPROM_STATUS_ADR (uint8_t *)0x00 // Address of the status byte
 // Byte pointers to each status bit in the eeprom status byte
@@ -35,31 +35,28 @@
 #define ADC_START_CONVERSION() ADCSRA |= (1 << ADSC) // ADC start conversion
 #define ADC_CLEAR_INT() ADCSRA |= (1 << ADIF)        // clear interrupt flag
 
-// Enable ADC filtering  0:OFF  1:ON
-#ifndef ADC_FILTER
-#define ADC_FILTER 0
-#endif
-
 // Giving Names to Numbers
 enum ADC_STATES
 {
-    ST_REGISTER,
     ST_MEASURE,
-    ST_FILTER
+    ST_AVERAGE,
 };
 
 //--------------FUNCTION-DEKLARATIONS--------------//
 
 // Function ADC_setup:
 // setting all important bits of the ADC register
-// Retrieving calibration data from the eeprom
 void ADC_init(void);
 
+void ADC_set_volt(void);
+
+void ADC_set_temp(void);
+
 // Function ADC_measure:
-// Returns the voltage raw value after at least 3 calls
+// Returns the temperature in degree celsius after at least 3 calls
 // ADC filtering can be enabled by defining FILTER as 1
 // Filtering cuts lowest and highest value and averages the remaining ones.
 // It's recommended to make at least 6 measurements when using ADC filtering
-uint16_t ADC_measure(uint8_t conversions, uint8_t type);
+uint16_t ADC_measure(uint8_t conversions);
 
 #endif // ADC_H
