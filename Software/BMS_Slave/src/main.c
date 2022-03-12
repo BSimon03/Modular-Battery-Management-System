@@ -106,25 +106,25 @@ int main(void)
 	// 1  : Set up for Battery Voltage Measurement
 
 	// Measurements
-	int8_t battery_temperature;
-	int8_t buffer_battery_temperature;
+	uint16_t adc_raw = 0;
 
-	uint16_t battery_voltage;
-	uint16_t buffer_battery_voltage;
-	// battery_voltage = (float)battery_voltage / 400; // divided by 1024 aka 10-bit, multiplied by 2,56 aka internal reference voltage
+	uint16_t battery_temperature; // battery_temperature = adc_value - 273; // K to degree C
+	int8_t battery_voltage;	  // battery_voltage = (float)adc_value / 200; // divided by 1024 aka 10-bit, multiplied by 2,56 aka internal reference voltage * 2 (voltage divider)
 
 	uint8_t eeprom_stat = 0;
 	eeprom_stat = eeprom_read_byte(EEPROM_STATUS_ADR);
 	//--------------CALIBRATION----------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
 	if (!eeprom_stat & EEPROM_CALIBRATED) // if EEPROM not calibrated
 	{
+		ADC_set_volt();
 		while (!battery_voltage) // Measure SUPPLY voltage
 		{
-			battery_voltage = measure_voltage(ADC_SAMPLES);
+			battery_voltage = ADC_measure(ADC_SAMPLES);
 		}
+		ADC_set_temp();
 		while (battery_temperature == -100) // Measure ambient temperature
 		{
-			battery_temperature = measure_temperature(ADC_SAMPLES);
+			battery_temperature = ADC_measure(ADC_SAMPLES);
 		}
 		if (!(eeprom_stat & EEPROM_STATUS_TEMP)) // if neither 3V or 4V are measured
 		{
@@ -152,9 +152,15 @@ int main(void)
 		{
 			stat_led_red(); // battery voltage out of predefined borders
 		}
-		while(1);
+		while (1)
+			;
 	}
-	ADC_get_calibration();
+	uint16_t voltage_h = eeprom_read_word(EEPROM_4V_ADR);
+	uint16_t voltage_l = eeprom_read_word(EEPROM_3V_ADR);
+	int8_t temp_cal = (int8_t)eeprom_read_word(EEPROM_temp_ADR);
+	float VOLT_K = (CAL_VOLTAGE_H - CAL_VOLTAGE_L) / (voltage_h - voltage_l); // calculate voltage slope error
+	int16_t VOLT_D = CAL_VOLTAGE_H - (voltage_h * VOLT_K);					  // calculate voltage offset
+	int16_t TEMP_D = temp_cal - CAL_TEMP;									  // calculate temperature offset
 
 	// clear timers after startup
 	timer_clear_timer(TIMER_COMM);
@@ -176,22 +182,24 @@ int main(void)
 
 			switch (ADCstat)
 			{
-			case MEASURE_TEMP:
-				buffer_battery_temperature = measure_temperature(ADC_SAMPLES);
-				if (buffer_battery_temperature >= -100) // make sure conversion is done
+			case MEASURE_VOLT:
+				adc_raw = ADC_measure(ADC_SAMPLES);
+				if (adc_raw) // make sure conversion is done
 				{
-					battery_temperature = buffer_battery_temperature;
-					ADCstat = MEASURE_VOLT;
-					stat_led_green();
+					battery_voltage = adc_raw;
+					ADCstat = MEASURE_TEMP;
+					ADC_set_temp();
+					stat_led_off();
 				}
 				break;
-			case MEASURE_VOLT:
-				buffer_battery_voltage = measure_voltage(ADC_SAMPLES);
-				if (buffer_battery_voltage) // make sure conversion is done
+			case MEASURE_TEMP:
+				adc_raw = ADC_measure(ADC_SAMPLES);
+				if (adc_raw) // make sure conversion is done
 				{
-					battery_voltage = buffer_battery_voltage;
-					ADCstat = MEASURE_TEMP;
-					stat_led_off();
+					battery_temperature = adc_raw - 273;
+					ADCstat = MEASURE_VOLT;
+					ADC_set_volt();
+					stat_led_green();
 				}
 				break;
 			}
@@ -228,8 +236,8 @@ int main(void)
 			}
 		}
 		//--------------TOP-PACKAGE-HANDLING-------------------------------------------------------------------------------------------------------------------------------------------------------------------//
-		manch_init_receive1();						  // init receive from top device
-		if (manch_receive(&top_received)) //TOP-BOT // if received from top
+		manch_init_receive1();			  // init receive from top device
+		if (manch_receive(&top_received)) // TOP-BOT // if received from top
 		{
 			bot_send = top_received;
 		}
@@ -240,21 +248,21 @@ int main(void)
 			timer_clear_timer(TIMER_COMM);
 		}
 
-		if (top_send) //BOT-TOP // if package for top ready
+		if (top_send) // BOT-TOP // if package for top ready
 		{
 			manch_init_send1();
 			manch_send1(top_send);
 		}
 
-		if (bot_send) //X-BOT // if package for bot ready
+		if (bot_send) // X-BOT // if package for bot ready
 		{
 			manch_init_send();
 			manch_send(bot_send);
 		}
 
 		// package received from top gets immediately send further down, no collision is expected
-		manch_init_receive1();						   // init receive from top device
-		if (manch_receive1(&top_received)) //TOP-BOT // receive from top
+		manch_init_receive1();			   // init receive from top device
+		if (manch_receive1(&top_received)) // TOP-BOT // receive from top
 		{
 			manch_init_send();
 			manch_send(top_received);
