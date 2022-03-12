@@ -88,37 +88,27 @@ void bms_slave_init(void);
 int main(void)
 {
   bms_slave_init();
+  stat_led_red();
   float voltage;
   uint16_t adc;
-  ADMUX = 0x86;  // Internal Reference Voltage 2.56V, ADC attached to Channel 6 aka PA7
-		ADCSRB = 0x01; // Internal Reference Voltage 2.56V
-    ADC_START_CONVERSION();
   while (1)
   {
-    
-		 
-    if (ADC_INTERRUPT)
+    adc=measure_voltage(6);
+    if (adc)
     {
-      ADC_CLEAR_INT();
-      adc = 0;
-      adc |= (ADCH << 8) | ADCL;
       voltage = (float)adc/200;
-      ADC_START_CONVERSION();
       if(voltage>4)
       {
         stat_led_green();
-        STOP_BALANCING();
       }
       else if(voltage>3)
       {
         stat_led_orange();
-        START_BALANCING();
       }
       else
       {
         stat_led_red();
       }
-     
     }
   }
 }

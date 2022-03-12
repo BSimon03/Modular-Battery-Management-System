@@ -35,9 +35,9 @@
 #define ADC_START_CONVERSION() ADCSRA |= (1 << ADSC) // ADC start conversion
 #define ADC_CLEAR_INT() ADCSRA |= (1 << ADIF)        // clear interrupt flag
 
-// Enable ADC filtering  0:OFF  1:ON
+// Setting a default value for the ADC_FILTER if nobody defines it in the main.c
 #ifndef ADC_FILTER
-#define ADC_FILTER 1
+#define ADC_FILTER 0
 #endif
 
 // Giving Names to Numbers
@@ -54,18 +54,22 @@ enum ADC_STATES
 // setting all important bits of the ADC register
 void ADC_init(void);
 
-// Function ADC_measure_volt:
-// Returns the ADC_value after at least 3 calls
-// ADC filtering can be enabled by defining FILTER as 1
-// Filtering cuts lowest and highest value and averages the remaining ones.
-// It's recommended to make at least 6 measurements when using ADC filtering
-uint16_t ADC_measure_volt(uint8_t conversions);
+// Function ADC_get_cal:
+// Retrieving calibration data from the eeprom
+void ADC_get_calibration(void);
 
-// Function ADC_measure_temp:
-// Returns the ADC_value after at least 3 calls
+// Function measure_temperature:
+// Returns the temperature in degree celsius after at least 3 calls
 // ADC filtering can be enabled by defining FILTER as 1
 // Filtering cuts lowest and highest value and averages the remaining ones.
 // It's recommended to make at least 6 measurements when using ADC filtering
-uint16_t ADC_measure_temp(uint8_t conversions);
+int8_t measure_temperature(uint8_t);
+
+// Function measure_voltage:
+// Returns the voltage raw value after at least 3 calls
+// ADC filtering can be enabled by defining FILTER as 1
+// Filtering cuts lowest and highest value and averages the remaining ones.
+// It's recommended to make at least 6 measurements when using ADC filtering
+uint16_t measure_voltage(uint8_t);
 
 #endif // ADC_H
