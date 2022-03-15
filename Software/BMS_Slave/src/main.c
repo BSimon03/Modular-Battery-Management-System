@@ -109,8 +109,7 @@ int main(void)
 	int8_t battery_temperature; // battery_temperature = adc_value - 273; // K to degree C
 	uint16_t battery_voltage;	// battery_voltage = (float)adc_value / 200; // divided by 1024 aka 10-bit, multiplied by 2,56 aka internal reference voltage * 2 (voltage divider)
 
-	uint8_t eeprom_stat = 0;
-	eeprom_stat = eeprom_read_byte(EEPROM_STATUS_ADR);
+	uint8_t eeprom_stat = eeprom_read_byte(EEPROM_STATUS_ADR);
 	//--------------CALIBRATION----------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
 	if (!eeprom_stat & EEPROM_CALIBRATED) // if EEPROM not calibrated
 	{
@@ -223,7 +222,7 @@ int main(void)
 		}
 		//--------------TOP-PACKAGE-HANDLING-------------------------------------------------------------------------------------------------------------------------------------------------------------------//
 		manch_init_receive1();			  // init receive from top device
-		if (manch_receive(&top_received)) // TOP-BOT // if received from top
+		if (manch_receive(&top_received)==1) // TOP-BOT // if received from top
 		{
 			bot_send = top_received;
 		}
@@ -248,7 +247,7 @@ int main(void)
 
 		// package received from top gets immediately send further down, no collision is expected
 		manch_init_receive1();			   // init receive from top device
-		if (manch_receive1(&top_received)) // TOP-BOT // receive from top
+		if (manch_receive1(&top_received)==1) // TOP-BOT // receive from top
 		{
 			manch_init_send();
 			manch_send(top_received);
