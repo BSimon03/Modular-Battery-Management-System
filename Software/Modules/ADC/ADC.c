@@ -37,10 +37,9 @@ void ADC_init()
 	//  ADIF must be written to 1 in order to clear it
 }
 
-int8_t measure_temperature(uint8_t conversions)
+int8_t measure_temperature()
 {
 	int8_t temperature = -100;
-	adc_value = 0;
 
 	switch (state)
 	{
@@ -49,34 +48,57 @@ int8_t measure_temperature(uint8_t conversions)
 		ADCSRB = 0x0F;																  // clearing REFS2, mux 5 bit set
 		ADMUX |= (1 << MUX0) | (1 << MUX1) | (1 << MUX2) | (1 << MUX3) | (1 << MUX4); // Attaching Channel 11 to the ADC... Temperature
 		state = ST_MEASURE;
-		adc_counter = 0;
 		ADC_START_CONVERSION();
 		break;
 	case ST_MEASURE:
 		if (ADC_INTERRUPT)
 		{
 			ADC_CLEAR_INT();
-			if (adc_counter < conversions)
-			{
-				adc_values[adc_counter] = 0;					 // current position in the array set to 0
-				adc_values[adc_counter] |= ADCL;				 // save ADCL in the array
-				adc_values[adc_counter] |= ((ADCH & 0x03) << 8); // save ADCH at the right position in the array
-				adc_counter++;
-				ADC_START_CONVERSION();
-			}
-			else
-			{
-				state = ST_FILTER;
-			}
+			adc_values[0] = (ADCH << 8) | ADCL;	 // save ADC in the array
+			ADC_START_CONVERSION();
+			temperature = adc_values[0] - 275;
+			state = ST_REGISTER;
 		}
 		break;
-	case ST_FILTER:
-		#if ADC_FILTER_T == 1 // filters out the greatest and the smallest value measured for higher precision
-		
-			// shifting the greatest value to the right
-			for (adc_counter = 0; adc_counter <= conversions; adc_counter++)
+		return temperature;
+	}
+}
+
+	uint16_t measure_voltage(uint8_t conversions)
+	{
+		adc_value = 0;
+
+		switch (state)
+		{
+		case ST_REGISTER:
+			ADMUX = 0x86;			// Internal Reference Voltage 2.56V, ADC attached to Channel 6 aka PA7
+			ADCSRB |= (1 << REFS2); // Internal Reference Voltage 2.56V
+			state = ST_MEASURE;
+			adc_counter = 0;
+			ADC_START_CONVERSION();
+			break;
+		case ST_MEASURE:
+			if (ADC_INTERRUPT)
 			{
-				if (adc_values[adc_counter - 1] > adc_values[adc_counter])
+				ADC_CLEAR_INT();
+				if (adc_counter < conversions)
+				{
+					adc_values[adc_counter] = (ADCH << 8) | ADCL;	 // save ADC in the array
+					adc_counter++;
+					ADC_START_CONVERSION();
+				}
+				else
+				{
+					state = ST_FILTER;
+				}
+			}
+			break;
+		case ST_FILTER:
+#if ADC_FILTER_V == 1 // filters out the greatest and the smallest value measured for higher precision
+			// shifting the greatest value to the right
+			for (adc_counter = 0; adc_counter < conversions; adc_counter++)
+			{
+				if (adc_values[adc_counter + 1] < adc_values[adc_counter])
 				{
 					sort = adc_values[adc_counter + 1];
 					adc_values[adc_counter + 1] = adc_values[adc_counter];
@@ -85,7 +107,7 @@ int8_t measure_temperature(uint8_t conversions)
 			}
 
 			// shifting the lowest value to the left
-			for (adc_counter = conversions; adc_counter >= 0; adc_counter--)
+			for (adc_counter = conversions; adc_counter > 0; adc_counter--)
 			{
 				if (adc_values[adc_counter] < adc_values[adc_counter - 1])
 				{
@@ -97,93 +119,19 @@ int8_t measure_temperature(uint8_t conversions)
 
 			// Adding all measured values to variable, except the outer ones
 			adc_value = 0; // Resetting variable
-			for (adc_counter = 1; adc_counter < (conversions - 1); adc_counter++)
+			for (adc_counter = 1; adc_counter <= (conversions - 1); adc_counter++)
 				adc_value += adc_values[adc_counter];
 			adc_value /= (conversions - 2);
-		#else
+#else
 			// Adding all measured values to variable
 			adc_value = 0; // Resetting variable
 			for (adc_counter = 0; adc_counter < conversions; adc_counter++)
 				adc_value += adc_values[adc_counter];
 			adc_value /= (conversions);
-		#endif
-				temperature = adc_value - 275;
-		state = ST_REGISTER;
-		break;
-	}
-	return temperature;
-}
-
-uint16_t measure_voltage(uint8_t conversions)
-{
-	adc_value = 0;
-
-	switch (state)
-	{
-	case ST_REGISTER:
-		ADMUX = 0x86;			// Internal Reference Voltage 2.56V, ADC attached to Channel 6 aka PA7
-		ADCSRB |= (1 << REFS2); // Internal Reference Voltage 2.56V
-		state = ST_MEASURE;
-		adc_counter = 0;
-		ADC_START_CONVERSION();
-		break;
-	case ST_MEASURE:
-		if (ADC_INTERRUPT)
-		{
-			ADC_CLEAR_INT();
-			if (adc_counter < conversions)
-			{
-				adc_values[adc_counter] = 0;					 // current position in the array set to 0
-				adc_values[adc_counter] |= ADCL;				 // save ADCL in the array
-				adc_values[adc_counter] |= ((ADCH & 0x03) << 8); // save ADCH at the right position in the array
-				adc_counter++;
-				ADC_START_CONVERSION();
-			}
-			else
-			{
-				state = ST_FILTER;
-			}
-		}
-		break;
-	case ST_FILTER:
-#if ADC_FILTER_V == 1 // filters out the greatest and the smallest value measured for higher precision
-		// shifting the greatest value to the right
-		for (adc_counter = 0; adc_counter < conversions; adc_counter++)
-		{
-			if (adc_values[adc_counter + 1] < adc_values[adc_counter])
-			{
-				sort = adc_values[adc_counter + 1];
-				adc_values[adc_counter + 1] = adc_values[adc_counter];
-				adc_values[adc_counter] = sort;
-			}
-		}
-
-		// shifting the lowest value to the left
-		for (adc_counter = conversions; adc_counter > 0; adc_counter--)
-		{
-			if (adc_values[adc_counter] < adc_values[adc_counter - 1])
-			{
-				sort = adc_values[adc_counter - 1];
-				adc_values[adc_counter - 1] = adc_values[adc_counter];
-				adc_values[adc_counter] = sort;
-			}
-		}
-
-		// Adding all measured values to variable, except the outer ones
-		adc_value = 0; // Resetting variable
-		for (adc_counter = 1; adc_counter <= (conversions - 1); adc_counter++)
-			adc_value += adc_values[adc_counter];
-		adc_value /= (conversions - 2);
-#else
-		// Adding all measured values to variable
-		adc_value = 0; // Resetting variable
-		for (adc_counter = 0; adc_counter < conversions; adc_counter++)
-			adc_value += adc_values[adc_counter];
-		adc_value /= (conversions);
-		// voltage = (float)adc_value / 400; //divided by 1024 aka 10-bit, multiplied by 2,56 aka internal reference voltage		
+			// voltage = (float)adc_value / 400; //divided by 1024 aka 10-bit, multiplied by 2,56 aka internal reference voltage
 #endif
-state = ST_REGISTER;
-break;
+			state = ST_REGISTER;
+			break;
+		}
+		return adc_value;
 	}
-	return adc_value;
-}

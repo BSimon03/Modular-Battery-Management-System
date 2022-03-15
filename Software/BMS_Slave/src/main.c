@@ -48,9 +48,7 @@
 #define DEBUG_PIN PINB5 // PCINT13
 
 //--------------SETTINGS-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
-#define MIN_VOLTAGE 0x04B0 // Minimum voltage for the battery: ADC value = voltage x 400
-#define ADC_SAMPLES_V 4	   // Averaging samples
-#define ADC_SAMPLES_T 4	   // Averaging samples
+#define ADC_SAMPLES_V 4	   // Averaging samples, 6 is max
 
 //--------------BALANCING------------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
 #define BALANCING_DDR DDRB
@@ -122,7 +120,7 @@ int main(void)
 		}
 		while (battery_temperature == -100) // Measure ambient temperature
 		{
-			battery_temperature = measure_temperature(ADC_SAMPLES_T);
+			battery_temperature = measure_temperature();
 		}
 		if (!(eeprom_stat & EEPROM_STATUS_TEMP)) // if neither 3V or 4V are measured
 		{
@@ -172,26 +170,25 @@ int main(void)
 		COMM_time = timer_get_timer(TIMER_COMM);
 		BALANCE_time = timer_get_timer(TIMER_BALANCE);
 
-		switch (ADCstat)
+		if(!ADCstat)
 		{
-		case MEASURE_VOLT:
 			adc_raw = VOLT_K * measure_voltage(ADC_SAMPLES_V);
 			if (adc_raw) // make sure conversion is done
 			{
-				battery_voltage = VOLT_D+adc_raw;
+				battery_voltage = adc_raw + VOLT_D;
 				ADCstat = MEASURE_TEMP;
 				stat_led_off();
 			}
-			break;
-		case MEASURE_TEMP:
-			adc_raw = measure_temperature(ADC_SAMPLES_T);
+		}
+		else
+		{
+			adc_raw = measure_temperature();
 			if (adc_raw) // make sure conversion is done
 			{
 				battery_temperature = adc_raw + TEMP_D;
 				ADCstat = MEASURE_VOLT;
 				stat_led_green();
 			}
-			break;
 		}
 		//--------------BOT-PACKAGE-HANDLING-------------------------------------------------------------------------------------------------------------------------------------------------------------------//
 		manch_init_receive(); // init receive from bot device

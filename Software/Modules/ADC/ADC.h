@@ -36,8 +36,7 @@
 #define ADC_CLEAR_INT() ADCSRA |= (1 << ADIF)        // clear interrupt flag
 
 // Setting a default value for the ADC_FILTER if nobody defines it in the main.c
-#define ADC_FILTER_V 0
-#define ADC_FILTER_T 0
+#define ADC_FILTER_V 1
 
 // Giving Names to Numbers
 enum ADC_STATES
@@ -58,7 +57,7 @@ void ADC_init(void);
 // ADC filtering can be enabled by defining FILTER as 1
 // Filtering cuts lowest and highest value and averages the remaining ones.
 // It's recommended to make at least 6 measurements when using ADC filtering
-int8_t measure_temperature(uint8_t);
+int8_t measure_temperature(void);
 
 // Function measure_voltage:
 // Returns the voltage raw value after at least 3 calls
