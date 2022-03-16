@@ -15,31 +15,10 @@
 #define F_CPU 2000000L
 #endif
 
-// CPU frequency converted to prescaler bit settings.
-#if F_CPU == 8000000L
-#define CLK_PS_SETTING (1 << CLKPCE) // PS = 1; 8 MHz
-
-#elif F_CPU == 4000000L
-#define CLK_PS_SETTING (1 << CLKPCE) | (1 << CLKPS0) // PS = 2; 4 MHz
-
-#elif F_CPU == 2000000L
-#define CLK_PS_SETTING (1 << CLKPCE) | (1 << CLKPS1) // PS = 4; 2 MHz
-
-#elif F_CPU == 1000000L
-#define CLK_PS_SETTING (1 << CLKPCE) | (1 << CLKPS1) | (1 << CLKPS0) // PS = 8; 1MHz
-
-#else
-#error Invalid prescaler setting.
-#endif
-
 //--------------USED-HARDWARE--------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
 //--Define Microcontroller, if not already defined in the platform.ini or intellisense
 #ifndef __AVR_ATtiny261A__
 #define __AVR_ATtiny261A__
-#endif
-
-#ifndef BMS_SLAVE
-#define BMS_SLAVE
 #endif
 
 //--------------PIN-DEFINITIONS------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
@@ -76,46 +55,56 @@
 #include "manch_m.h"
 #include "status.h"
 
-enum ADC_STAT
-{
-  MEASURE_VOLT,
-  MEASURE_TEMP
-};
-
 void bms_slave_init(void);
 
 //--------------MAIN-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
 int main(void)
 {
+  uint16_t t, time;
   bms_slave_init();
-  stat_led_red();
-  float voltage;
-  uint16_t adc;
+  timer_clear_timer(TIMER_COMM);
+  timer_clear_timer(TIMER_ADC);
   while (1)
   {
-    adc=measure_voltage(6);
-    if (adc)
+    timer_add_time();
+    t = timer_get_timer(TIMER_ADC);
+    time = timer_get_timer(TIMER_COMM);
+    manch_init_send();
+    manch_init_send1();
+    if (t >= 2000)
     {
-      voltage = (float)adc/200;
-      if(voltage>4)
-      {
-        stat_led_green();
-      }
-      else if(voltage>3)
-      {
-        stat_led_orange();
-      }
-      else
-      {
-        stat_led_red();
-      }
+      timer_clear_timer(TIMER_ADC);
+      timer_clear_timer(TIMER_COMM);
+      stat_led_off();
+    }
+    else if (time >= 1000)
+    {
+      timer_clear_timer(TIMER_COMM);
+      stat_led_green();
+      manch_send(0x99);
+      manch_send1(0x99);
     }
   }
 }
 
 void bms_slave_init() // Combining all init functions
 {
-  CLKPR |= CLK_PS_SETTING; // Clock presescaler setting
+  // CPU frequency settings.
+#if F_CPU == 4000000L
+  CLKPR = 0x80;
+  CLKPR = 0x01;
+
+#elif F_CPU == 2000000L
+  CLKPR = 0x80;
+  CLKPR = 0x01;
+
+#elif F_CPU == 1000000L
+  CLKPR = 0x80;
+  CLKPR = 0x01;
+
+#else
+#error Invalid prescaler setting.
+#endif
   timer_init_timer();
   timer_add_time();
   ADC_init();
