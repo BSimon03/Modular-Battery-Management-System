@@ -44,46 +44,47 @@
 #include <avr/io.h>
 #include <stdint.h>
 #include <avr/interrupt.h>
-#include <avr/eeprom.h>
-#include <avr/sleep.h>
+#include <util/delay.h>
+//#include <avr/eeprom.h>
+//#include <avr/sleep.h>
 
 //--------------SOURCE-FILES---------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
 // These are stored outside of the project folder, but will still be compiled
-#include "ADC.h"
-#include "communication.h"
+//#include "ADC.h"
+//#include "communication.h"
 #include "timer.h"
-#include "manch_m.h"
-#include "status.h"
+//#include "manch_m.h"
+//#include "status.h"
 
 void bms_slave_init(void);
+
+#define UPTODOWN
 
 //--------------MAIN-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
 int main(void)
 {
-  uint16_t t, time;
   bms_slave_init();
-  timer_clear_timer(TIMER_COMM);
-  timer_clear_timer(TIMER_ADC);
+#ifdef DOWNTOUP
+  DDRA |= (1 << PINA2);
+  DDRB &= ~(1 << PINB6);
+  DDRA |= (1 << PINA5);
+  PORTA |= (1 << PINA5);
+#endif
+#ifdef UPTODOWN
+  DDRA &= ~(1 << PINA2);
+  DDRB |= (1 << PINB6);
+  DDRA |= (1 << PINA6);
+  PORTA |= (1 << PINA6);
+#endif
   while (1)
   {
-    timer_add_time();
-    t = timer_get_timer(TIMER_ADC);
-    time = timer_get_timer(TIMER_COMM);
-    manch_init_send();
-    manch_init_send1();
-    if (t >= 2000)
-    {
-      timer_clear_timer(TIMER_ADC);
-      timer_clear_timer(TIMER_COMM);
-      stat_led_off();
-    }
-    else if (time >= 1000)
-    {
-      timer_clear_timer(TIMER_COMM);
-      stat_led_green();
-      manch_send(0x99);
-      manch_send1(0x99);
-    }
+    _delay_us(50);
+#ifdef DOWNTOUP
+      PORTA ^= (1 << PINA2);
+#endif
+#ifdef UPTODOWN
+      PORTB ^= (1 << PINB6);
+#endif
   }
 }
 
@@ -96,19 +97,17 @@ void bms_slave_init() // Combining all init functions
 
 #elif F_CPU == 2000000L
   CLKPR = 0x80;
-  CLKPR = 0x01;
+  CLKPR = 0x02;
 
 #elif F_CPU == 1000000L
   CLKPR = 0x80;
-  CLKPR = 0x01;
+  CLKPR = 0x04;
 
 #else
 #error Invalid prescaler setting.
 #endif
   timer_init_timer();
   timer_add_time();
-  ADC_init();
-  stat_led_init(); // Status LED initialised
   BALANCING_DDR |= (1 << BALANCING_PIN);
   sei(); // global interrupt enable
 }
