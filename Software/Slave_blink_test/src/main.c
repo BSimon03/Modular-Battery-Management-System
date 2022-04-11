@@ -12,7 +12,7 @@
 //--------------SOURCE-FILES---------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
 // These are stored outside of the project folder, but will still be compiled
 #include "timer.h"
-#include "status.h"
+//#include "status.h"
 
 void bms_slave_init(void);
 
@@ -20,21 +20,16 @@ void bms_slave_init(void);
 int main(void)
 {
   uint16_t t = 0;
-  uint16_t time = 0;
   bms_slave_init();
-
+  DDRA|=(1<<PINA6);
   while (1)
   {
     timer_add_time();
     t = timer_get_timer(TIMER_ADC);
-    time = timer_get_timer(TIMER_COMM);
-    if (t >= 2000)
+    if (t >= 500)
     {
-      stat_led_off();
-    }
-    else if (time >= 1000)
-    {
-      stat_led_green();
+      timer_clear_timer(TIMER_ADC);
+      PORTA^=(1<<PINA6);
     }
   }
 }
@@ -57,7 +52,6 @@ void bms_slave_init() // Combining all init functions
 #else
 #error Invalid prescaler setting.
 #endif
-  stat_led_init();
   timer_init_timer();
   timer_add_time();
   sei(); // global interrupt enable
