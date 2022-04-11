@@ -15,7 +15,8 @@
 #define LEDPORT PORTA
 #define LEDPINR PINA5
 #define LEDPING PINA6
-#elif __AVR_ATmega32U4__
+#endif
+#ifdef __AVR_ATmega32U4__
 #define LEDDDR  DDRD
 #define LEDPORT PORTD
 #define LEDPINR PIND6
