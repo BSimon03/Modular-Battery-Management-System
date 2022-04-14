@@ -75,7 +75,7 @@ int main(void)
   // Measurements
   uint16_t adc_raw = 0;
 
-  int8_t battery_temperature; // battery_temperature = adc_value - 273; // K to degree C
+  int8_t battery_temperature;
   uint16_t battery_voltage;   // battery_voltage = (float)adc_value / 200; // divided by 1024 aka 10-bit, multiplied by 2,56 aka internal reference voltage * 2 (voltage divider)
   _delay_ms(500);
   uint8_t eeprom_stat = eeprom_read_byte(EEPROM_STATUS_ADR);
@@ -105,7 +105,7 @@ int main(void)
       }
       else
       {
-        eeprom_update_byte(EEPROM_STATUS_ADR, EEPROM_CALIBRATED);
+        eeprom_write_byte(EEPROM_STATUS_ADR, EEPROM_CALIBRATED);
       }
       while (1)
       {
@@ -313,7 +313,7 @@ void bms_slave_init() // Combining all init functions
 
 //********************************************************************************************************************************************************************************************************************************
 
-/*EEPROM TEST
+///*EEPROM TEST
 
 //--------------CPU-FREQUENCY--------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
 //--Define CPU frequency, if not already defined in the platformio.ini or intellisense
@@ -342,10 +342,6 @@ void bms_slave_init() // Combining all init functions
 //--Define Microcontroller, if not already defined in the platform.ini or intellisense
 #ifndef __AVR_ATtiny261A__
 #define __AVR_ATtiny261A__
-#endif
-
-#ifndef BMS_SLAVE
-#define BMS_SLAVE
 #endif
 
 //--------------PIN-DEFINITIONS------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
@@ -394,8 +390,9 @@ void bms_slave_init(void);
 int main(void)
 {
   bms_slave_init();
-  uint16_t* EEP = 0x0000;
-  eeprom_update_word(EEP, 0x0000);
+  uint16_t* EEP_adr = 0x0000;
+  uint16_t EEP_data = 0xAAAA;
+  eeprom_update_word(EEP_adr, EEP_data);
   float voltage;
   uint16_t adc;
   while (1)
@@ -421,21 +418,35 @@ int main(void)
     }
   }
 }
-
 void bms_slave_init() // Combining all init functions
 {
-  CLKPR |= CLK_PS_SETTING; // Clock presescaler setting
+  // CPU frequency settings.
+#if F_CPU == 4000000L
+  CLKPR = 0x80;
+  CLKPR = 0x01;
+
+#elif F_CPU == 2000000L
+  CLKPR = 0x80;
+  CLKPR = 0x02;
+
+#elif F_CPU == 1000000L
+  CLKPR = 0x80;
+  CLKPR = 0x04;
+
+#else
+#error Invalid prescaler setting.
+#endif
   timer_init_timer();
   timer_add_time();
   ADC_init();
   stat_led_init(); // Status LED initialised
   BALANCING_DDR |= (1 << BALANCING_PIN);
   sei(); // global interrupt enable
-}*/
+}//*/
 
 //********************************************************************************************************************************************************************************************************************************
 
-///* BALANCING TEST
+/* BALANCING TEST
 
 //--------------USED-HARDWARE--------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
 //--Define Microcontroller, if not already defined in the platform.ini or intellisense
@@ -520,7 +531,7 @@ void bms_slave_init() // Combining all init functions
   stat_led_init(); // Status LED initialised
   BALANCING_DDR |= (1 << BALANCING_PIN);
   sei(); // global interrupt enable
-}
+}*/
 
 //********************************************************************************************************************************************************************************************************************************
 
