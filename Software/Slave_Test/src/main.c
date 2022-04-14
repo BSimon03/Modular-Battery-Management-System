@@ -9,7 +9,6 @@
 /*  Author: Simon Ball                       */
 /*********************************************/
 
-/*
 //--------------CPU-FREQUENCY--------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
 //--Define CPU frequency, if not already defined in the platformio.ini or intellisense
 #ifndef F_CPU
@@ -68,113 +67,103 @@ int main(void)
 {
   bms_slave_init(); // Initiating the MCU, Registers configurated
 
-  uint8_t ADCstat = MEASURE_VOLT;
-  // 0  : Set up for Battery Temperature Measurement
-  // 1  : Set up for Battery Voltage Measurement
-
   // Measurements
-  uint16_t adc_raw = 0;
+  uint16_t adc = 0;
 
-  int8_t battery_temperature;
-  uint16_t battery_voltage;   // battery_voltage = (float)adc_value / 200; // divided by 1024 aka 10-bit, multiplied by 2,56 aka internal reference voltage * 2 (voltage divider)
+  int8_t battery_temperature = -100;
+  uint16_t battery_voltage = 0; // battery_voltage = (float)adc_value / 200; // divided by 1024 (10-bit), multiplied by 2,56 (internal reference voltage) * 2 (voltage divider)
   _delay_ms(500);
   uint8_t eeprom_stat = eeprom_read_byte(EEPROM_STATUS_ADR);
   _delay_ms(500);
   //--------------CALIBRATION----------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
   if (eeprom_stat != EEPROM_CALIBRATED) // if EEPROM not calibrated
   {
-    while (!battery_voltage) // Measure SUPPLY voltage
-    {
-      battery_voltage = measure_voltage(ADC_SAMPLES_V);
-      eeprom_write_word(EEPROM_3V_ADR, (uint16_t)battery_temperature);
-    }
-    while (battery_temperature == -100) // Measure ambient temperature
+    eeprom_update_byte(EEPROM_STATUS_ADR, 0x00);
+    /*// TEMP CALLIBRATION
+    while (battery_temperature < 0) // Measure ambient temperature
     {
       battery_temperature = measure_temperature();
     }
-    if (!(eeprom_stat & EEPROM_STATUS_TEMP)) // if neither 3V or 4V are measured
+    eeprom_update_word(EEPROM_temp_ADR, (uint16_t)battery_temperature);
+    */
+    // VOLT CALLIBRATION
+    while (battery_voltage == 0) // Measure SUPPLY voltage
     {
-      eeprom_write_word(EEPROM_3V_ADR, (uint16_t)battery_temperature);
+      battery_voltage = measure_voltage(6);
     }
-    if ((battery_voltage <= CAL_VOLTAGE_LB) && (!(eeprom_stat & EEPROM_STATUS_L))) // battery voltage smaller than lower max voltage and not calibrated yet
+
+    // 3V detection
+    if ((battery_voltage <= CAL_VOLT_LT) && (battery_voltage >= CAL_VOLT_LB) && (!(eeprom_stat & EEPROM_STATUS_L))) // battery voltage in low borders and not calibrated yet
     {
-      eeprom_write_word(EEPROM_3V_ADR, battery_voltage);
+      eeprom_update_word(EEPROM_3V_ADR, battery_voltage);
       if (!(eeprom_stat & EEPROM_STATUS_H)) // high voltage not calibrated yet
       {
-        eeprom_write_byte(EEPROM_STATUS_ADR, EEPROM_STATUS_L);
+        eeprom_update_byte(EEPROM_STATUS_ADR, EEPROM_STATUS_L); // set low voltage callibrated
       }
       else
       {
-        eeprom_write_byte(EEPROM_STATUS_ADR, EEPROM_CALIBRATED);
+        eeprom_update_byte(EEPROM_STATUS_ADR, EEPROM_CALIBRATED); // set all callibrated
       }
       while (1)
       {
-        _delay_ms(200);
+        _delay_ms(250);
         stat_led_green();
-        _delay_ms(200);
+        _delay_ms(250);
         stat_led_red();
       }
     }
-    else if ((battery_voltage >= CAL_VOLTAGE_HB) && (!(eeprom_stat & EEPROM_STATUS_H))) // battery voltage smaller than high min voltage and not calibrated yet
+    // 4V detection
+    else if ((battery_voltage >= CAL_VOLT_HB) && (battery_voltage <= CAL_VOLT_HT) && (!(eeprom_stat & EEPROM_STATUS_H))) // battery voltage in high borders and not calibrated yet
     {
-      eeprom_write_word(EEPROM_4V_ADR, battery_voltage);
+      eeprom_update_word(EEPROM_4V_ADR, battery_voltage);
       if (!(eeprom_stat & EEPROM_STATUS_L)) // low voltage not calibrated yet
       {
-        eeprom_write_byte(EEPROM_STATUS_ADR, EEPROM_STATUS_H);
+        eeprom_update_byte(EEPROM_STATUS_ADR, EEPROM_STATUS_H); // set high voltage callibrated
       }
       else
       {
-        eeprom_update_byte(EEPROM_STATUS_ADR, EEPROM_CALIBRATED);
+        eeprom_update_byte(EEPROM_STATUS_ADR, EEPROM_CALIBRATED); // set all callibrated
       }
       while (1)
       {
-        _delay_ms(200);
+        _delay_ms(250);
         stat_led_green();
-        _delay_ms(200);
+        _delay_ms(250);
         stat_led_off();
       }
     }
+    // battery voltage out of predefined borders
     else
     {
       while (1)
       {
         _delay_ms(200);
-        stat_led_red(); // battery voltage out of predefined borders
+        stat_led_red();
         _delay_ms(200);
         stat_led_off();
       }
     }
   }
-  uint16_t voltage_h = eeprom_read_word(EEPROM_4V_ADR);
-  uint16_t voltage_l = eeprom_read_word(EEPROM_3V_ADR);
-  int8_t temp_cal = (int8_t)eeprom_read_word(EEPROM_temp_ADR);
-  float VOLT_K = (CAL_VOLTAGE_H - CAL_VOLTAGE_L) / (voltage_h - voltage_l); // calculate voltage slope error
-  int8_t VOLT_D = CAL_VOLTAGE_H - (voltage_h * VOLT_K);                     // calculate voltage offset
-  int8_t TEMP_D = temp_cal - CAL_TEMP;                                      // calculate temperature offset
 
   while (1)
   {
-    //--------------ADC------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
-    stat_led_off();
-
-    if (!ADCstat)
+    adc = measure_voltage(ADC_SAMPLES_V);
+    if (adc) // make sure conversion is done
     {
-      adc_raw = VOLT_K * measure_voltage(ADC_SAMPLES_V);
-      if (adc_raw) // make sure conversion is done
+      if (adc > 800)
       {
-        battery_voltage = adc_raw + VOLT_D;
-        ADCstat = MEASURE_TEMP;
-        stat_led_off();
-      }
-    }
-    else
-    {
-      adc_raw = measure_temperature();
-      if (adc_raw) // make sure conversion is done
-      {
-        battery_temperature = adc_raw + TEMP_D;
-        ADCstat = MEASURE_VOLT;
         stat_led_green();
+        STOP_BALANCING();
+      }
+      else if (adc > 600)
+      {
+        stat_led_orange();
+        START_BALANCING();
+      }
+      else
+      {
+        stat_led_red();
+        STOP_BALANCING();
       }
     }
   }
@@ -202,7 +191,7 @@ void bms_slave_init() // Combining all init functions
   stat_led_init(); // Status LED initialised
   BALANCING_DDR |= (1 << BALANCING_PIN);
   sei(); // global interrupt enable
-}*/
+}
 
 //********************************************************************************************************************************************************************************************************************************
 
@@ -313,7 +302,7 @@ void bms_slave_init() // Combining all init functions
 
 //********************************************************************************************************************************************************************************************************************************
 
-///*EEPROM TEST
+/*EEPROM TEST
 
 //--------------CPU-FREQUENCY--------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
 //--Define CPU frequency, if not already defined in the platformio.ini or intellisense
@@ -442,7 +431,7 @@ void bms_slave_init() // Combining all init functions
   stat_led_init(); // Status LED initialised
   BALANCING_DDR |= (1 << BALANCING_PIN);
   sei(); // global interrupt enable
-}//*/
+}*/
 
 //********************************************************************************************************************************************************************************************************************************
 
