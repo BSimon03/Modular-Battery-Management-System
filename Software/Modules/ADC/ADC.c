@@ -11,7 +11,6 @@
 
 #include <avr/io.h>
 #include <stdint.h>
-#include <avr/eeprom.h>
 #include "ADC.h"
 
 static uint8_t state = ST_REGISTER;
@@ -22,15 +21,13 @@ static uint16_t sort; // sort algorithm
 
 void ADC_init()
 {
-	// ADC5 : Temperature Sensor NTC
-	ADCSRA |= (1 << ADEN);	// ADC enabled
-	ADCSRA |= (1 << ADPS2); // Clock Prescaler of 16
+	ADCSRA = 0x84; // ADC enabled // Clock Prescaler of 16
 
 	// Result is right adjusted
 
-	// Single Conversion mode
-	//  ADATE is not enabled, which means we drive the ADC in Single Conversion Mode.
-	//  By setting ADSC (ADC Start Conversion) to a logic 1, the conversion is getting started.
+	//  Single Conversion mode
+	//  ADATE is not enabled, which means that the ADC is in Single Conversion Mode.
+	//  By setting the ADSC bit(ADC Start Conversion) the conversion is started.
 	//  Once the conversion is done, ADSC is cleared and the ADIF flag will be set.
 	//  When its completed the channel can safely be changed. The next conversion takes 25 clock cycles.
 	//  ADIE is not set as ADIF gets set when the conversion is done
@@ -44,9 +41,8 @@ int8_t measure_temperature()
 	switch (state)
 	{
 	case ST_REGISTER:
-		ADMUX = 0xC0;																  // Internal Reference Voltage 1.1V
-		ADCSRB = 0x0F;																  // clearing REFS2, mux 5 bit set
-		ADMUX |= (1 << MUX0) | (1 << MUX1) | (1 << MUX2) | (1 << MUX3) | (1 << MUX4); // Attaching Channel 11 to the ADC... Temperature
+		ADMUX = 0xDF;  // Internal Reference Voltage 1.1V // Attaching Channel 11 to the ADC... Temperature
+		ADCSRB = 0x08; // clearing REFS2, mux 5 bit set
 		state = ST_MEASURE;
 		ADC_START_CONVERSION();
 		break;
@@ -54,49 +50,52 @@ int8_t measure_temperature()
 		if (ADC_INTERRUPT)
 		{
 			ADC_CLEAR_INT();
-			adc_values[0] = (ADCH << 8) | ADCL;	 // save ADC in the array
-			ADC_START_CONVERSION();
+			adc_values[0] = 0;					   // current position in the array set to 0
+			adc_values[0] |= ADCL;				   // save ADCL in the array
+			adc_values[0] |= ((ADCH & 0x03) << 8); // save ADCH at the right position in the array
 			temperature = adc_values[0] - 275;
 			state = ST_REGISTER;
 		}
 		break;
-		return temperature;
 	}
+	return temperature;
 }
 
-	uint16_t measure_voltage(uint8_t conversions)
-	{
-		adc_value = 0;
+uint16_t measure_voltage(uint8_t conversions)
+{
+	adc_value = 0;
 
-		switch (state)
+	switch (state)
+	{
+	case ST_REGISTER:
+		ADMUX = 0x86;  // Internal Reference Voltage 2.56V, ADC attached to Channel 6 aka PA7
+		ADCSRB = 0x10; // Internal Reference Voltage 2.56V
+		state = ST_MEASURE;
+		adc_counter = 0;
+		ADC_START_CONVERSION();
+		break;
+	case ST_MEASURE:
+		if (ADC_INTERRUPT)
 		{
-		case ST_REGISTER:
-			ADMUX = 0x86;			// Internal Reference Voltage 2.56V, ADC attached to Channel 6 aka PA7
-			ADCSRB |= (1 << REFS2); // Internal Reference Voltage 2.56V
-			state = ST_MEASURE;
-			adc_counter = 0;
-			ADC_START_CONVERSION();
-			break;
-		case ST_MEASURE:
-			if (ADC_INTERRUPT)
+			ADC_CLEAR_INT();
+			if (adc_counter < conversions)
 			{
-				ADC_CLEAR_INT();
-				if (adc_counter < conversions)
-				{
-					adc_values[adc_counter] = (ADCH << 8) | ADCL;	 // save ADC in the array
-					adc_counter++;
-					ADC_START_CONVERSION();
-				}
-				else
-				{
-					state = ST_FILTER;
-				}
+				adc_values[adc_counter] = 0;					 // current position in the array set to 0
+				adc_values[adc_counter] |= ADCL;				 // save ADCL in the array
+				adc_values[adc_counter] |= ((ADCH & 0x03) << 8); // save ADCH at the right position in the array
+				adc_counter++;
+				ADC_START_CONVERSION();
 			}
-			break;
-		case ST_FILTER:
-#if ADC_FILTER_V == 1 // filters out the greatest and the smallest value measured for higher precision
+			else
+			{
+				state = ST_FILTER;
+			}
+		}
+		break;
+	case ST_FILTER:
+		#if ADC_FILTER_V == 1 // filters out the greatest and the smallest value measured for higher precision
 			// shifting the greatest value to the right
-			for (adc_counter = 0; adc_counter < conversions; adc_counter++)
+			for (adc_counter = 0; adc_counter <= conversions; adc_counter++)
 			{
 				if (adc_values[adc_counter + 1] < adc_values[adc_counter])
 				{
@@ -119,19 +118,19 @@ int8_t measure_temperature()
 
 			// Adding all measured values to variable, except the outer ones
 			adc_value = 0; // Resetting variable
-			for (adc_counter = 1; adc_counter <= (conversions - 1); adc_counter++)
+			for (adc_counter = 1; adc_counter < (conversions - 1); adc_counter++)
 				adc_value += adc_values[adc_counter];
 			adc_value /= (conversions - 2);
-#else
+		#else
 			// Adding all measured values to variable
 			adc_value = 0; // Resetting variable
 			for (adc_counter = 0; adc_counter < conversions; adc_counter++)
 				adc_value += adc_values[adc_counter];
 			adc_value /= (conversions);
-			// voltage = (float)adc_value / 400; //divided by 1024 aka 10-bit, multiplied by 2,56 aka internal reference voltage
-#endif
-			state = ST_REGISTER;
-			break;
-		}
-		return adc_value;
+		#endif
+		// voltage = (float)adc_value / 400; //divided by 1024 aka 10-bit, multiplied by 2,56 aka internal reference voltage
+		state = ST_REGISTER;
+		break;
 	}
+	return adc_value;
+}
