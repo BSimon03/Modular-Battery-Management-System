@@ -67,8 +67,10 @@ int main(void)
 {
   bms_slave_init(); // Initiating the MCU, Registers configurated
 
+  uint8_t ADCstat = MEASURE_VOLT;
+  // 0  : Set up for Battery Temperature Measurement
+  // 1  : Set up for Battery Voltage Measurement
   // Measurements
-  uint16_t adc = 0;
 
   int8_t battery_temperature = -100;
   uint16_t battery_voltage = 0; // battery_voltage = (float)adc_value / 200; // divided by 1024 (10-bit), multiplied by 2,56 (internal reference voltage) * 2 (voltage divider)
@@ -147,23 +149,44 @@ int main(void)
 
   while (1)
   {
-    adc = measure_voltage(ADC_SAMPLES_V);
-    if (adc) // make sure conversion is done
+    if (!ADCstat)
     {
-      if (adc > 800)
+      battery_voltage = measure_voltage(ADC_SAMPLES_V);
+      if (battery_voltage) // make sure conversion is done
+      {
+        if (battery_voltage > 800)
+        {
+          STOP_BALANCING();
+        }
+        else if (battery_voltage > 600)
+        {
+          START_BALANCING();
+        }
+        else
+        {
+          STOP_BALANCING();
+        }
+        ADCstat = MEASURE_TEMP;
+      }
+    }
+    else
+    {
+      battery_temperature = measure_temperature();
+      if (battery_temperature > -100) // make sure conversion is done
+      {
+        if (battery_temperature > 30)
       {
         stat_led_green();
-        STOP_BALANCING();
       }
-      else if (adc > 600)
+      else if (battery_temperature < 30 && battery_temperature > 0)
       {
         stat_led_orange();
-        START_BALANCING();
       }
       else
       {
         stat_led_red();
-        STOP_BALANCING();
+      }
+        ADCstat = MEASURE_VOLT;
       }
     }
   }
