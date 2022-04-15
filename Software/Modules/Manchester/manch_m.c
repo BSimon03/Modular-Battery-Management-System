@@ -4,6 +4,10 @@
 //
 //   rst, jan 2022
 //
+//   Author: Reinhard Steindl
+//
+//   Update by: Simon Ball
+//
 //================================================================
 
 #include <avr/io.h>
