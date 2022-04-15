@@ -59,7 +59,9 @@ int main(void)
     if (COMM_time >= 1000)
     {
       timer_clear_timer(TIMER_COMM);
+      manch_init_send1();
       manch_init_send();
+      manch_send1(send);
       manch_send(send);
       stat_led_toggle_green();
     }
