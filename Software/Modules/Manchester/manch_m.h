@@ -13,7 +13,7 @@
 #define CLOCK_PR 1
 #endif // __AVR_ATmega32u4__
 #ifdef __AVR_ATtiny261A__
-#define CLOCK_PR 256
+#define CLOCK_PR 2
 #define MANCHESTER1 // 2. manchester-übertragung
 #endif              // __AVR_ATtiny261a__
 

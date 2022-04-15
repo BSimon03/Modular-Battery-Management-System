@@ -28,10 +28,10 @@ void manch_init_send(void)
    TIMSK1 = 0x05; // ocr1b match und overflow interrupt;
 #endif            //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
-   TCCR1A = 0x03; // Mode 2, Fast PWM
-   // TCCR1B = 0x09; // Prescaler 256
+   TCCR1A = 0x02; // Mode 2, Fast PWM
+   OCR1B = F_CPU / BAUDRATE / CLOCK_PR;
    OCR1C = 2 * F_CPU / BAUDRATE / CLOCK_PR;
-   TIMSK = 0x24; // ocr1b match und overflow interrupt;
+   TIMSK = 0x24; // ocr1b match und overflow interrupt
 #endif           //__AVR_ATtiny261A__
 }
 
@@ -74,7 +74,7 @@ void manch_send(uint16_t data)
 #endif             //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
    TIFR = 0x00;
-   TCCR1B = 0x09; // timer starten prescaler 256
+   TCCR1B = 0x01; // timer starten
 #endif            //__AVR_ATtiny261A__
 }
 
@@ -229,7 +229,7 @@ ISR(TIMER1_COMPA_vect) // timeout, eine erwartete flanke ist nicht gekommen
    TCCR1B &= ~0x01; // timer stoppen
 #endif              //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
-   TCCR1B &= ~0x09; // timer stoppen
+   TCCR1B &= ~0x01; // timer stoppen
 #endif              //__AVR_ATtiny261A__
 }
 
@@ -243,7 +243,7 @@ ISR(TIMER1_OVF_vect)
       TCCR1B &= 0xFE; // timer stoppen
 #endif
 #ifdef __AVR_ATtiny261A__
-      TCCR1B = 0x00; // timer stoppen
+      TCCR1B &= ~0x01; // timer stoppen
 #endif
 #ifdef MANCHESTER1
       CLRMANCH1;
