@@ -21,6 +21,91 @@
 #define __AVR_ATtiny261A__
 #endif
 
+//--------------LIBRARY-INCLUDES-----------------------------------------------------------------------------------------------------------------------------------------------------------------------//
+#include <avr/io.h>
+#include <stdint.h>
+#include <avr/interrupt.h>
+#include <avr/eeprom.h>
+#include <avr/sleep.h>
+
+//--------------SOURCE-FILES---------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
+// These are stored outside of the project folder, but will still be compiled
+#include "communication.h"
+#include "timer.h"
+#include "manch_m.h"
+#include "status.h"
+
+void bms_slave_init(void);
+
+//--------------MAIN-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
+int main(void)
+{
+  bms_slave_init(); // Initiating the MCU, Registers configurated
+
+  // Send data
+  uint16_t send = 0xAACC;
+
+  // Timing
+  uint16_t COMM_time = 0; // compare value
+
+  // clear timers after startup
+  timer_clear_timer(TIMER_COMM);
+
+  while (1)
+  {
+    //--------------ADC------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
+    timer_add_time(); // executed after max 32ms
+    COMM_time = timer_get_timer(TIMER_COMM);
+    if (COMM_time >= 1000)
+    {
+      timer_clear_timer(TIMER_COMM);
+      manch_init_send();
+      manch_send(send);
+      stat_led_toggle_green();
+    }
+  }
+}
+
+void bms_slave_init() // Combining all init functions
+{
+  // CPU frequency settings.
+#if F_CPU == 4000000L
+  CLKPR = 0x80;
+  CLKPR = 0x01;
+
+#elif F_CPU == 2000000L
+  CLKPR = 0x80;
+  CLKPR = 0x02;
+
+#elif F_CPU == 1000000L
+  CLKPR = 0x80;
+  CLKPR = 0x04;
+
+#else
+#error Invalid prescaler setting.
+#endif
+  timer_init_timer();
+  timer_add_time();
+  stat_led_init(); // Status LED initialised
+  sei();           // global interrupt enable
+}
+
+//********************************************************************************************************************************************************************************************************************************
+
+/* EEPROM CALLIBRATION TEST
+
+//--------------CPU-FREQUENCY--------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
+//--Define CPU frequency, if not already defined in the platformio.ini or intellisense
+#ifndef F_CPU
+#define F_CPU 2000000L
+#endif
+
+//--------------USED-HARDWARE--------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
+//--Define Microcontroller, if not already defined in the platform.ini or intellisense
+#ifndef __AVR_ATtiny261A__
+#define __AVR_ATtiny261A__
+#endif
+
 //--------------PIN-DEFINITIONS------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
 #define DEBUG_DDR DDRB
 #define DEBUG_PORT PORTB
@@ -81,13 +166,13 @@ int main(void)
   if (eeprom_stat != EEPROM_CALIBRATED) // if EEPROM not calibrated
   {
     eeprom_update_byte(EEPROM_STATUS_ADR, 0x00);
-    /*// TEMP CALLIBRATION
+    // TEMP CALLIBRATION
     while (battery_temperature < 0) // Measure ambient temperature
     {
       battery_temperature = measure_temperature();
     }
     eeprom_update_word(EEPROM_temp_ADR, (uint16_t)battery_temperature);
-    */
+
     // VOLT CALLIBRATION
     while (battery_voltage == 0) // Measure SUPPLY voltage
     {
@@ -214,7 +299,7 @@ void bms_slave_init() // Combining all init functions
   stat_led_init(); // Status LED initialised
   BALANCING_DDR |= (1 << BALANCING_PIN);
   sei(); // global interrupt enable
-}
+}*/
 
 //********************************************************************************************************************************************************************************************************************************
 
