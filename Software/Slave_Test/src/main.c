@@ -9,6 +9,219 @@
 /*  Author: Simon Ball                       */
 /*********************************************/
 
+//--------------USED-HARDWARE--------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
+//--Define Microcontroller, if not already defined in the platform.ini or intellisense
+#ifndef __AVR_ATtiny261A__
+#define __AVR_ATtiny261A__
+#endif
+
+//--------------PIN-DEFINITIONS------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
+#define DEBUG_DDR DDRB
+#define DEBUG_PORT PORTB
+#define DEBUG_PIN PINB5 // PCINT13
+
+//--------------SETTINGS-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
+#define ADC_SAMPLES_V 4 // Averaging samples, 6 is max
+
+//--------------BALANCING------------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
+#define BALANCING_DDR DDRB
+#define BALANCING_PORT PORTB
+#define BALANCING_PIN PINB4
+
+#define START_BALANCING() BALANCING_PORT |= (1 << BALANCING_PIN)
+
+#define STOP_BALANCING() BALANCING_PORT &= ~(1 << BALANCING_PIN)
+
+//--------------LIBRARY-INCLUDES-----------------------------------------------------------------------------------------------------------------------------------------------------------------------//
+#include <avr/io.h>
+#include <stdint.h>
+#include <avr/interrupt.h>
+#include <avr/eeprom.h>
+#include <avr/sleep.h>
+#include <util/delay.h>
+
+//--------------SOURCE-FILES---------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
+// These are stored outside of the project folder, but will still be compiled
+#include "ADC.h"
+#include "communication.h"
+#include "timer.h"
+#include "manch_m.h"
+#include "status.h"
+
+enum ADC_STAT
+{
+  MEASURE_VOLT,
+  MEASURE_TEMP
+};
+
+void bms_slave_init(void);
+
+//--------------MAIN-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
+int main(void)
+{
+  bms_slave_init(); // Initiating the MCU, Registers configurated
+
+  uint8_t ADCstat = MEASURE_VOLT;
+  // 0  : Set up for Battery Temperature Measurement
+  // 1  : Set up for Battery Voltage Measurement
+  // Measurements
+
+  int8_t battery_temperature = -100;
+  uint16_t battery_voltage = 0; // battery_voltage = (float)adc_value / 200; // divided by 1024 (10-bit), multiplied by 2,56 (internal reference voltage) * 2 (voltage divider)
+  _delay_ms(500);
+  uint8_t eeprom_stat = eeprom_read_byte(EEPROM_STATUS_ADR);
+  _delay_ms(500);
+  //--------------CALIBRATION----------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
+  if (eeprom_stat != EEPROM_CALIBRATED) // if EEPROM not calibrated
+  {
+    eeprom_update_byte(EEPROM_STATUS_ADR, 0x00);
+    // TEMP CALLIBRATION
+    while (battery_temperature < 0) // Measure ambient temperature
+    {
+      battery_temperature = measure_temperature();
+    }
+    eeprom_update_byte(EEPROM_temp_ADR, (uint8_t)battery_temperature);
+
+    // VOLT CALLIBRATION
+    while (battery_voltage == 0) // Measure SUPPLY voltage
+    {
+      battery_voltage = measure_voltage(6);
+    }
+
+    // 3V detection
+    if ((battery_voltage <= CAL_VOLT_LT) && (battery_voltage >= CAL_VOLT_LB) && (!(eeprom_stat & EEPROM_STATUS_L))) // battery voltage in low borders and not calibrated yet
+    {
+      eeprom_update_word(EEPROM_3V_ADR, battery_voltage);
+      if (!(eeprom_stat & EEPROM_STATUS_H)) // high voltage not calibrated yet
+      {
+        eeprom_update_byte(EEPROM_STATUS_ADR, EEPROM_STATUS_L); // set low voltage callibrated
+      }
+      else
+      {
+        eeprom_update_byte(EEPROM_STATUS_ADR, EEPROM_CALIBRATED); // set all callibrated
+      }
+      while (1)
+      {
+        _delay_ms(250);
+        stat_led_green();
+        _delay_ms(250);
+        stat_led_red();
+      }
+    }
+    // 4V detection
+    else if ((battery_voltage >= CAL_VOLT_HB) && (battery_voltage <= CAL_VOLT_HT) && (!(eeprom_stat & EEPROM_STATUS_H))) // battery voltage in high borders and not calibrated yet
+    {
+      eeprom_update_word(EEPROM_4V_ADR, battery_voltage);
+      if (!(eeprom_stat & EEPROM_STATUS_L)) // low voltage not calibrated yet
+      {
+        eeprom_update_byte(EEPROM_STATUS_ADR, EEPROM_STATUS_H); // set high voltage callibrated
+      }
+      else
+      {
+        eeprom_update_byte(EEPROM_STATUS_ADR, EEPROM_CALIBRATED); // set all callibrated
+      }
+      while (1)
+      {
+        _delay_ms(250);
+        stat_led_green();
+        _delay_ms(250);
+        stat_led_off();
+      }
+    }
+    // battery voltage out of predefined borders
+    else
+    {
+      while (1)
+      {
+        _delay_ms(200);
+        stat_led_red();
+        _delay_ms(200);
+        stat_led_off();
+      }
+    }
+  }
+  int8_t TEMP_D = (int8_t)eeprom_read_byte(EEPROM_temp_ADR) - CAL_TEMP; // calculate temperature offset
+
+  uint16_t voltage_h = eeprom_read_word(EEPROM_4V_ADR);
+  uint16_t voltage_l = eeprom_read_word(EEPROM_3V_ADR);
+
+  uint16_t VOLT_K = (CAL_VOLT_H - CAL_VOLT_L) / (voltage_h - voltage_l); // Multiplication factor for slope error
+
+  uint16_t VOLT_D = CAL_VOLT_H - (voltage_h * VOLT_K); // Value to subtract from measurement to kill offset VOLT_D is x64
+
+  while (1)
+  {
+    if (!ADCstat)
+    {
+      battery_voltage = (measure_voltage(ADC_SAMPLES_V)*VOLT_K)-VOLT_D;
+      if (battery_voltage) // make sure conversion is done
+      {
+        if (battery_voltage > 51200)
+        {
+          STOP_BALANCING();
+        }
+        else if (battery_voltage > 38400)
+        {
+          START_BALANCING();
+        }
+        else
+        {
+          STOP_BALANCING();
+        }
+        ADCstat = MEASURE_TEMP;
+      }
+    }
+    else
+    {
+      battery_temperature = measure_temperature()-TEMP_D;
+      if (battery_temperature > -100) // make sure conversion is done
+      {
+        if (battery_temperature > 30)
+        {
+          stat_led_green();
+        }
+        else if (battery_temperature < 30 && battery_temperature > 0)
+        {
+          stat_led_orange();
+        }
+        else
+        {
+          stat_led_red();
+        }
+        ADCstat = MEASURE_VOLT;
+      }
+    }
+  }
+}
+
+void bms_slave_init() // Combining all init functions
+{
+  // CPU frequency settings.
+#if F_CPU == 4000000L
+  CLKPR = 0x80;
+  CLKPR = 0x01;
+
+#elif F_CPU == 2000000L
+  CLKPR = 0x80;
+  CLKPR = 0x02;
+
+#elif F_CPU == 1000000L
+  CLKPR = 0x80;
+  CLKPR = 0x04;
+
+#else
+#error Invalid prescaler setting.
+#endif
+  timer_init_timer();
+  timer_add_time();
+  stat_led_init(); // Status LED initialised
+  sei();           // global interrupt enable
+}
+
+//********************************************************************************************************************************************************************************************************************************
+
+/* MANCHESTER SEND TEST
+
 //--------------CPU-FREQUENCY--------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
 //--Define CPU frequency, if not already defined in the platformio.ini or intellisense
 #ifndef F_CPU
@@ -90,7 +303,7 @@ void bms_slave_init() // Combining all init functions
   timer_add_time();
   stat_led_init(); // Status LED initialised
   sei();           // global interrupt enable
-}
+}*/
 
 //********************************************************************************************************************************************************************************************************************************
 
