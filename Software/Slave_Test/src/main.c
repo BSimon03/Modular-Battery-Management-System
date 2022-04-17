@@ -240,7 +240,7 @@ int main(void)
     }
   }
 
-  int8_t TEMP_D = (int8_t)eeprom_read_byte(EEPROM_temp_ADR) - CAL_TEMP; // calculate temperature offset
+  int8_t TEMP_D = (int8_t)eeprom_read_word(EEPROM_temp_ADR) - CAL_TEMP; // calculate temperature offset
 
   uint16_t voltage_h = eeprom_read_word(EEPROM_4V_ADR);
   uint16_t voltage_l = eeprom_read_word(EEPROM_3V_ADR);
