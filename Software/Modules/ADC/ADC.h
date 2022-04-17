@@ -17,15 +17,17 @@
 #define EEPROM_temp_ADR (uint16_t *)0x05 // Address of ADC temperature offset
 
 // Callibration
-#define CAL_VOLT_HT 0x035C //                              -> 4.3V
-#define CAL_VOLT_H 0x0320  // Callibration Voltage HIGH    -> 4V
-#define CAL_VOLT_HB 0x02E4 //                              -> 3.7V
+#define CAL_VOLT_HT 0x035C    //                              -> 4.3V
+#define CAL_VOLT_H 0x0320     // Callibration Voltage HIGH    -> 4V
+#define CAL_VOLT_H_EXT 0xC800 // Callibration Voltage HIGH    -> 4V
+#define CAL_VOLT_HB 0x02E4    //                              -> 3.7V
 
-#define CAL_VOLT_LT 0x0294 //                              -> 3.3V
-#define CAL_VOLT_L 0x0258  // Callibration Voltage LOW     -> 3V
-#define CAL_VOLT_LB 0x021C //                              -> 2.7V
+#define CAL_VOLT_LT 0x0294    //                              -> 3.3V
+#define CAL_VOLT_L 0x0258     // Callibration Voltage LOW     -> 3V
+#define CAL_VOLT_L_EXT 0x9600 // Callibration Voltage LOW     -> 3V
+#define CAL_VOLT_LB 0x021C    //                              -> 2.7V
 
-#define CAL_TEMP 22           // Environment temperature during calibration
+#define CAL_TEMP (int8_t)22 // Environment temperature during calibration
 
 #define EEPROM_STATUS_ADR (uint8_t *)0x00 // Address of the status byte
 // Byte pointers to each bit in the eeprom status byte

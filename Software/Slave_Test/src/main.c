@@ -164,6 +164,7 @@ int main(void)
   // Measurements
 
   int8_t battery_temperature = -100;
+  uint16_t volt_raw = 0;
   uint16_t battery_voltage = 0; // battery_voltage = (float)adc_value / 200; // divided by 1024 (10-bit), multiplied by 2,56 (internal reference voltage) * 2 (voltage divider)
   _delay_ms(500);
   uint8_t eeprom_stat = eeprom_read_byte(EEPROM_STATUS_ADR);
@@ -180,10 +181,11 @@ int main(void)
     eeprom_update_word(EEPROM_temp_ADR, (uint16_t)battery_temperature);
 
     // VOLT CALLIBRATION
-    while (battery_voltage == 0) // Measure SUPPLY voltage
-    {
-      battery_voltage = measure_voltage(6);
-    }
+    for (int i = 0; i < 10; i++)
+      while (battery_voltage == 0) // Measure SUPPLY voltage
+      {
+        battery_voltage = measure_voltage(6);
+      }
 
     // 3V detection
     if ((battery_voltage <= CAL_VOLT_LT) && (battery_voltage >= CAL_VOLT_LB) && (!(eeprom_stat & EEPROM_STATUS_L))) // battery voltage in low borders and not calibrated yet
@@ -243,22 +245,39 @@ int main(void)
   uint16_t voltage_h = eeprom_read_word(EEPROM_4V_ADR);
   uint16_t voltage_l = eeprom_read_word(EEPROM_3V_ADR);
 
-  uint16_t VOLT_K = (CAL_VOLT_H - CAL_VOLT_L) / (voltage_h - voltage_l); // Multiplication factor for slope error
+  uint16_t VOLT_K = (CAL_VOLT_H_EXT - CAL_VOLT_L_EXT) / (voltage_h - voltage_l); // Multiplication factor for slope error
 
-  uint16_t VOLT_D = CAL_VOLT_H - (voltage_h * VOLT_K); // Value to subtract from measurement to kill offset VOLT_D is x64
+  uint16_t VOLT_D = CAL_VOLT_H_EXT - (voltage_h * VOLT_K); // Value to subtract from measurement to kill offset VOLT_D is x64
 
   while (1)
   {
     if (!ADCstat)
     {
-      battery_voltage = measure_voltage(ADC_SAMPLES_V)*VOLT_K-VOLT_D;
-      if (battery_voltage) // make sure conversion is done
+      volt_raw = measure_voltage(ADC_SAMPLES_V);
+      battery_voltage = volt_raw * VOLT_K + VOLT_D;
+      if (volt_raw) // make sure conversion is done
       {
-        if (battery_voltage > 51200)
+        if (battery_voltage > CAL_VOLT_H_EXT)
         {
-          STOP_BALANCING();
+          stat_led_green();
         }
-        else if (battery_voltage > 38400)
+        else if (battery_voltage > CAL_VOLT_L_EXT)
+        {
+          stat_led_red();
+        }
+        else
+        {
+          stat_led_green();
+        }
+        ADCstat = MEASURE_TEMP;
+      }
+    }
+    else
+    {
+      battery_temperature = measure_temperature() - TEMP_D;
+      if (battery_temperature > -100) // make sure conversion is done
+      {
+        if (battery_temperature > 23)
         {
           START_BALANCING();
         }
@@ -266,26 +285,6 @@ int main(void)
         {
           STOP_BALANCING();
         }
-        ADCstat = MEASURE_TEMP;
-      }
-    }
-    else
-    {
-      battery_temperature = measure_temperature()-TEMP_D;
-      if (battery_temperature > -100) // make sure conversion is done
-      {
-        if (battery_temperature > 30)
-      {
-        stat_led_green();
-      }
-      else if (battery_temperature < 30 && battery_temperature > 0)
-      {
-        stat_led_orange();
-      }
-      else
-      {
-        stat_led_red();
-      }
         ADCstat = MEASURE_VOLT;
       }
     }
