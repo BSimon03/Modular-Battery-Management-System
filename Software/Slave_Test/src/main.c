@@ -29,13 +29,10 @@
 #include <avr/io.h>
 #include <stdint.h>
 #include <avr/interrupt.h>
-#include <avr/eeprom.h>
-#include <avr/sleep.h>
 
 //--------------SOURCE-FILES---------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
 // These are stored outside of the project folder, but will still be compiled
 #include "communication.h"
-#include "timer.h"
 #include "manch_m.h"
 #include "status.h"
 
@@ -51,7 +48,6 @@ int main(void)
   uint8_t COMM_stat = 0;
 
   // clear timers after startup
-  timer_clear_timer(TIMER_COMM);
   manch_init_receive();
   while (1)
   {
@@ -87,8 +83,6 @@ void bms_slave_init() // Combining all init functions
 #else
 #error Invalid prescaler setting.
 #endif
-  timer_init_timer();
-  timer_add_time();
   stat_led_init(); // Status LED initialised
   sei();           // global interrupt enable
 }//*/
