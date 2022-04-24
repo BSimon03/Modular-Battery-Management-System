@@ -105,7 +105,6 @@ ISR(PCINT0_vect)
 ISR(PCINT_vect)
 #endif //__AVR_ATtiny261A__
 {
-   uint16_t tim;
 #ifdef __AVR_ATmega32U4__
    uint16_t tim;
 #endif //__AVR_ATmega32u4
