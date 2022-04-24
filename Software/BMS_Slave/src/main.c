@@ -96,7 +96,72 @@ int main(void)
 	//--------------CALIBRATION----------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
 	if (eeprom_stat != EEPROM_CALIBRATED) // if EEPROM not calibrated
 	{
-		eeprom_callibrate(eeprom_stat);
+		eeprom_update_byte(EEPROM_STATUS_ADR, 0x00);
+		// TEMP CALLIBRATION
+		while (battery_temperature < 0) // Measure ambient temperature
+		{
+			battery_temperature = measure_temperature();
+		}
+		eeprom_update_word(EEPROM_temp_ADR, (uint16_t)battery_temperature);
+
+		// VOLT CALLIBRATION
+		for (int i = 0; i < 10; i++)
+			while (battery_voltage == 0) // Measure SUPPLY voltage
+			{
+				battery_voltage = measure_voltage(6);
+			}
+
+		// 3V detection
+		if ((battery_voltage <= CAL_VOLT_LT) && (battery_voltage >= CAL_VOLT_LB) && (!(eeprom_stat & EEPROM_STATUS_L))) // battery voltage in low borders and not calibrated yet
+		{
+			eeprom_update_word(EEPROM_3V_ADR, battery_voltage);
+			if (!(eeprom_stat & EEPROM_STATUS_H)) // high voltage not calibrated yet
+			{
+				eeprom_update_byte(EEPROM_STATUS_ADR, EEPROM_STATUS_L); // set low voltage callibrated
+			}
+			else
+			{
+				eeprom_update_byte(EEPROM_STATUS_ADR, EEPROM_CALIBRATED); // set all callibrated
+			}
+			while (1)
+			{
+				_delay_ms(250);
+				stat_led_green();
+				_delay_ms(250);
+				stat_led_red();
+			}
+		}
+		// 4V detection
+		else if ((battery_voltage >= CAL_VOLT_HB) && (battery_voltage <= CAL_VOLT_HT) && (!(eeprom_stat & EEPROM_STATUS_H))) // battery voltage in high borders and not calibrated yet
+		{
+			eeprom_update_word(EEPROM_4V_ADR, battery_voltage);
+			if (!(eeprom_stat & EEPROM_STATUS_L)) // low voltage not calibrated yet
+			{
+				eeprom_update_byte(EEPROM_STATUS_ADR, EEPROM_STATUS_H); // set high voltage callibrated
+			}
+			else
+			{
+				eeprom_update_byte(EEPROM_STATUS_ADR, EEPROM_CALIBRATED); // set all callibrated
+			}
+			while (1)
+			{
+				_delay_ms(250);
+				stat_led_green();
+				_delay_ms(250);
+				stat_led_off();
+			}
+		}
+		// battery voltage out of predefined borders
+		else
+		{
+			while (1)
+			{
+				_delay_ms(200);
+				stat_led_red();
+				_delay_ms(200);
+				stat_led_off();
+			}
+		}
 	}
 	int8_t TEMP_D = (int8_t)eeprom_read_word(EEPROM_temp_ADR) - CAL_TEMP; // calculate temperature offset
 
@@ -235,77 +300,4 @@ void bms_slave_init() // Combining all init functions
 	stat_led_init(); // Status LED initialised
 	BALANCING_DDR |= (1 << BALANCING_PIN);
 	sei(); // global interrupt enable
-}
-
-void eeprom_callibrate(uint8_t eeprom_stat)
-{
-	int8_t battery_temperature; // battery_temperature = adc_value - 273; // K to degree C
-	uint16_t battery_voltage;	// battery_voltage = (float)adc_value / 200; // divided by 1024 aka 10-bit, multiplied by 2,56 aka internal reference voltage * 2 (voltage divider)
-
-	eeprom_update_byte(EEPROM_STATUS_ADR, 0x00);
-	// TEMP CALLIBRATION
-	while (battery_temperature < 0) // Measure ambient temperature
-	{
-		battery_temperature = measure_temperature();
-	}
-	eeprom_update_word(EEPROM_temp_ADR, (uint16_t)battery_temperature);
-
-	// VOLT CALLIBRATION
-	for (int i = 0; i < 10; i++)
-		while (battery_voltage == 0) // Measure SUPPLY voltage
-		{
-			battery_voltage = measure_voltage(6);
-		}
-
-	// 3V detection
-	if ((battery_voltage <= CAL_VOLT_LT) && (battery_voltage >= CAL_VOLT_LB) && (!(eeprom_stat & EEPROM_STATUS_L))) // battery voltage in low borders and not calibrated yet
-	{
-		eeprom_update_word(EEPROM_3V_ADR, battery_voltage);
-		if (!(eeprom_stat & EEPROM_STATUS_H)) // high voltage not calibrated yet
-		{
-			eeprom_update_byte(EEPROM_STATUS_ADR, EEPROM_STATUS_L); // set low voltage callibrated
-		}
-		else
-		{
-			eeprom_update_byte(EEPROM_STATUS_ADR, EEPROM_CALIBRATED); // set all callibrated
-		}
-		while (1)
-		{
-			_delay_ms(250);
-			stat_led_green();
-			_delay_ms(250);
-			stat_led_red();
-		}
-	}
-	// 4V detection
-	else if ((battery_voltage >= CAL_VOLT_HB) && (battery_voltage <= CAL_VOLT_HT) && (!(eeprom_stat & EEPROM_STATUS_H))) // battery voltage in high borders and not calibrated yet
-	{
-		eeprom_update_word(EEPROM_4V_ADR, battery_voltage);
-		if (!(eeprom_stat & EEPROM_STATUS_L)) // low voltage not calibrated yet
-		{
-			eeprom_update_byte(EEPROM_STATUS_ADR, EEPROM_STATUS_H); // set high voltage callibrated
-		}
-		else
-		{
-			eeprom_update_byte(EEPROM_STATUS_ADR, EEPROM_CALIBRATED); // set all callibrated
-		}
-		while (1)
-		{
-			_delay_ms(250);
-			stat_led_green();
-			_delay_ms(250);
-			stat_led_off();
-		}
-	}
-	// battery voltage out of predefined borders
-	else
-	{
-		while (1)
-		{
-			_delay_ms(200);
-			stat_led_red();
-			_delay_ms(200);
-			stat_led_off();
-		}
-	}
 }

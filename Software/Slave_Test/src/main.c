@@ -11,7 +11,91 @@
 
 //********************************************************************************************************************************************************************************************************************************
 
-/* RECEIVE
+///* MANCHESTER RECEIVE TEST
+
+//--------------CPU-FREQUENCY--------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
+//--Define CPU frequency, if not already defined in the platformio.ini or intellisense
+#ifndef F_CPU
+#define F_CPU 2000000L
+#endif
+
+//--------------USED-HARDWARE--------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
+//--Define Microcontroller, if not already defined in the platform.ini or intellisense
+#ifndef __AVR_ATtiny261A__
+#define __AVR_ATtiny261A__
+#endif
+
+//--------------LIBRARY-INCLUDES-----------------------------------------------------------------------------------------------------------------------------------------------------------------------//
+#include <avr/io.h>
+#include <stdint.h>
+#include <avr/interrupt.h>
+#include <avr/eeprom.h>
+#include <avr/sleep.h>
+
+//--------------SOURCE-FILES---------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
+// These are stored outside of the project folder, but will still be compiled
+#include "communication.h"
+#include "timer.h"
+#include "manch_m.h"
+#include "status.h"
+
+void bms_slave_init(void);
+
+//--------------MAIN-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
+int main(void)
+{
+  bms_slave_init(); // Initiating the MCU, Registers configurated
+
+  uint16_t *receive;
+
+  uint8_t COMM_stat = 0;
+
+  // clear timers after startup
+  timer_clear_timer(TIMER_COMM);
+  manch_init_receive();
+  while (1)
+  {
+    COMM_stat=manch_receive(*receive);
+    if(COMM_stat==1)
+    {
+      stat_led_green();
+      manch_init_receive();
+    }
+    else if(COMM_stat==2)
+    {
+      stat_led_red();
+      manch_init_receive();
+    }
+  }
+}
+
+void bms_slave_init() // Combining all init functions
+{
+  // CPU frequency settings.
+#if F_CPU == 4000000L
+  CLKPR = 0x80;
+  CLKPR = 0x01;
+
+#elif F_CPU == 2000000L
+  CLKPR = 0x80;
+  CLKPR = 0x02;
+
+#elif F_CPU == 1000000L
+  CLKPR = 0x80;
+  CLKPR = 0x04;
+
+#else
+#error Invalid prescaler setting.
+#endif
+  timer_init_timer();
+  timer_add_time();
+  stat_led_init(); // Status LED initialised
+  sei();           // global interrupt enable
+}//*/
+
+//********************************************************************************************************************************************************************************************************************************
+
+/* RECEIVE ON BOTH PORTS
 
 //--------------CPU-FREQUENCY--------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
 //--Define CPU frequency, if not already defined in the platformio.ini or intellisense
@@ -64,7 +148,7 @@ void bms_slave_init() // Combining all init functions
 
 //********************************************************************************************************************************************************************************************************************************
 
-///* MANCHESTER SEND TEST
+/* MANCHESTER SEND TEST
 
 //--------------CPU-FREQUENCY--------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
 //--Define CPU frequency, if not already defined in the platformio.ini or intellisense
@@ -100,7 +184,7 @@ int main(void)
   bms_slave_init(); // Initiating the MCU, Registers configurated
 
   // Send data
-  uint16_t send = 0xAACC;
+  uint16_t send = 0xFF00;
 
   // Timing
   uint16_t COMM_time = 0; // compare value
@@ -147,7 +231,7 @@ void bms_slave_init() // Combining all init functions
   timer_add_time();
   stat_led_init(); // Status LED initialised
   sei();           // global interrupt enable
-}
+}*/
 
 //********************************************************************************************************************************************************************************************************************************
 
