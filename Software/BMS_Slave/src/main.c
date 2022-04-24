@@ -60,6 +60,14 @@ enum ADC_STAT
 	MEASURE_TEMP
 };
 
+enum COMM_STAT
+{
+	COMM_START,
+	COMM_RECEIVE,
+	COMM_GLOBAL,
+	COMM_ADD
+};
+
 void bms_slave_init(void);
 void eeprom_callibrate(uint8_t eeprom_stat);
 
@@ -68,16 +76,21 @@ int main(void)
 {
 	bms_slave_init(); // Initiating the MCU, Registers configurated
 	// Data received
-	uint16_t bot_received = 0; // data received from the lower slave
+	uint16_t *bot_received = 0; // data received from the lower slave
 	uint8_t address_received = 0;
-	uint16_t top_received = 0; // data received from the upper slave
+	uint16_t *top_received = 0; // data received from the upper slave
+
+	uint8_t COMM_stat_B = 0; // Status of the communication to the lower slave
+	uint8_t COMM_stat_T = 0; // Status of the communication to the upper slave
+
+	// Communication Cycle
+	uint8_t comm_cycle = COMM_START; // Communication cycle, 0 = no communication, 1 = global communication, 2 = addressed communication
 
 	// Send data
 	uint16_t bot_send = 0;
 	uint16_t top_send = 0;
 
 	// Timing
-	uint16_t COMM_time = 0;	   // compare value
 	uint16_t BALANCE_time = 0; // compare value
 
 	uint8_t ADCstat = MEASURE_VOLT;
@@ -173,7 +186,6 @@ int main(void)
 	uint16_t VOLT_D = CAL_VOLT_H_EXT - (voltage_h * VOLT_K); // Value to subtract from measurement to kill offset VOLT_D is x64
 
 	// clear timers after startup
-	timer_clear_timer(TIMER_COMM);
 	timer_clear_timer(TIMER_BALANCE);
 
 	while (1)
@@ -181,13 +193,11 @@ int main(void)
 		//--------------ADC------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
 		timer_add_time(); // executed after max 32ms
 		stat_led_off();
-		COMM_time = timer_get_timer(TIMER_COMM);
 		BALANCE_time = timer_get_timer(TIMER_BALANCE);
 
 		if (!ADCstat)
 		{
 			volt_raw = measure_voltage(ADC_SAMPLES_V);
-			battery_voltage = volt_raw * VOLT_K + VOLT_D;
 			if (volt_raw) // make sure conversion is done
 			{
 				battery_voltage = volt_raw * VOLT_K + VOLT_D;
@@ -196,79 +206,89 @@ int main(void)
 		}
 		else
 		{
-			battery_temperature = measure_temperature() - TEMP_D;
+			battery_temperature = measure_temperature();
 			if (battery_temperature > -100) // make sure conversion is done
 			{
-				battery_temperature = volt_raw + TEMP_D;
+				battery_temperature = volt_raw - TEMP_D;
 				ADCstat = MEASURE_VOLT;
 			}
 		}
-		//--------------BOT-PACKAGE-HANDLING-------------------------------------------------------------------------------------------------------------------------------------------------------------------//
-		manch_init_receive(); // init receive from bot device
-
-		bot_send = 0; // reset bot_send... status
-		top_send = 0; // reset top_send... status
-
-		if (manch_receive(&bot_received)) // if received from bot
+		//--------------PACKAGE-HANDLING-------------------------------------------------------------------------------------------------------------------------------------------------------------------//
+		switch (comm_cycle)
 		{
-			if (bot_received & REQ_VOLT_G) // BOT-X // checking if battery voltage is requested
+		case COMM_START:		  // starting a new cycle
+			manch_init_receive(); // initialize receive from bottom board
+			comm_cycle = COMM_RECEIVE;
+			break;
+		case COMM_RECEIVE: // receiving data from bottom board
+			COMM_stat_B = manch_receive(*bot_received);
+			if (COMM_stat_B == 1) // if data received
 			{
-				top_send = bot_received; // handout global command to next module
+				if (*bot_received & 0x40) // if command is Global
+				{
+					comm_cycle = COMM_GLOBAL;
+				}
+				else
+				{
+					comm_cycle = COMM_ADD;
+				}
+			}
+			else if (COMM_stat_B == 2) // if error
+			{
+				comm_cycle = COMM_START;
+			}
+			break;
+		case COMM_GLOBAL:					// handling global commands
+			if (*bot_received & REQ_VOLT_G) // BOT-X // checking if battery voltage is requested
+			{
+				top_send = *bot_received; // handout global command to next module
 				bot_send = battery_voltage;
 				bot_send |= (calc_parity(battery_voltage) << 14) | (1 << 15); // add parity to data
 			}
-			else if (bot_received & REQ_TEMP_G) // BOT-X // checking if battery temperature is requested
+			else if (*bot_received & REQ_TEMP_G) // BOT-X // checking if battery temperature is requested
 			{
-				top_send = bot_received; // handout global command to next module
-				bot_send = battery_temperature;
+				top_send = *bot_received; // handout global command to next module
+				bot_send = (uint16_t)battery_temperature;
 				bot_send |= (calc_parity(battery_temperature) << 14) | (1 << 15); // add parity to data
 			}
-			else if ((!(bot_received & ADDRESS_MASK)) && (bot_received & COM_BLC_A)) // checking if the current slave is addressed and command is balancing
+			else if (*bot_received & COM_SLP_G) // sleepin command received
+			{
+				top_send = *bot_received; // handout global command to next module
+				manch_init_send1(); // initialize send to top board
+				manch_send(top_send); // send data to top board
+				// Standby mode ATtiny261A
+				set_sleep_mode(SLEEP_MODE_STANDBY);
+				sleep_enable();
+				sleep_mode();
+				sleep_disable();
+				// Power down mode ATtiny261A
+				//set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+				//sleep_enable();
+				//sleep_mode();
+				//sleep_disable();
+			}
+			
+			break;
+		case COMM_ADD:															  // handling addressed commands
+			if ((!(*bot_received & ADDRESS_MASK)) && (*bot_received & COM_BLC_A)) // checking if the current slave is addressed and command is balancing
 			{
 				START_BALANCING();
+				timer_clear_timer(TIMER_BALANCE);
 				stat_led_orange();
 			}
-			else // BOT_TOP // current module not addressed... pass through addressed command
+			else // current module not addressed... pass through addressed command
 			{
-				address_received = (uint8_t)bot_received & ADDRESS_MASK;
-				top_send = calc_data_bal(address_received - 1);
+				address_received = (uint8_t)*bot_received & ADDRESS_MASK;
+				top_send = *bot_received & ~ADDRESS_MASK;		 // handout addressed command to next module
+				top_send |= calc_data_bal(address_received - 1); // add address and parity to command
+				manch_init_send();								 // initialize send to top board
+				manch_send(top_send);							 // send command to next module
+				manch_init_receive();
 			}
+			break;
 		}
-		//--------------TOP-PACKAGE-HANDLING-------------------------------------------------------------------------------------------------------------------------------------------------------------------//
-		manch_init_receive1();				   // init receive from top device
-		if (manch_receive(&top_received) == 1) // TOP-BOT // if received from top
-		{
-			bot_send = top_received;
-		}
-
-		//--------------COMMUNICATION--------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
-		if (COMM_time >= 1)
-		{
-			timer_clear_timer(TIMER_COMM);
-		}
-
-		if (top_send) // BOT-TOP // if package for top ready
-		{
-			manch_init_send1();
-			manch_send1(top_send);
-		}
-
-		if (bot_send) // X-BOT // if package for bot ready
-		{
-			manch_init_send();
-			manch_send(bot_send);
-		}
-
-		// package received from top gets immediately send further down, no collision is expected
-		manch_init_receive1();					// init receive from top device
-		if (manch_receive1(&top_received) == 1) // TOP-BOT // receive from top
-		{
-			manch_init_send();
-			manch_send(top_received);
-		}
-
 		//--------------BALANCING-TIMING-------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
-		if (BALANCE_time >= 10000) // Balancing Timeout of 10 000 ms
+		if (BALANCE_time >= 10000) // Balancing Timeout after 10 seconds
 		{
 			STOP_BALANCING();
 			timer_clear_timer(TIMER_BALANCE);
