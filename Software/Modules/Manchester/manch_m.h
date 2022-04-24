@@ -12,12 +12,12 @@
 #ifndef MANCH_H
 #define MANCH_H
 
-#define BAUDRATE 9600
+#define BAUDRATE 1200
 #ifdef __AVR_ATmega32U4__
 #define CLOCK_PR 1
 #endif // __AVR_ATmega32u4__
 #ifdef __AVR_ATtiny261A__
-#define CLOCK_PR 2
+#define CLOCK_PR 32 // Prescaler 8
 #define MANCHESTER1 // 2. manchester-übertragung
 #endif              // __AVR_ATtiny261a__
 
@@ -73,42 +73,42 @@
 #define READMANCH1 (PINMANCH1 & PN_MANCH1)
 #endif // MANCHESTER1
 
-//=========== prototypen =======================================
-// initialisieren zum senden nach "unten"
-// vor jedem senden aufrufen!
 void manch_init_send(void);
+// initializes the manchester-transmitter
+// has to be called before manch_send
 
-// copiert daten von data und startet das senden
 void manch_send(uint16_t data);
+// copies data to send-buffer and starts sending
 
-// initialisieren zum empfang von "unten"
-// vor jedem empfangen aufrufen
 void manch_init_receive();
+// initializes the manchester-receiver from bottom
+// has to be called before the call of manch_receive
 
-// return 0: wartet noch auf daten
-// return 1: daten empfangen, in *data copiert
-// return 2: fehlerhafter empfang, empfang abgebrochen, muss neu gestartet werden
 uint8_t manch_receive(uint16_t *data);
+// copies received data to *data
+// returns 0: waitin for data
+// returns 1: data received, data in *data
+// returns 2: error, receive aborted, has to be restarted
 
 #ifdef MANCHESTER1
 
-// zum senden nach "oben"
-// initialisiert nur das sendeport.
-// danach manch_init_send() aufrufen!
 void manch_init_send1(void);
+// initializes only the port for sending to top
+// has to be called before manch_send1
 
-// copiert nur die sendedaten für senden nach "oben",
-// danach mach_send() zum starten aufrufen!
 void manch_send1(uint16_t data);
+// copies data to send-buffer
+// manch_send has to be called to start sending
 
-// initialisieren zum empfang von "oben"
-// vor jedem empfangen aufrufen
 void manch_init_receive1();
+// initializes the port for receiving from top
+// has to be called before the call of manch_receive1
 
-// return 0: wartet noch auf daten
-// return 1: daten empfangen, in *data copiert
-// return 2: fehlerhafter empfang, empfang abgebrochen, muss neu gestartet werden
 uint8_t manch_receive1(uint16_t *data);
+// copies received data to *data
+// returns 0: waitin for data
+// returns 1: data received, data in *data
+// returns 2: error, receive aborted, has to be restarted
 
 #endif // MANCHESTER1
 #endif // MANCH_H

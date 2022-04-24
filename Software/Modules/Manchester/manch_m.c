@@ -49,20 +49,20 @@ void manch_init_receive()
    TCCR1B = 0x18;                                //  - " -
    OCR1A = 3 * F_CPU / BAUDRATE / CLOCK_PR + 18; // timeout => bit zu lang
    ICR1 = 0xffff;
-   TIMSK1 = 0x02; // ocr1a match interrupt;
-   PCICR = 0x01;  // flankeninterrupt
-#endif            //__AVR_ATmega32u4
+   TIMSK1 = 0x02;          // ocr1a match interrupt;
+   PCICR = 0x01;           // flankeninterrupt
+   PCMSK0 |= PN_MANCH_REC; // enable pcint on receive pin
+#endif                     //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
-   TCCR1A = 0x03;                                // mode 2, fast pwm, top is ocr1c
-   TCCR1B = 0x09;                                // prescaler 256
-   OCR1A = 3 * F_CPU / BAUDRATE / CLOCK_PR + 18; // timeout => bit zu lang
+   TCCR1A = 0x02;                           // mode 2, fast pwm, top is ocr1c
+   OCR1A = 3 * F_CPU / BAUDRATE / CLOCK_PR; // timeout => bit zu lang
    OCR1C = 0xFF;
-   TIMSK = 0x40;  // ocr1a match interrupt;
-   GIMSK |= 0x10; // PCINT0 enable
-#endif            //__AVR_ATtiny261A__
+   TIMSK = 0x40;           // ocr1a match interrupt;
+   GIMSK |= 0x20;          // PCINT1 enable
+   PCMSK1 |= PN_MANCH_REC; // enable pcint on receive pin
+#endif                     //__AVR_ATtiny261A__
    manch_i = 0;
    manch_res = 0;
-   PCMSK0 = PN_MANCH_REC; // enable pcint on receive pin
 }
 
 void manch_send(uint16_t data)
@@ -78,7 +78,7 @@ void manch_send(uint16_t data)
 #endif             //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
    TIFR = 0x00;
-   TCCR1B = 0x01; // timer starten
+   TCCR1B = 0x05; // Prescaler 16, start timer
 #endif            //__AVR_ATtiny261A__
 }
 
@@ -106,17 +106,24 @@ ISR(PCINT_vect)
 #endif //__AVR_ATtiny261A__
 {
    uint16_t tim;
+#ifdef __AVR_ATmega32U4__
+   uint16_t tim;
+#endif //__AVR_ATmega32u4
+#ifdef __AVR_ATtiny261A__
+   uint8_t tim;
+#endif
    if (manch_i == 0) // anfang
    {
       if (READMANCH == 0) // 1 als startbit, neg. logik!
       {
 #ifdef __AVR_ATmega32U4__
          TCCR1B |= 0x01; // timer starten
-#endif                   //__AVR_ATmega32u4
-#ifdef __AVR_ATtiny261A__
-         TCCR1B |= 0x09; // timer starten prescaler 256
-#endif                   //__AVR_ATtiny261A__
          TCNT1 = 0x0000;
+#endif //__AVR_ATmega32u4
+#ifdef __AVR_ATtiny261A__
+         TCCR1B |= 0x05; // timer starten
+         TCNT1 = 0x00;
+#endif //__AVR_ATtiny261A__
          manch_x = 'k';
          manch_i++;
       }
@@ -124,7 +131,12 @@ ISR(PCINT_vect)
    else
    {
       tim = TCNT1;
-      TCNT1 = 0x0000;                                                                                 // reset timer
+#ifdef __AVR_ATmega32U4__
+      TCNT1 = 0x0000;
+#endif //__AVR_ATmega32u4
+#ifdef __AVR_ATtiny261A__
+      TCNT1 = 0x00;
+#endif                                                                                                // reset timer
       if ((F_CPU / BAUDRATE / CLOCK_PR * 2) / 3 < tim && tim < (F_CPU / BAUDRATE / CLOCK_PR * 4) / 3) //
       {
          if (manch_x == 'l') // weiter
@@ -152,7 +164,7 @@ ISR(PCINT_vect)
                TCCR1B &= ~0x01; // timer stoppen
 #endif                          //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
-               TCCR1B &= ~0x09; // timer stoppen
+               TCCR1B &= ~0x05; // timer stoppen
 #endif                          //__AVR_ATtiny261A__
 
 #ifdef __AVR_ATmega32U4__
@@ -160,9 +172,10 @@ ISR(PCINT_vect)
                PCICR = 0x00;  // flankeninterrupt stoppen
 #endif                        //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
-               TIMSK = 0x00;           // overflow interrupt stoppen
-               GIMSK &= ~(1 << PCIE0); // flankeninterrupt stoppen
-#endif                                 //__AVR_ATtiny261A__
+               TIMSK = 0x00;            // overflow interrupt stoppen
+               GIMSK &= ~(1 << PCIE1);  // flankeninterrupt stoppen
+               PCMSK1 &= ~PN_MANCH_REC; // enable pcint on receive pin
+#endif                                  //__AVR_ATtiny261A__
 
                manch_res = 1;
             }
@@ -194,10 +207,11 @@ ISR(PCINT_vect)
                PCICR = 0x00;    // flankeninterrupt stoppen
 #endif                          //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
-               TCCR1B &= ~0x09;        // timer stoppen
-               TIMSK = 0x00;           // overflow interrupt stoppen
-               GIMSK &= ~(1 << PCIE0); // stop pcint...
-#endif                                 //__AVR_ATtiny261A__
+               TCCR1B &= ~0x05;         // timer stoppen
+               TIMSK = 0x00;            // overflow interrupt stoppen
+               GIMSK &= ~(1 << PCIE1);  // stop pcint...
+               PCMSK1 &= ~PN_MANCH_REC; // enable pcint on receive pin
+#endif                                  //__AVR_ATtiny261A__
                manch_res = 1;
             }
          }
@@ -208,7 +222,7 @@ ISR(PCINT_vect)
             TCCR1B &= ~0x01; // timer stoppen
 #endif                       //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
-            TCCR1B &= ~0x09; // timer stoppen
+            TCCR1B &= ~0x05; // timer stoppen
 #endif                       //__AVR_ATtiny261A__
          }
       }
@@ -219,7 +233,7 @@ ISR(PCINT_vect)
          TCCR1B &= ~0x01; // timer stoppen
 #endif                    //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
-         TCCR1B &= ~0x09; // timer stoppen
+         TCCR1B &= ~0x05; // timer stoppen
 #endif                    //__AVR_ATtiny261A__
       }
    }
@@ -233,7 +247,7 @@ ISR(TIMER1_COMPA_vect) // timeout, eine erwartete flanke ist nicht gekommen
    TCCR1B &= ~0x01; // timer stoppen
 #endif              //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
-   TCCR1B &= ~0x01; // timer stoppen
+   TCCR1B &= ~0x05; // timer stoppen
 #endif              //__AVR_ATtiny261A__
 }
 
@@ -247,7 +261,7 @@ ISR(TIMER1_OVF_vect)
       TCCR1B &= 0xFE; // timer stoppen
 #endif
 #ifdef __AVR_ATtiny261A__
-      TCCR1B &= ~0x01; // timer stoppen
+      TCCR1B &= ~0x05; // timer stoppen
 #endif
 #ifdef MANCHESTER1
       CLRMANCH1;
@@ -308,27 +322,21 @@ void manch_init_receive1()
    TCCR1A = 0x02; // mode 14, fast pwm, top is icr1
    TCCR1B = 0x18; //  - " -
    OCR1A = 3 * F_CPU / BAUDRATE / CLOCK_PR + 18;
-#endif //__AVR_ATmega32u4
-#ifdef __AVR_ATtiny261A__
-   TCCR1A = 0x03;                                // mode 2, fast pwm, top is ocr1c
-   TCCR1B = 0x09;                                // prescaler 256
-   OCR1A = 3 * F_CPU / BAUDRATE / CLOCK_PR + 18; // timeout => bit zu lang
-   OCR1C = 0xFF;
-   TIMSK = 0x40; // ocr1a match interrupt;
-#endif           //__AVR_ATtiny261A__
-
-   manch_i = 0;
-   manch_res = 0;
-#ifdef __AVR_ATmega32U4__
    EICRA = 0x01 << 2 * (PN_MANCH1 - 1); // ext. interrupt bei jeder flanke
    EIFR = 0xff;                         // clear all ints
    EIMSK = PN_MANCH1;                   // enable interrupt
 #endif                                  //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
+   TCCR1A = 0x02;                           // mode 2, fast pwm, top is ocr1c
+   OCR1A = 3 * F_CPU / BAUDRATE / CLOCK_PR; // timeout => bit zu lang
+   OCR1C = 0xFF;
+   TIMSK = 0x40;  // ocr1a match interrupt;
    MCUCR = 0x01;  // ext. interrupt bei jeder flanke
    GIFR = 0xFF;   // clear all ints
-   GIMSK |= 0xF0; // enable interrupt
+   GIMSK |= 0x80; // enable external interrupt 1
 #endif            //__AVR_ATtiny261A__
+   manch_i = 0;
+   manch_res = 0;
 }
 
 void manch_send1(uint16_t data)
@@ -353,19 +361,26 @@ uint8_t manch_receive1(uint16_t *data)
 }
 
 // fürs empfangen
-ISR(INT0_vect)
+ISR(INT1_vect)
 {
+#ifdef __AVR_ATmega32U4__
    uint16_t tim;
+#endif //__AVR_ATmega32u4
+#ifdef __AVR_ATtiny261A__
+   uint8_t tim;
+#endif               //__AVR_ATtiny261A__
    if (manch_i == 0) // anfang
    {
       if (READMANCH1 == 0) // 1 als startbit! (neg.logik)
       {
 #ifdef __AVR_ATmega32U4__
          TCCR1B |= 0x01; // timer starten
-#endif                   //__AVR_ATmega32u4
+         TCNT1 = 0x00;
+#endif //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
-         TCCR1B |= 0x09; // timer starten
-#endif                   //__AVR_ATtiny261A__
+         TCCR1B |= 0x05; // timer starten
+         TCNT1 = 0x00;
+#endif //__AVR_ATtiny261A__
          TCNT1 = 0x0000;
          manch_x = 'k';
          manch_i++;
@@ -374,7 +389,13 @@ ISR(INT0_vect)
    else
    {
       tim = TCNT1;
-      TCNT1 = 0x0000;                                                                                 // reset timer
+#ifdef __AVR_ATmega32U4__
+      TCNT1 = 0x0000;
+#endif //__AVR_ATmega32u4
+#ifdef __AVR_ATtiny261A__
+      TCNT1 = 0x00;
+#endif                                                                                                //__AVR_ATtiny261A__
+                                                                                                      // reset timer
       if ((F_CPU / BAUDRATE / CLOCK_PR * 2) / 3 < tim && tim < (F_CPU / BAUDRATE / CLOCK_PR * 4) / 3) //
       {
          if (manch_x == 'l') // weiter
@@ -404,9 +425,9 @@ ISR(INT0_vect)
                EIMSK = 0x00;    // ext. interrupt disable
 #endif                          //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
-               TCCR1B &= ~0x09; // timer stoppen
+               TCCR1B &= ~0x05; // timer stoppen
                TIMSK = 0x00;
-               GIMSK &= ~0xF0; // enable interrupt
+               GIMSK &= ~0x80; // disable interrupt
 #endif                         //__AVR_ATtiny261A__
 
                manch_res = 1;
@@ -439,9 +460,9 @@ ISR(INT0_vect)
                EIMSK = 0x00;    // flankeninterrupt stoppen
 #endif                          //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
-               TCCR1B &= ~0x09; // timer stoppen
+               TCCR1B &= ~0x05; // timer stoppen
                TIMSK = 0x00;
-               GIMSK &= ~0xF0; // enable interrupt
+               GIMSK &= ~0x80; // disable interrupt
 #endif                         //__AVR_ATtiny261A__
 
                manch_res = 1;
@@ -454,7 +475,7 @@ ISR(INT0_vect)
             TCCR1B &= ~0x01; // timer stoppen
 #endif                       //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
-            TCCR1B &= ~0x09; // timer stoppen
+            TCCR1B &= ~0x05; // timer stoppen
 #endif                       //__AVR_ATtiny261A__
          }
       }
@@ -465,7 +486,7 @@ ISR(INT0_vect)
          TCCR1B &= ~0x01; // timer stoppen
 #endif                    //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
-         TCCR1B &= ~0x09; // timer stoppen
+         TCCR1B &= ~0x05; // timer stoppen
 #endif                    //__AVR_ATtiny261A__
       }
    }
