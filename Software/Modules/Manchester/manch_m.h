@@ -12,11 +12,12 @@
 #ifndef MANCH_H
 #define MANCH_H
 
-#define BAUDRATE 1200
 #ifdef __AVR_ATmega32U4__
+#define BAUDRATE 2400   //fx?
 #define CLOCK_PR 1
 #endif // __AVR_ATmega32u4__
 #ifdef __AVR_ATtiny261A__
+#define BAUDRATE 1200
 #define CLOCK_PR 32 // Prescaler 8
 #define MANCHESTER1 // 2. manchester-übertragung
 #endif              // __AVR_ATtiny261a__
