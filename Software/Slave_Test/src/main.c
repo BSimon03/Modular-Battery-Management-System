@@ -11,7 +11,86 @@
 
 //********************************************************************************************************************************************************************************************************************************
 
-///* MANCHESTER RECEIVE TEST
+///* FAKE IT TILL U MAKE IT
+
+//--------------USED-HARDWARE--------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
+//--Define Microcontroller, if not already defined in the platform.ini or intellisense
+#ifndef __AVR_ATtiny261A__
+#define __AVR_ATtiny261A__
+#endif
+
+//--------------LIBRARY-INCLUDES-----------------------------------------------------------------------------------------------------------------------------------------------------------------------//
+#include <avr/io.h>
+#include <stdint.h>
+#include <avr/interrupt.h>
+#include <util/delay.h>
+
+//--------------SOURCE-FILES---------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
+// These are stored outside of the project folder, but will still be compiled
+#include "timer.h"
+#include "status.h"
+
+#define BLINK_TIME 1000
+#define BALANCE 5000
+#define RAND 100
+
+void bms_slave_init(void);
+
+//--------------MAIN-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
+int main(void)
+{
+  bms_slave_init();
+  uint16_t blink = 0;
+  uint8_t counter = 0;
+
+  while (1)
+  {
+    timer_add_time();
+    blink = timer_get_timer(TIMER_ADC);
+    counter++;
+    if (blink >= BLINK_TIME)
+    {
+      if(!(counter%RAND))
+      {
+        stat_led_orange();
+        _delay_ms(BALANCE);
+        stat_led_green();
+      }
+      timer_clear_timer(TIMER_ADC);
+      stat_led_green();
+      _delay_ms(100);
+      stat_led_off();
+    }
+  }
+}
+
+void bms_slave_init() // Combining all init functions
+{
+  // CPU frequency settings.
+#if F_CPU == 4000000L
+  CLKPR = 0x80;
+  CLKPR = 0x01;
+
+#elif F_CPU == 2000000L
+  CLKPR = 0x80;
+  CLKPR = 0x02;
+
+#elif F_CPU == 1000000L
+  CLKPR = 0x80;
+  CLKPR = 0x04;
+
+#else
+#error Invalid prescaler setting.
+#endif
+  timer_init_timer();
+  stat_led_init();
+  timer_add_time();
+  sei(); // global interrupt enable
+}//*/
+
+//********************************************************************************************************************************************************************************************************************************
+
+/* MANCHESTER RECEIVE TEST
 
 //--------------CPU-FREQUENCY--------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
 //--Define CPU frequency, if not already defined in the platformio.ini or intellisense
@@ -43,7 +122,7 @@ int main(void)
 {
   bms_slave_init(); // Initiating the MCU, Registers configurated
 
-  uint16_t *receive;
+  uint16_t receive;
 
   uint8_t COMM_stat = 0;
 
@@ -51,7 +130,7 @@ int main(void)
   manch_init_receive();
   while (1)
   {
-    COMM_stat=manch_receive(*receive);
+    COMM_stat=manch_receive(&receive);
     if(COMM_stat==1)
     {
       stat_led_green();
@@ -85,7 +164,7 @@ void bms_slave_init() // Combining all init functions
 #endif
   stat_led_init(); // Status LED initialised
   sei();           // global interrupt enable
-}//*/
+}*/
 
 //********************************************************************************************************************************************************************************************************************************
 
