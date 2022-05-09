@@ -12,7 +12,7 @@
 
 #include <avr/io.h>
 #include "avr/interrupt.h"
-#include <util/delay.h>
+//#include <util/delay.h>
 #include "manch_m.h"
 
 static uint8_t manch_i;           // manch_i: counter
@@ -28,7 +28,8 @@ void manch_init_send(void)
    TCCR1A = 0x02; // mode 14, fast pwm, top is icr1
    TCCR1B = 0x18; //  - " -
    OCR1B = F_CPU / BAUDRATE / CLOCK_PR + 18;
-   ICR1 = 2 * F_CPU / BAUDRATE;
+   ICR1 = 6 * F_CPU / BAUDRATE;     //fx 3 Bitdauern
+   TIFR1 = 0xff;   // flags löschen		fx
    TIMSK1 = 0x05; // ocr1b match und overflow interrupt;
 #endif            //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
@@ -71,9 +72,9 @@ void manch_send(uint16_t data)
    manch_i = 0;
    manch_d = (uint8_t)(data >> 8) | 0x80; // msb als startbit immer 1
    manch_d1 = (uint8_t)(data & 0x00ff);
-   TCNT1 = F_CPU / BAUDRATE / CLOCK_PR + 5;
+   TCNT1 = OCR1B+1; //fx
 #ifdef __AVR_ATmega32U4__
-   TIFR1 = 0x00;   // flags löschen
+   TIFR1 = 0xff;   // flags löschen fx
    TCCR1B |= 0x01; // timer starten
 #endif             //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
@@ -86,7 +87,7 @@ uint8_t manch_receive(uint16_t *data)
 {
    if (manch_res == 1) // daten fertig empfangen
    {
-      *data = manch_d1 * 256 + manch_d;
+      *data = manch_d * 256 + manch_d1; //fx
       return 1;
    }
    else if (manch_res == 0) // noch nicht fertig
@@ -113,7 +114,7 @@ ISR(PCINT_vect)
 #endif
    if (manch_i == 0) // anfang
    {
-      if (READMANCH == 0) // 1 als startbit, neg. logik!
+      if (READMANCH != 0) // 1 als startbit, neg. logik! fx
       {
 #ifdef __AVR_ATmega32U4__
          TCCR1B |= 0x01; // timer starten
@@ -144,7 +145,7 @@ ISR(PCINT_vect)
          {
             manch_d1 = manch_d1 << 1;
             manch_x = 'l'; // nächstes mal einlesen nach ganzem bit
-            if (READMANCH)
+            if (READMANCH==0) //fx
             {
                manch_d1 |= 0x01;
             }
@@ -185,7 +186,7 @@ ISR(PCINT_vect)
          if (manch_x == 'l') // bit einlesen
          {
             manch_d1 = manch_d1 << 1;
-            if (READMANCH)
+            if (READMANCH==0) //fx
             {
                manch_d1 |= 0x01;
             }
@@ -253,6 +254,9 @@ ISR(TIMER1_COMPA_vect) // timeout, eine erwartete flanke ist nicht gekommen
 // fürs senden
 ISR(TIMER1_OVF_vect)
 {
+   #ifdef __AVR_ATmega32U4__
+      ICR1=2 * F_CPU / BAUDRATE; //fx
+   #endif
    if (manch_i == 16) // ende
    {
       CLRMANCH;
