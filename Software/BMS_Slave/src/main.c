@@ -62,10 +62,10 @@ enum ADC_STAT
 
 enum COMM_STAT
 {
-	COMM_START,
 	COMM_RECEIVE,
 	COMM_GLOBAL,
-	COMM_ADD
+	COMM_ADD,
+	COMM_SEND
 };
 
 void bms_slave_init(void);
@@ -80,11 +80,11 @@ int main(void)
 	uint8_t address_received = 0;
 	uint16_t *top_received = 0; // data received from the upper slave
 
-	uint8_t COMM_stat_B = 0; // Status of the communication to the lower slave
-	uint8_t COMM_stat_T = 0; // Status of the communication to the upper slave
+	uint8_t comm_stat_b = 0; // Status of the communication to the lower slave
+	uint8_t comm_stat_t = 0; // Status of the communication to the upper slave
 
 	// Communication Cycle
-	uint8_t comm_cycle = COMM_START; // Communication cycle, 0 = no communication, 1 = global communication, 2 = addressed communication
+	uint8_t comm_stat = COMM_RECEIVE;
 
 	// Send data
 	uint16_t bot_send = 0;
@@ -214,49 +214,61 @@ int main(void)
 			}
 		}
 		//--------------PACKAGE-HANDLING-------------------------------------------------------------------------------------------------------------------------------------------------------------------//
-		switch (comm_cycle)
+
+		// 0 is top, 1 is bottom
+
+		switch (comm_stat)
 		{
-		case COMM_START:		  // starting a new cycle
-			manch_init_receive(); // initialize receive from bottom board
-			comm_cycle = COMM_RECEIVE;
-			break;
 		case COMM_RECEIVE: // receiving data from bottom board
-			COMM_stat_B = manch_receive(*bot_received);
-			if (COMM_stat_B == 1) // if data received
+			comm_stat_b = manch_receive1(bot_received);
+			comm_stat_t = manch_receive(top_received);
+			if (comm_stat_b == 1) // if data received from bot
 			{
 				if (*bot_received & 0x40) // if command is Global
 				{
-					comm_cycle = COMM_GLOBAL;
+					comm_stat = COMM_GLOBAL;
 				}
 				else
 				{
-					comm_cycle = COMM_ADD;
+					comm_stat = COMM_ADD;
 				}
 			}
-			else if (COMM_stat_B == 2) // if error
+			else if (comm_stat_b == 2) // if error
 			{
-				comm_cycle = COMM_START;
+				manch_init_receive1();
+			}
+
+			if (comm_stat_t == 1) // if data received from top
+			{
+				bot_send = *top_received;
+				top_send = 0x00;
+				manch_init_send1();
+				manch_send1(bot_send);
+				manch_init_send();
+				manch_send(top_send);
+			}
+			else if (comm_stat_t == 2) // if error
+			{
+				manch_init_receive();
 			}
 			break;
 		case COMM_GLOBAL:					// handling global commands
-			if (*bot_received & REQ_VOLT_G) // BOT-X // checking if battery voltage is requested
+			top_send = *bot_received; 		// prepare global command for next module
+
+			if (*bot_received & REQ_VOLT_G) 	// checking if battery voltage is requested
 			{
-				top_send = *bot_received; // handout global command to next module
-				bot_send = battery_voltage;
+				bot_send = battery_voltage >> 6;
 				bot_send |= (calc_parity(battery_voltage) << 14) | (1 << 15); // add parity to data
 			}
-			else if (*bot_received & REQ_TEMP_G) // BOT-X // checking if battery temperature is requested
+			else if (*bot_received & REQ_TEMP_G) // checking if battery temperature is requested
 			{
-				top_send = *bot_received; // handout global command to next module
-				bot_send = (uint16_t)battery_temperature;
+				bot_send = (uint16_t)battery_temperature >> 6;
 				bot_send |= (calc_parity(battery_temperature) << 14) | (1 << 15); // add parity to data
 			}
-			else if (*bot_received & COM_SLP_G) // sleepin command received
+			/*else if (*bot_received & COM_SLP_G) // sleep command received
 			{
-				top_send = *bot_received; // handout global command to next module
-				manch_init_send1(); // initialize send to top board
-				manch_send(top_send); // send data to top board
 				// Standby mode ATtiny261A
+				bot_send = 0x00;	// send nothing, high active bus
 				set_sleep_mode(SLEEP_MODE_STANDBY);
 				sleep_enable();
 				sleep_mode();
@@ -266,8 +278,12 @@ int main(void)
 				//sleep_enable();
 				//sleep_mode();
 				//sleep_disable();
-			}
+			}*/
 			
+			manch_init_send1();				// initialize send to bot module
+			manch_send1(bot_send);			// send data to bot module
+			manch_init_send();				// initialize send to top board
+			manch_send(top_send);			// send global command to top board		
 			break;
 		case COMM_ADD:															  // handling addressed commands
 			if ((!(*bot_received & ADDRESS_MASK)) && (*bot_received & COM_BLC_A)) // checking if the current slave is addressed and command is balancing
@@ -283,12 +299,11 @@ int main(void)
 				top_send |= calc_data_bal(address_received - 1); // add address and parity to command
 				manch_init_send();								 // initialize send to top board
 				manch_send(top_send);							 // send command to next module
-				manch_init_receive();
 			}
 			break;
 		}
 		//--------------BALANCING-TIMING-------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
-		if (BALANCE_time >= 10000) // Balancing Timeout after 10 seconds
+		if (BALANCE_time >= 1000) // Balancing Timeout after 1 second
 		{
 			STOP_BALANCING();
 			timer_clear_timer(TIMER_BALANCE);
