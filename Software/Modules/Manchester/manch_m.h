@@ -11,14 +11,14 @@
 //================================================================
 #ifndef MANCH_H
 #define MANCH_H
-#define BAUDRATE 2400   //fx?
+#define BAUDRATE 1200   //fx?
 #ifdef __AVR_ATmega32U4__
 #define CLOCK_PR 1
 #endif // __AVR_ATmega32u4__
-#ifdef __AVR_ATtiny261A__
-#define CLOCK_PR 32 // Prescaler 8
+#ifdef __AVR_ATtiny261__
+#define CLOCK_PR 8 // Prescaler 8, im code hardcodiert!!!
 #define MANCHESTER1 // 2. manchester-übertragung
-#endif              // __AVR_ATtiny261a__
+#endif              // __AVR_ATtiny261__
 
 //========= definitionen des verwendeten port und pins =============
 // zur übertragung in nur eine richtung: vom master oder slave nach unten
@@ -34,7 +34,8 @@
 #define PINMANCH PINB
 #define PN_MANCH_SEND (1 << PINB6) // pin zum senden
 #define PN_MANCH_REC (1 << PINB5)  // pin zum empfangen
-#elif __AVR_ATtiny261A__
+#endif
+#ifdef __AVR_ATtiny261__
 #define DDRMANCH DDRB // port der übertragungsleitung
 #define PORTMANCH PORTB
 #define PINMANCH PINB
@@ -60,12 +61,12 @@
 #define PINMANCH1 PIND
 #define PN_MANCH1 0x01 // pin zum übertrage: z.B. 0x10 => bit 5
 #endif                 //__AVR_ATmega32u4
-#ifdef __AVR_ATtiny261A__
+#ifdef __AVR_ATtiny261__
 #define DDRMANCH1 DDRA
 #define PORTMANCH1 PORTA
 #define PINMANCH1 PINA
 #define PN_MANCH1 (1 << PINA2)
-#endif //__AVR_ATtiny261A__
+#endif //__AVR_ATtiny261__
 #define CLRMANCH1 (PORTMANCH1 &= ~PN_MANCH1)
 #define SETMANCH1 (PORTMANCH1 |= PN_MANCH1)
 #define TOGMANCH1 (PINMANCH1 = PN_MANCH1)

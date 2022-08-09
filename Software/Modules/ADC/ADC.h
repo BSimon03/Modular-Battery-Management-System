@@ -41,7 +41,7 @@
 #define ADC_CLEAR_INT() ADCSRA |= (1 << ADIF)        // clear interrupt flag
 
 // Setting the filtering for voltage (0: OFF    1: ON)
-#define ADC_FILTER_V 1
+#define ADC_FILTER_V 0
 
 // Giving Names to Numbers
 enum ADC_STATES

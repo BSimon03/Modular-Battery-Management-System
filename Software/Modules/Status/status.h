@@ -10,7 +10,7 @@
 #ifndef STATUS_H
 #define STATUS_H
 
-#ifdef __AVR_ATtiny261A__
+#ifdef __AVR_ATtiny261__
 #define LEDDDR  DDRA
 #define LEDPORT PORTA
 #define LEDPINR PINA5
