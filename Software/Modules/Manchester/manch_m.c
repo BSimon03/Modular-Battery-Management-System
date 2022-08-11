@@ -131,8 +131,13 @@ ISR(PCINT_vect)
 //			PORTD^=(1<<PIND3);		//fx
    if (manch_i == 0) // anfang
    {
-//   	stat_led_green();
+   	stat_led_green();
+#ifdef __AVR_ATmega32U4__
+      if (READMANCH == 0) // 1 als startbit, neg. logik! fx
+#endif //__AVR_ATmega32u4
+#ifdef __AVR_ATtiny261__
       if (READMANCH != 0) // 1 als startbit, neg. logik! fx
+#endif 
       {
 //			PORTD^=(1<<PIND3);		//fx
          TCCR1B |= TCCR1B_TIMER_START; // timer starten
@@ -155,7 +160,12 @@ ISR(PCINT_vect)
          {
             manch_d1 = manch_d1 << 1;
             manch_x = 'l';      // nächstes mal einlesen nach ganzem bit
-            if (READMANCH == 0) // fx
+#ifdef __AVR_ATmega32U4__
+            if (READMANCH == 1)
+#endif //__AVR_ATmega32u4
+#ifdef __AVR_ATtiny261__
+            if (READMANCH == 0) 
+#endif
             {
                manch_d1 |= 0x01;
             }
@@ -192,7 +202,12 @@ ISR(PCINT_vect)
          if (manch_x == 'l') // bit einlesen
          {
             manch_d1 = manch_d1 << 1;
-            if (READMANCH == 0) // fx
+#ifdef __AVR_ATmega32U4__
+            if (READMANCH == 1)
+#endif //__AVR_ATmega32u4
+#ifdef __AVR_ATtiny261__
+            if (READMANCH == 0) 
+#endif
             {
                manch_d1 |= 0x01;
             }

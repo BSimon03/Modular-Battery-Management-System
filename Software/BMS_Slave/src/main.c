@@ -186,18 +186,48 @@ int main(void)
 
 	// clear timers after startup
 //	timer_clear_timer(TIMER_BALANCE);
-
+unsigned char com_stat, state=0;
 	while (1)
 	{
 		//--------------ADC------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
 		timer_add_time(); // executed after max 32ms
 //		stat_led_off();
-		_delay_ms(500);
+//		_delay_ms(500);
 //		stat_led_green();
 		manch_init_send();
 		manch_send();
 		_delay_ms(800);
-
+/*
+		//============================Recieve Test==========================
+		if(state==0)		//empfangen initialisieren
+		{
+			manch_init_receive();
+			com_stat=0;
+			state++;
+		}
+		
+		else if(state==1)		//Daten Empfangen
+		{
+			com_stat=manch_receive();
+			
+			if (com_stat==0)		//während auf Daten gewartet wird LED orange blinken
+			{
+				stat_led_orange();
+			}
+			
+			if(com_stat==1)			//wenn Daten erfolgreich Empfangen wurden LED grün
+			{
+				stat_led_green();
+				_delay_ms(600);
+				state=0;
+			}
+			else if (com_stat==2)		//wenn Fehler beim Empfangen LED rot
+			{
+				stat_led_red();
+				state=0;
+			}
+		}
+*/
 /*
 		BALANCE_time = timer_get_timer(TIMER_BALANCE);
 

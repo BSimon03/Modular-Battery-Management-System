@@ -38,12 +38,13 @@ int main(void)
     {
     	PORTD^=(1<<PIND3);
 		
-		/*while (1)
+/*		while (1)
 		{
 			manch_init_send();
 			manch_send();
-			_delay_ms(500);
-		}*/
+			_delay_ms(1000);
+		}
+*/
 		//============================Recieve Test==========================
 		if(state==0)		//empfangen initialisieren
 		{
