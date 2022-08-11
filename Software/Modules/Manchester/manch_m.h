@@ -77,7 +77,7 @@ void manch_init_send(void);
 // initializes the manchester-transmitter
 // has to be called before manch_send
 
-void manch_send(uint16_t data);
+void manch_send(void);
 // copies data to send-buffer and starts sending
 
 void manch_init_receive();
@@ -92,14 +92,6 @@ uint8_t manch_receive(uint16_t *data);
 
 #ifdef MANCHESTER1
 
-void manch_init_send1(void);
-// initializes only the port for sending to top
-// has to be called before manch_send1
-
-void manch_send1(uint16_t data);
-// copies data to send-buffer
-// manch_send has to be called to start sending
-
 void manch_init_receive1();
 // initializes the port for receiving from top
 // has to be called before the call of manch_receive1
@@ -111,4 +103,16 @@ uint8_t manch_receive1(uint16_t *data);
 // returns 2: error, receive aborted, has to be restarted
 
 #endif // MANCHESTER1
+
+//==========globale variablen================================
+#ifdef MANCH_M
+	#define EXTERN
+#else
+	#define EXTERN extern
+#endif 
+	// Send data
+	uint16_t EXTERN bot_send;
+	uint16_t EXTERN top_send;
+#undef EXTERN
+
 #endif // MANCH_H

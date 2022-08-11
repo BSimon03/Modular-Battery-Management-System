@@ -10,6 +10,7 @@
 //
 //================================================================
 
+#define MANCH_M
 #include <avr/io.h>
 #include "avr/interrupt.h"
 //#include <util/delay.h>
@@ -25,6 +26,10 @@ void manch_init_send(void)
 {
    DDRMANCH |= PN_MANCH_SEND; // pin als ausgang
    CLRMANCH;                  // und auf 0
+#ifdef MANCHESTER1
+   DDRMANCH1 |= PN_MANCH1; // pin als ausgang
+   CLRMANCH1;              // und auf 1
+#endif
 #ifdef __AVR_ATmega32U4__
    TCCR1A = 0x02; // mode 14, fast pwm, top is icr1
    TCCR1B = 0x18; //  - " -
@@ -68,18 +73,23 @@ void manch_init_receive()
    manch_res = 0;
 }
 
-void manch_send(uint16_t data)
+void manch_send()
 {
    manch_res = 0;
    manch_i = 0;
-   manch_d = (uint8_t)(data >> 8) | 0x80; // msb als startbit immer 1
-   manch_d1 = (uint8_t)(data & 0x00ff);
-   TCNT1 = OCR1C - 2; // fx
+   manch_d = (uint8_t)(top_send >> 8) | 0x80; // msb als startbit immer 1
+   manch_d1 = (uint8_t)(top_send & 0x00ff);
+#ifdef MANCHESTER1
+   manch1_d = (uint8_t)(bot_send >> 8) | 0x80; // msb als startbit immer 1
+   manch1_d1 = (uint8_t)(bot_send & 0x00ff);
+#endif MANCHESTER1
 #ifdef __AVR_ATmega32U4__
+   TCNT1 = ICR1 - 2; // fx
    TIFR1 = 0xff;   // flags löschen fx
    TCCR1B |= 0x01; // timer starten
 #endif             //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261__
+   TCNT1 = OCR1C - 2; // fx
    TIFR = 0xFF;
    TCCR1B = 0x04;  // Prescaler 8, start timer
 #endif             //__AVR_ATtiny261__
@@ -262,29 +272,19 @@ ISR(TIMER1_COMPA_vect) // timeout, eine erwartete flanke ist nicht gekommen
 ISR(TIMER1_OVF_vect)
 {
 stat_led_green();
-#ifdef __AVR_ATmega32U4__
-   ICR1 = 2 * F_CPU / BAUDRATE; // fx
-#endif
-#ifdef __AVR_ATtiny261__
-//   OCR1C = F_CPU / BAUDRATE / CLOCK_PR /2;
-#endif
    if (manch_i == 16) // ende
    {
       CLRMANCH;
+#ifdef MANCHESTER1
+      CLRMANCH1;
+#endif // MANCHESTER1
 #ifdef __AVR_ATmega32U4__
       TCCR1B &= 0xFE; // timer stoppen
 #endif
 #ifdef __AVR_ATtiny261__
       TCCR1B = 0; // timer stoppen
 #endif
-#ifdef MANCHESTER1
-      CLRMANCH1;
-#endif // MANCHESTER1
 
-//      manch_init_receive();
-#ifdef MANCHESTER1
-//      manch_init_receive1();
-#endif // MANCHESTER1
    }
    else
    {
@@ -299,17 +299,15 @@ stat_led_green();
          SETMANCH;
       else
          CLRMANCH;
+       manch_d = manch_d << 1;
 #ifdef MANCHESTER1
       if (manch1_d & 0x80)
          SETMANCH1;
       else
          CLRMANCH1;
-#endif // MANCHESTER1
-      manch_i++;
-      manch_d = manch_d << 1;
-#ifdef MANCHESTER1
       manch1_d = manch1_d << 1;
 #endif // MANCHESTER1
+      manch_i++;
    }
 stat_led_off();
 }
@@ -326,12 +324,6 @@ stat_led_off();
 }
 
 #ifdef MANCHESTER1
-void manch_init_send1(void)
-{
-   DDRMANCH1 |= PN_MANCH1; // pin als ausgang
-   CLRMANCH1;              // und auf 1
-}
-
 void manch_init_receive1()
 {
    DDRMANCH1 &= ~PN_MANCH1; // pin als Eingang
@@ -361,11 +353,6 @@ void manch_init_receive1()
    manch_res = 0;
 }
 
-void manch_send1(uint16_t data)
-{
-   manch1_d = (uint8_t)(data >> 8) | 0x80; // msb als startbit immer 1
-   manch1_d1 = (uint8_t)(data & 0x00ff);
-}
 
 uint8_t manch_receive1(uint16_t *data)
 {

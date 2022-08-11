@@ -86,10 +86,6 @@ int main(void)
 	// Communication Cycle
 	uint8_t comm_stat = COMM_RECEIVE;
 
-	// Send data
-	uint16_t bot_send = 0;
-	uint16_t top_send = 0;
-
 	// Timing
 	uint16_t BALANCE_time = 0; // compare value
 
@@ -198,10 +194,8 @@ int main(void)
 //		stat_led_off();
 		_delay_ms(500);
 //		stat_led_green();
-		manch_init_send1();
 		manch_init_send();
-		manch_send1(bot_send);
-		manch_send(bot_send);
+		manch_send();
 		_delay_ms(800);
 
 /*
