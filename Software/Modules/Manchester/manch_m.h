@@ -11,12 +11,17 @@
 //================================================================
 #ifndef MANCH_H
 #define MANCH_H
-#define BAUDRATE 1200   //fx?
+
+#define BAUDRATE 1200   
+
 #ifdef __AVR_ATmega32U4__
 #define CLOCK_PR 1
+#define TCCR1B_TIMER_START 0x01
 #endif // __AVR_ATmega32u4__
+
 #ifdef __AVR_ATtiny261__
 #define CLOCK_PR 8 // Prescaler 8, im code hardcodiert!!!
+#define TCCR1B_TIMER_START 0x04
 #define MANCHESTER1 // 2. manchester-übertragung
 #endif              // __AVR_ATtiny261__
 
@@ -28,6 +33,7 @@
 // im pausen: beim senden hochohmig,  beim empfang liegt 0 an
 // verwendet timer1: ocr1b-int und overflow-int
 //          zum empfangen pinchange-interrupt
+
 #ifdef __AVR_ATmega32U4__
 #define DDRMANCH DDRB // port der übertragungsleitung
 #define PORTMANCH PORTB
@@ -84,7 +90,7 @@ void manch_init_receive();
 // initializes the manchester-receiver from bottom
 // has to be called before the call of manch_receive
 
-uint8_t manch_receive(uint16_t *data);
+uint8_t manch_receive(void);
 // copies received data to *data
 // returns 0: waitin for data
 // returns 1: data received, data in *data
@@ -111,8 +117,11 @@ uint8_t manch_receive1(uint16_t *data);
 	#define EXTERN extern
 #endif 
 	// Send data
-	uint16_t EXTERN bot_send;
-	uint16_t EXTERN top_send;
+	uint16_t EXTERN gl_manch_dat;
+#ifdef MANCHESTER1
+	uint16_t EXTERN gl_manch_dat1;
+#endif // MANCHESTER1
+
 #undef EXTERN
 
 #endif // MANCH_H
