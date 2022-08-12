@@ -187,6 +187,7 @@ int main(void)
 	// clear timers after startup
 //	timer_clear_timer(TIMER_BALANCE);
 unsigned char com_stat, state=0;
+DDRA |= 0x80;
 	while (1)
 	{
 		//--------------ADC------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
@@ -194,10 +195,10 @@ unsigned char com_stat, state=0;
 //		stat_led_off();
 //		_delay_ms(500);
 //		stat_led_green();
-		manch_init_send();
-		manch_send();
-		_delay_ms(800);
-/*
+//		manch_init_send();
+//		manch_send();
+//		_delay_ms(800);
+
 		//============================Recieve Test==========================
 		if(state==0)		//empfangen initialisieren
 		{
@@ -212,22 +213,36 @@ unsigned char com_stat, state=0;
 			
 			if (com_stat==0)		//während auf Daten gewartet wird LED orange blinken
 			{
-				stat_led_orange();
+				stat_led_off();
 			}
 			
 			if(com_stat==1)			//wenn Daten erfolgreich Empfangen wurden LED grün
 			{
 				stat_led_green();
-				_delay_ms(600);
-				state=0;
+				_delay_ms(200);
+				state=2;
 			}
 			else if (com_stat==2)		//wenn Fehler beim Empfangen LED rot
 			{
 				stat_led_red();
+				_delay_ms(200);
 				state=0;
 			}
 		}
-*/
+		else if (state==2)	// antworten
+		{
+			stat_led_red();
+			manch_init_send();
+			manch_send();
+			state = 3;
+		}
+		else if (state==3)	// warten, bis fertig gesendet
+		{
+			if (manch_res == 1)
+			{
+				state = 0;
+			}
+		}
 /*
 		BALANCE_time = timer_get_timer(TIMER_BALANCE);
 
@@ -376,7 +391,7 @@ void bms_slave_init() // Combining all init functions
 #endif
 	timer_init_timer();
 	timer_add_time();
-	ADC_init();
+//	ADC_init();
 	stat_led_init(); // Status LED initialised
 	BALANCING_DDR |= (1 << BALANCING_PIN);
 	sei(); // global interrupt enable

@@ -12,7 +12,7 @@
 #ifndef MANCH_H
 #define MANCH_H
 
-#define BAUDRATE 1200   
+#define BAUDRATE 2400  
 
 #ifdef __AVR_ATmega32U4__
 #define CLOCK_PR 1
@@ -116,11 +116,12 @@ uint8_t manch_receive1(uint16_t *data);
 #else
 	#define EXTERN extern
 #endif 
-	// Send data
+	// daten zum senden bzw. empfangene daten
 	uint16_t EXTERN gl_manch_dat;
 #ifdef MANCHESTER1
 	uint16_t EXTERN gl_manch_dat1;
 #endif // MANCHESTER1
+	uint8_t EXTERN volatile manch_res;
 
 #undef EXTERN
 
