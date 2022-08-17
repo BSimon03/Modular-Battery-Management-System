@@ -12,13 +12,13 @@
 //--------------CPU-FREQUENCY--------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
 //--Define CPU frequency, if not already defined in the platformio.ini or intellisense
 #ifndef F_CPU
-#define F_CPU 2000000L
+error! #define F_CPU 2000000L
 #endif
 
 //--------------USED-HARDWARE--------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
 //--Define Microcontroller, if not already defined in the platform.ini or intellisense
 #ifndef __AVR_ATtiny261A__
-#define __AVR_ATtiny261A__
+error! #define __AVR_ATtiny261A__
 #endif
 
 //--------------PIN-DEFINITIONS------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
@@ -191,7 +191,7 @@ DDRA |= 0x80;
 	while (1)
 	{
 		//--------------ADC------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
-		timer_add_time(); // executed after max 32ms
+//		timer_add_time(); // executed after max 32ms
 //		stat_led_off();
 //		_delay_ms(500);
 //		stat_led_green();
@@ -216,11 +216,11 @@ DDRA |= 0x80;
 				stat_led_off();
 			}
 			
-			if(com_stat==1)			//wenn Daten erfolgreich Empfangen wurden LED grün
+			else if(com_stat==1)			//wenn Daten erfolgreich Empfangen wurden LED grün
 			{
 				stat_led_green();
 				_delay_ms(200);
-				state=2;
+				state=0;
 			}
 			else if (com_stat==2)		//wenn Fehler beim Empfangen LED rot
 			{
@@ -229,7 +229,7 @@ DDRA |= 0x80;
 				state=0;
 			}
 		}
-		else if (state==2)	// antworten
+/*		else if (state==2)	// antworten
 		{
 			stat_led_red();
 			manch_init_send();
@@ -243,6 +243,7 @@ DDRA |= 0x80;
 				state = 0;
 			}
 		}
+*/
 /*
 		BALANCE_time = timer_get_timer(TIMER_BALANCE);
 
@@ -389,8 +390,8 @@ void bms_slave_init() // Combining all init functions
 #else
 #error Invalid prescaler setting.
 #endif
-	timer_init_timer();
-	timer_add_time();
+//	timer_init_timer();
+//	timer_add_time();
 //	ADC_init();
 	stat_led_init(); // Status LED initialised
 	BALANCING_DDR |= (1 << BALANCING_PIN);

@@ -14,7 +14,7 @@
 #include "ADC.h"
 
 static uint8_t state = ST_REGISTER;
-static uint16_t adc_values[6];
+static uint16_t adc_values[2];
 static uint8_t adc_counter;
 static uint16_t adc_value = 0;
 static uint16_t sort; // sort algorithm

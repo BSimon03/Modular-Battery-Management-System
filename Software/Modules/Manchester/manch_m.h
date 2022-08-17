@@ -19,11 +19,11 @@
 #define TCCR1B_TIMER_START 0x01
 #endif // __AVR_ATmega32u4__
 
-#ifdef __AVR_ATtiny261__
+#ifdef __AVR_ATtiny261A__
 #define CLOCK_PR 8 // Prescaler 8, im code hardcodiert!!!
 #define TCCR1B_TIMER_START 0x04
-#define MANCHESTER1 // 2. manchester-übertragung
-#endif              // __AVR_ATtiny261__
+//#define MANCHESTER1 // 2. manchester-übertragung
+#endif              // __AVR_ATtiny261A__
 
 //========= definitionen des verwendeten port und pins =============
 // zur übertragung in nur eine richtung: vom master oder slave nach unten
@@ -41,7 +41,7 @@
 #define PN_MANCH_SEND (1 << PINB6) // pin zum senden
 #define PN_MANCH_REC (1 << PINB5)  // pin zum empfangen
 #endif
-#ifdef __AVR_ATtiny261__
+#ifdef __AVR_ATtiny261A__
 #define DDRMANCH DDRB // port der übertragungsleitung
 #define PORTMANCH PORTB
 #define PINMANCH PINB
@@ -67,12 +67,12 @@
 #define PINMANCH1 PIND
 #define PN_MANCH1 0x01 // pin zum übertrage: z.B. 0x10 => bit 5
 #endif                 //__AVR_ATmega32u4
-#ifdef __AVR_ATtiny261__
+#ifdef __AVR_ATtiny261A__
 #define DDRMANCH1 DDRA
 #define PORTMANCH1 PORTA
 #define PINMANCH1 PINA
 #define PN_MANCH1 (1 << PINA2)
-#endif //__AVR_ATtiny261__
+#endif //__AVR_ATtiny261A__
 #define CLRMANCH1 (PORTMANCH1 &= ~PN_MANCH1)
 #define SETMANCH1 (PORTMANCH1 |= PN_MANCH1)
 #define TOGMANCH1 (PINMANCH1 = PN_MANCH1)
@@ -113,15 +113,18 @@ uint8_t manch_receive1(uint16_t *data);
 //==========globale variablen================================
 #ifdef MANCH_M
 	#define EXTERN
+	#define REGISTER register
+//	#define ASMR3 asm("r3")
 #else
 	#define EXTERN extern
+	#define REGISTER register
 #endif 
 	// daten zum senden bzw. empfangene daten
 	uint16_t EXTERN gl_manch_dat;
 #ifdef MANCHESTER1
 	uint16_t EXTERN gl_manch_dat1;
 #endif // MANCHESTER1
-	uint8_t EXTERN volatile manch_res;
+
 
 #undef EXTERN
 
