@@ -24,7 +24,7 @@ all: $(PROJ).hex
  
 # Generate executable
 $(PROJ).elf: $(OBJ)
-	avr-gcc -w -mmcu=$(MCU) -Wl,-Map=output.map $(OBJ) -o $(PROJ).elf
+	avr-gcc -w -mmcu=$(MCU) -Wl,-Map=$(PROJ).map $(OBJ) -o $(PROJ).elf
  
 # Create Intel hex format for programming
 $(PROJ).hex: $(PROJ).elf
@@ -45,5 +45,5 @@ install:
 # info, etc:
 info:
 	avr-nm -S BMS_Slave.elf
-	avr-objdump -D -m avr2 BMS_Slave.hex  > test.dump
+	avr-objdump -D -m avr2 BMS_Slave.hex  > BMS_Slave.dump
 

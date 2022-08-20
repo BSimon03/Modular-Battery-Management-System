@@ -113,11 +113,9 @@ uint8_t manch_receive1(uint16_t *data);
 //==========globale variablen================================
 #ifdef MANCH_M
 	#define EXTERN
-	#define REGISTER register
 //	#define ASMR3 asm("r3")
 #else
 	#define EXTERN extern
-	#define REGISTER register
 #endif 
 	// daten zum senden bzw. empfangene daten
 	uint16_t EXTERN gl_manch_dat;

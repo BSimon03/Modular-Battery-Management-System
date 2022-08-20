@@ -17,10 +17,12 @@
 #include "manch_m.h"
 #include "status.h"
 
-static uint8_t manch_i;           // manch_i: counter
+uint8_t register manch_i asm("r4");           // manch_i: counter
 static uint8_t manch_d, manch_d1; // manch_d: manchester data
 static uint8_t manch1_d, manch1_d1;
-static uint8_t manch_x; // manch_x: differs betwenn long and short   
+static uint8_t manch_x; // manch_x: differs betwenn long and short 
+static uint8_t manch_nr; // welche schnittstelle empfängt?
+uint8_t register manch_bit asm("r16");
 
 uint8_t volatile register manch_res asm("r3"); 
 
@@ -72,12 +74,13 @@ void manch_init_receive()
    OCR1C = 0xFF;				// top-wert
    TIFR = 0xFF; 				// flags löschen
    TIMSK = 0x40;           // ocr1a match interrupt;
-   GIMSK |= 0x20;          // PF_CPU / BAUDRATE / CLOCK_PRCINT1 enable
+   GIMSK = 0x20;          
    PCMSK1 = PN_MANCH_REC; // enable pcint on receive pin
-   PCMSK0 = 0;
+   PCMSK0 = 0;		// defaultmäßig nicht auf 0!!
 #endif                     //__AVR_ATtiny261A__
    manch_i = 0;
    manch_res = 0;
+   manch_nr = 0;
 }
 
 void manch_send()
@@ -105,43 +108,64 @@ void manch_send()
 
 uint8_t manch_receive()
 {
-/*
-	uint8_t help; // nur einmal einlesen, manch-res könnte sich während der funktion ändern!
-	help = manch_res;
-   if (help == 1) // daten fertig empfangen
-   {
-//      gl_manch_dat = manch_d * 256 + manch_d1; // fx
-//      stat_led_off();
-      return 1;
-   }
-   else if (help == 0) // noch nicht fertig
-   {
-      return 0;
-   }
-   else // error, overflow
-   {
-//   	stat_led_red();
-gl_manch_dat = manch_res;
-      return 2;
-   }
-*/
-return manch_res;
+	return manch_res;
 }
 
-// fürs empfangen
+manch_stop_receive()
+{
+               TCCR1B =0; // timer stoppen
+
+#ifdef __AVR_ATmega32U4__
+               TIMSK1 = 0x00; // overflow interrupt stoppen
+               PCICR = 0x00;  // flankeninterrupt stoppen
+#endif                        //__AVR_ATmega32u4
+#ifdef __AVR_ATtiny261A__
+               TIMSK = 0x00;            // overflow interrupt stoppen
+               GIMSK = 0;  // flankeninterrupt stoppen
+               PCMSK1 = 0; // enable pcint on receive pin
+               PCMSK1 = 0; // - " -
+#endif                                  //__AVR_ATtiny261A__
+}
+
+// fürs empfangen, rst: ISR_NAKED!
 #ifdef __AVR_ATmega32U4__
 ISR(PCINT0_vect)
-#endif //__AVR_ATmega32u4
-#ifdef __AVR_ATtiny261A__
-ISR(PCINT_vect)
-#endif //__AVR_ATtiny261A__
 {
-#ifdef __AVR_ATmega32U4__
    uint16_t tim;
 #endif //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
-   uint8_t tim;
+ISR(PCINT_vect)
+{
+	uint8_t tim;
+#endif //__AVR_ATtiny261A__
+
+// timer einlesen und neu starten, für zeitmessung
+      tim = TCNT1;
+#ifdef __AVR_ATtiny261A__
+		TC1H = 0;	// 10-bit register!
 #endif
+      TCNT1 = 0; // reset timer
+
+#ifdef __AVR_ATtiny261A__
+// eingangspin einlesen
+	if ( (manch_nr&0x01) == 0)
+	{
+		if (PINMANCH&PN_MANCH_REC == PN_MANCH_REC)
+			manch_bit = manch_bit&0x01; // comp.optimierung
+		else	
+			manch_bit = 0;
+	}
+  #ifdef MANCHESTER1
+	else
+		{
+		if (PINMANCH1&PN_MANCH_REC1 == PN_MANCH_REC1)
+			manch_bit = manch_bit&0x01; // comp.optimierung
+		else	
+			manch_bit = 0;
+	}
+  #endif //MANCHESTER1
+#endif //__AVR_ATtiny261A__
+
 PINA=0x80;		//fx
    if (manch_i == 0) // anfang
    {
@@ -150,14 +174,10 @@ PINA=0x80;		//fx
       if (READMANCH == 0) // 1 als startbit, neg. logik! fx
 #endif //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
-      if (READMANCH != 0) // 1 als startbit, neg. logik! fx
+      if (manch_bit&0x01 == 1) // 1 als startbit, neg. logik! compiler-optimiert
 #endif 
       {
 //			PORTD^=(1<<PIND3);		//fx
-#ifdef __AVR_ATtiny261A__
-		   TC1H = 0;	// 10-bit register!
-#endif
-         TCNT1 = 0;
          TCCR1B |= TCCR1B_TIMER_START; // timer starten
 
          manch_x = 'k';
@@ -166,11 +186,6 @@ PINA=0x80;		//fx
    }
    else
    {
-      tim = TCNT1;
-#ifdef __AVR_ATtiny261A__
-		TC1H = 0;	// 10-bit register!
-#endif
-      TCNT1 = 0; // reset timer
 //flanke nach halben bit:
       if ((F_CPU / BAUDRATE / CLOCK_PR ) / 3 < tim && tim < (F_CPU / BAUDRATE / CLOCK_PR * 2) / 3) //
       {
@@ -185,7 +200,7 @@ PINA=0x870;
             if (READMANCH == 1)
 #endif //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
-            if (READMANCH == 0) 
+            if (manch_bit&0x01 == 0) //comp. optimierung
 #endif
             {
                manch_d1 |= 0x01;
@@ -201,18 +216,7 @@ PINA=0x870;
             }
             else if (manch_i == 17) // fertig, empfang stoppen
             {
-               TCCR1B &= ~TCCR1B_TIMER_START; // timer stoppen
-
-#ifdef __AVR_ATmega32U4__
-               TIMSK1 = 0x00; // overflow interrupt stoppen
-               PCICR = 0x00;  // flankeninterrupt stoppen
-#endif                        //__AVR_ATmega32u4
-#ifdef __AVR_ATtiny261A__
-               TIMSK = 0x00;            // overflow interrupt stoppen
-               GIMSK &= ~(1 << PCIE1);  // flankeninterrupt stoppen
-               PCMSK1 &= ~PN_MANCH_REC; // enable pcint on receive pin
-#endif                                  //__AVR_ATtiny261A__
-
+            	manch_stop_receive();
                manch_res = 1;
             }
          }
@@ -228,7 +232,7 @@ PINA=0x870;
             if (READMANCH == 1)
 #endif //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
-            if (READMANCH == 0) 
+            if (manch_bit&0x01 == 0) //comp. optimierung
 #endif
             {
                manch_d1 |= 0x01;
@@ -244,42 +248,30 @@ PINA=0x870;
             }
             else if (manch_i == 17) // fertig, empfang stoppen
             {
-               TCCR1B &= ~TCCR1B_TIMER_START; // timer stoppen
-
-#ifdef __AVR_ATmega32U4__
-               TIMSK1 = 0x00; // overflow interrupt stoppen
-               PCICR = 0x00;  // flankeninterrupt stoppen
-#endif                        //__AVR_ATmega32u4
-#ifdef __AVR_ATtiny261A__
-               TIMSK = 0x00;            // overflow interrupt stoppen
-               GIMSK &= ~(1 << PCIE1);  // flankeninterrupt stoppen
-               PCMSK1 &= ~PN_MANCH_REC; // enable pcint on receive pin
-#endif                                  //__AVR_ATtiny261A__
+					manch_stop_receive();
                manch_res = 1;
             }
          }
          else // es hätte nur ein kurzer sein sollen! neu beginnen
          {
-            manch_i = 0; // von vorne!
-            TCCR1B &= ~TCCR1B_TIMER_START; // timer stoppen
+         	manch_stop_receive();
             manch_res = 2;
          }
       }
       else // fehler, flanke nicht zum richtigen zeitpunkt! neu beginnen
       {
-         manch_i = 0; // von vorne!
-         TCCR1B &= ~TCCR1B_TIMER_START; // timer stoppen
+      	manch_stop_receive();
 			manch_res = 3;
       }
    }
 }
 
+
 ISR(TIMER1_COMPA_vect) // timeout, eine erwartete flanke ist nicht gekommen
 // gilt für beide empfänger!!
 {
 //PORTA ^=0x04;
-   manch_i = 0; // von vorne!
-   TCCR1B &= ~TCCR1B_TIMER_START; // timer stoppen
+	manch_stop_receive();
 	manch_res = 4;
 }
 
@@ -331,6 +323,7 @@ ISR(TIMER1_COMPB_vect)
    TOGMANCH1;
 #endif // MANCHESTER1
 //stat_led_off();
+//asm volatile("reti");
 }
 
 #ifdef MANCHESTER1
@@ -361,6 +354,7 @@ void manch_init_receive1()
 #endif            //__AVR_ATtiny261A__
    manch_i = 0;
    manch_res = 0;
+   manch_nr = 1;
 }
 
 
