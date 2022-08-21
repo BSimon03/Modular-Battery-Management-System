@@ -19,8 +19,10 @@
 #include "status.h"
 
 uint8_t register manch_i asm("r4");           // manch_i: counter
-static uint8_t manch_d, manch_d1; // manch_d: manchester data
-static uint8_t manch1_d, manch1_d1;
+uint8_t register manch_d asm("r5");
+uint8_t register manch_d1 asm("r5"); // manch_d: manchester data
+uint8_t register manch1_d asm("r6"); 
+uint8_t register manch1_d1 asm("r7");
 static uint8_t manch_x; // manch_x: differs betwenn long and short 
 static uint8_t manch_nr; // welche schnittstelle empfängt?
 uint8_t register manch_bit asm("r16");
@@ -55,13 +57,13 @@ void manch_init_send(void)
    // ist default TCCR1A = 0x00; // normal mode
    OCR1B = F_CPU / BAUDRATE / CLOCK_PR / 2;
    OCR1C = F_CPU / BAUDRATE / CLOCK_PR; // Bitdauer
-   TIFR = 0xFF;                             // Flags cleared
-   TIMSK = 0x24;                            // ocr1b match und overflow interrupt
-#endif                                      //__AVR_ATtiny261A__
-#ifdef __AVR_ATtiny261A__
+   TIFR = 0xFF;     // Flags cleared, erst nach synchronization clock cycle!!
    TC1H = 0;	// 10-bit register!
 #endif
    TCNT1 = F_CPU / BAUDRATE / CLOCK_PR - 20; 
+#ifdef __AVR_ATtiny261A__
+   TIMSK = 0x24;                            // ocr1b match und overflow interrupt
+#endif
    TCCR1B |= TCCR1B_TIMER_START;
 }
 

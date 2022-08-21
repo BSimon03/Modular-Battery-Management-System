@@ -186,8 +186,10 @@ int main(void)
 
 	// clear timers after startup
 //	timer_clear_timer(TIMER_BALANCE);
-unsigned char com_stat, state=0;
+uint8_t com_stat;
+uint8_t state;
 DDRA |= 0x80;
+	state = 0;
 	while (1)
 	{
 		//--------------ADC------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
