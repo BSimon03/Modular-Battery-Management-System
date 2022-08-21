@@ -225,7 +225,31 @@ DDRA |= 0x80;
 			else if (com_stat==2)		//wenn Fehler beim Empfangen LED rot
 			{
 				stat_led_red();
-				_delay_ms(200);
+				_delay_ms(100);
+				state=0;
+			}
+			else if (com_stat==3)		//wenn Fehler beim Empfangen LED rot
+			{
+				stat_led_red();
+				_delay_ms(100);
+				stat_led_off();
+				_delay_ms(100);
+				stat_led_red();
+				_delay_ms(100);
+				state=0;
+			}
+			else if (com_stat==4)		//wenn Fehler beim Empfangen LED rot
+			{
+				stat_led_red();
+				_delay_ms(100);
+				stat_led_off();
+				_delay_ms(100);
+				stat_led_red();
+				_delay_ms(100);
+				stat_led_off();
+				_delay_ms(100);
+				stat_led_red();
+				_delay_ms(100);
 				state=0;
 			}
 		}

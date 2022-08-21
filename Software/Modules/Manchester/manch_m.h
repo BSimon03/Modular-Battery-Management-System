@@ -22,7 +22,7 @@
 #ifdef __AVR_ATtiny261A__
 #define CLOCK_PR 8 // Prescaler 8, im code hardcodiert!!!
 #define TCCR1B_TIMER_START 0x04
-//#define MANCHESTER1 // 2. manchester-übertragung
+#define MANCHESTER1 // 2. manchester-übertragung
 #endif              // __AVR_ATtiny261A__
 
 //========= definitionen des verwendeten port und pins =============
@@ -50,7 +50,7 @@
 #endif
 #define CLRMANCH (PORTMANCH &= ~PN_MANCH_SEND)
 #define SETMANCH (PORTMANCH |= PN_MANCH_SEND)
-#define TOGMANCH (PINMANCH = PN_MANCH_SEND)
+#define TOGMANCH sbi(PINMANCH, PINB6)
 #define READMANCH (PINMANCH & PN_MANCH_REC)
 
 //=========== 2. schnittstelle ====================================
@@ -71,12 +71,13 @@
 #define DDRMANCH1 DDRA
 #define PORTMANCH1 PORTA
 #define PINMANCH1 PINA
-#define PN_MANCH1 (1 << PINA2)
+#define PN_MANCH1_REC (1 << PINA2)
+#define PN_MANCH1_SEND (1 << PINA2)
 #endif //__AVR_ATtiny261A__
-#define CLRMANCH1 (PORTMANCH1 &= ~PN_MANCH1)
-#define SETMANCH1 (PORTMANCH1 |= PN_MANCH1)
-#define TOGMANCH1 (PINMANCH1 = PN_MANCH1)
-#define READMANCH1 (PINMANCH1 & PN_MANCH1)
+#define CLRMANCH1 (PORTMANCH1 &= ~PN_MANCH1_SEND)
+#define SETMANCH1 (PORTMANCH1 |= PN_MANCH1_SEND)
+#define TOGMANCH1 sbi(PINMANCH1, PINA2)
+#define READMANCH1 (PINMANCH1 & PN_MANCH1_REC)
 #endif // MANCHESTER1
 
 void manch_init_send(void);
