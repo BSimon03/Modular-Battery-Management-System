@@ -202,8 +202,7 @@ DDRA |= 0x80;
 		//============================Recieve Test==========================
 		if(state==0)		//empfangen initialisieren
 		{
-			manch_init_receive1();
-			com_stat=0;
+			manch_init_receive();
 			state++;
 		}
 		
@@ -219,8 +218,8 @@ DDRA |= 0x80;
 			else if(com_stat==1)			//wenn Daten erfolgreich Empfangen wurden LED grün
 			{
 				stat_led_green();
-				_delay_ms(200);
-				state=0;
+				_delay_ms(20);
+				state=2;
 			}
 			else if (com_stat==2)		//wenn Fehler beim Empfangen LED rot
 			{
@@ -255,10 +254,7 @@ DDRA |= 0x80;
 		}
 		else if (state==2)	// antworten
 		{
-//			stat_led_red();
-_delay_ms(500);
 			manch_init_send();
-			manch_send();
 			state = 3;
 		}
 		else if (state==3)	// warten, bis fertig gesendet
@@ -266,7 +262,8 @@ _delay_ms(500);
 			com_stat=manch_receive();
 			if (com_stat == 1)
 			{
-				state = 2;
+				_delay_ms(3);
+				state = 0;
 			}
 		}
 

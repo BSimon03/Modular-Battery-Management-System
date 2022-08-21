@@ -31,9 +31,15 @@ uint8_t volatile register manch_res asm("r3");
 //=============================================================================
 void manch_init_send(void)
 {
+   manch_res = 0;
+   manch_i = 0;
+   manch_d = (uint8_t)(gl_manch_dat >> 8) | 0x80; // msb als startbit immer 1
+   manch_d1 = (uint8_t)(gl_manch_dat & 0x00ff);
    DDRMANCH |= PN_MANCH_SEND; // pin als ausgang
    CLRMANCH;                  // und auf 0
 #ifdef MANCHESTER1
+   manch1_d = (uint8_t)(gl_manch_dat1 >> 8) | 0x80; // msb als startbit immer 1
+   manch1_d1 = (uint8_t)(gl_manch_dat1 & 0x00ff);
    DDRMANCH1 |= PN_MANCH1_SEND; // pin als ausgang
    SETMANCH1;              // und auf 1
 #endif
@@ -46,13 +52,17 @@ void manch_init_send(void)
    TIMSK1 = 0x05;               // ocr1b match und overflow interrupt;
 #endif                          //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
-   TCCR1A = 0x02; // Mode 2, Fast PWM
-   TC1H = 0;	// 10-bit register!   
+   // ist default TCCR1A = 0x00; // normal mode
    OCR1B = F_CPU / BAUDRATE / CLOCK_PR / 2;
    OCR1C = F_CPU / BAUDRATE / CLOCK_PR; // Bitdauer
    TIFR = 0xFF;                             // Flags cleared
    TIMSK = 0x24;                            // ocr1b match und overflow interrupt
 #endif                                      //__AVR_ATtiny261A__
+#ifdef __AVR_ATtiny261A__
+   TC1H = 0;	// 10-bit register!
+#endif
+   TCNT1 = F_CPU / BAUDRATE / CLOCK_PR - 20; 
+   TCCR1B |= TCCR1B_TIMER_START;
 }
 
 //============================================================================
@@ -61,7 +71,7 @@ void manch_init_rec_all()
    manch_i = 0;
    manch_res = 0;
 #ifdef __AVR_ATtiny261A__   
-   TCCR1A = 0x02;                           // mode 2, fast pwm, top is ocr1c
+   // default! TCCR1A = 0x00;          // normal mode, top is ocr1c
    TC1H = 0;	// 10-bit register!
    TCNT1 = 0;
    OCR1A = 2 * F_CPU / BAUDRATE / CLOCK_PR; // timeout => bit zu lang
@@ -100,6 +110,7 @@ void manch_init_receive()
 
 
 //=========================================================================
+/*
 void manch_send()
 {
    manch_res = 0;
@@ -122,7 +133,7 @@ void manch_send()
    TCNT1 = F_CPU / BAUDRATE / CLOCK_PR - 20; 
    TCCR1B |= TCCR1B_TIMER_START;
 }
-
+*/
 //====================================================================
 uint8_t manch_receive()
 {
@@ -311,7 +322,8 @@ ISR(TIMER1_OVF_vect)
 #ifdef MANCHESTER1
       SETMANCH1;
 #endif // MANCHESTER1
-	   TCCR1B &= ~TCCR1B_TIMER_START; // timer stoppen
+	   TCCR1B = 0; // timer stoppen
+	   TIMSK = 0x00; // overflow interrupt stoppen
 	   manch_res = 1;
    }
    else

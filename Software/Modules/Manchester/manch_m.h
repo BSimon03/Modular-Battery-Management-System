@@ -21,7 +21,8 @@
 
 #ifdef __AVR_ATtiny261A__
 #define CLOCK_PR 8 // Prescaler 8, im code hardcodiert!!!
-#define TCCR1B_TIMER_START 0x04
+#define TCCR1B_TIMER_START 0x04  // im code hardcodiert, suche TCCR1B
+#define TCCR1B_START_BIT 2
 #define MANCHESTER1 // 2. manchester-übertragung
 #endif              // __AVR_ATtiny261A__
 
