@@ -202,7 +202,7 @@ DDRA |= 0x80;
 		//============================Recieve Test==========================
 		if(state==0)		//empfangen initialisieren
 		{
-			manch_init_receive();
+			manch_init_receive1();
 			com_stat=0;
 			state++;
 		}
@@ -253,21 +253,23 @@ DDRA |= 0x80;
 				state=0;
 			}
 		}
-/*		else if (state==2)	// antworten
+		else if (state==2)	// antworten
 		{
-			stat_led_red();
+//			stat_led_red();
+_delay_ms(500);
 			manch_init_send();
 			manch_send();
 			state = 3;
 		}
 		else if (state==3)	// warten, bis fertig gesendet
 		{
-			if (manch_res == 1)
+			com_stat=manch_receive();
+			if (com_stat == 1)
 			{
-				state = 0;
+				state = 2;
 			}
 		}
-*/
+
 /*
 		BALANCE_time = timer_get_timer(TIMER_BALANCE);
 

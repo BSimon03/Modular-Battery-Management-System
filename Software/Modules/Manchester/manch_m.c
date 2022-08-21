@@ -60,7 +60,6 @@ void manch_init_rec_all()
 {
    manch_i = 0;
    manch_res = 0;
-   manch_nr = 0;  
 #ifdef __AVR_ATtiny261A__   
    TCCR1A = 0x02;                           // mode 2, fast pwm, top is ocr1c
    TC1H = 0;	// 10-bit register!
@@ -94,6 +93,7 @@ void manch_init_receive()
    CLRMANCH;                  // no pull-up
    PCMSK1 = PN_MANCH_REC; // enable pcint on receive pin
    PCMSK0 = 0;		// defaultmäßig nicht auf 0!!
+   manch_nr = 0; 
 #endif                     //__AVR_ATtiny261A__
 	manch_init_rec_all();
 }
@@ -176,12 +176,12 @@ ISR(PCINT_vect)
 			manch_bit = 0;
 	}
   #ifdef MANCHESTER1
-	else
+	else // schnittstelle von oben invertiert!
 	{
 		if ((PINMANCH1&PN_MANCH1_REC) == PN_MANCH1_REC)
-			manch_bit = manch_bit|0x01; // comp.optimierung
+			manch_bit = 0; // comp.optimierung
 		else	
-			manch_bit = 0;
+			manch_bit = manch_bit|0x01; // comp.optimierung
 	}
   #endif //MANCHESTER1
 #endif //__AVR_ATtiny261A__
@@ -365,9 +365,11 @@ void manch_init_receive1()
    CLRMANCH1;                  // no pull-up
    PCMSK0 = PN_MANCH1_REC; // enable pcint on receive pin
    PCMSK1 = 0;		// defaultmäßig nicht auf 0!!
+   manch_nr = 1; 
 #endif                     //__AVR_ATtiny261A__
 	manch_init_rec_all();
 }
 
 
 #endif // MANCHESTER1
+
