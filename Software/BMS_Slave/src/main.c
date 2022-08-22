@@ -193,7 +193,7 @@ DDRA |= 0x80;
 	while (1)
 	{
 		//--------------ADC------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
-//		timer_add_time(); // executed after max 32ms
+		timer_add_time(); // executed after max 32ms
 //		stat_led_off();
 //		_delay_ms(500);
 //		stat_led_green();
@@ -220,7 +220,7 @@ DDRA |= 0x80;
 			else if(com_stat==1)			//wenn Daten erfolgreich Empfangen wurden LED grün
 			{
 				stat_led_green();
-				_delay_ms(20);
+				timer_clear_timer(MAIN); //_delay_ms(20);
 				state=2;
 			}
 			else if (com_stat==2)		//wenn Fehler beim Empfangen LED rot
@@ -254,21 +254,67 @@ DDRA |= 0x80;
 				state=0;
 			}
 		}
-		else if (state==2)	// antworten
+		else if (state==2)  // kurz warten
+		{
+			if (timer_get_timer(MAIN) >= 7)
+				state = 3; 
+		}
+		else if (state==3)	// antworten
 		{
 			manch_init_send();
-			state = 3;
+			state = 4;
 		}
-		else if (state==3)	// warten, bis fertig gesendet
+		else if (state==4)	// warten, bis fertig gesendet
 		{
 			com_stat=manch_receive();
 			if (com_stat == 1)
 			{
-				_delay_ms(3);
-				state = 0;
+				//_delay_ms(3);
+				state = 5;
 			}
 		}
-
+		else if (state==5) // von oben empfangen
+		{
+			timer_clear_timer(MAIN);
+			manch_init_receive1();
+			state = 6;
+		}
+		else if(state==6)		//Daten von oben warten
+		{
+			com_stat=manch_receive();
+			
+			if (com_stat==0)		//während auf Daten gewartet wird LED orange blinken
+			{
+				stat_led_off();
+			}
+			else if(com_stat==1)			//wenn Daten erfolgreich Empfangen wurden LED grün
+			{
+				stat_led_green();
+				state=7;
+			}
+			else if (com_stat==2)		//wenn Fehler beim Empfangen LED rot
+			{
+				stat_led_red();
+				_delay_ms(100);
+				state=0;
+			}
+			
+			if (timer_get_timer(MAIN) >= 15) // time out, kommt nix von oben
+				state = 0;
+		}
+		else if (state==7)	// antworten mit daten von oben
+		{
+			manch_init_send();
+			state = 8;
+		}
+		else if (state==8)	// warten, bis fertig gesendet
+		{
+			com_stat=manch_receive();
+			if (com_stat == 1)
+			{
+				state = 5;
+			}
+		}
 /*
 		BALANCE_time = timer_get_timer(TIMER_BALANCE);
 
@@ -415,7 +461,7 @@ void bms_slave_init() // Combining all init functions
 #else
 #error Invalid prescaler setting.
 #endif
-//	timer_init_timer();
+	timer_init_timer();
 //	timer_add_time();
 //	ADC_init();
 	stat_led_init(); // Status LED initialised

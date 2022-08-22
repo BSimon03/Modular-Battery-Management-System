@@ -17,7 +17,7 @@
 uint16_t timer_timer[TIMER_MAX_TIMER];
 uint16_t timer_tick;  // zählt die ms (genauer: 1024µs)
 
-
+//==================================================================
 void timer_init_timer()
 // sartet timer 0
 {
@@ -30,6 +30,7 @@ void timer_init_timer()
 #endif // F_CPU
 }
 
+//====================================================================
 void timer_add_time(void)
 // liest timer aus und addiert die timer_tick
 {
@@ -68,12 +69,14 @@ void timer_add_time(void)
 #endif // F_CPU
 }
 
+//======================================================================
 void timer_clear_timer(uint8_t nr)
 // setzt den timer auf aktuellen wert
 {
    timer_timer[nr] = timer_tick;
 }
 
+//======================================================================
 uint16_t timer_get_timer(uint8_t nr)
 // liefert die zeit des timers seit dem letzten clear in ms zurück
 {

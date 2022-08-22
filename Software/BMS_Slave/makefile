@@ -8,10 +8,10 @@ PROJ=BMS_Slave
 SOURCES=src/main.c\
 ../Modules/Manchester/manch_m.c\
 ../Modules/Status/status.c\
-##../Modules/One_Wire_COMM/communication.c
-##../Modules/Timing/timer.c\
+../Modules/Timing/timer.c\
 ##../Modules/ADC/ADC.c\
- 
+##../Modules/One_Wire_COMM/communication.c
+
 # List of object files generated from source files
 OBJ=$(SOURCES:.c=.o)
 

@@ -13,12 +13,12 @@
 #define TIMER_H
 
 //  verwendet timer 0 und stellt funktionen fürs timing zur verfügung
-// #define TIME_MAX_TIMER 2
 
 enum TIMER_NR {
 //   TIMER_COMM,
 //   TIMER_ADC,
 //   TIMER_BALANCE,
+	MAIN,
    HEARTBEAT,
 // letzte eintrag, neue timer davor!
    TIMER_MAX_TIMER};
