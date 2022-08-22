@@ -92,7 +92,7 @@ void manch_init_receive();
 // initializes the manchester-receiver from bottom
 // has to be called before the call of manch_receive
 
-uint8_t manch_receive(void);
+uint8_t manch_result(void);
 // copies received data to *data
 // returns 0: waitin for data
 // returns 1: data received, data in *data

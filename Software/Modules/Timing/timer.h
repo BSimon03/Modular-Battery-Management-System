@@ -13,7 +13,7 @@
 #define TIMER_H
 
 //  verwendet timer 0 und stellt funktionen fürs timing zur verfügung
-
+#ifdef __AVR_ATmega32U4__
 enum TIMER_NR {
 //   TIMER_COMM,
 //   TIMER_ADC,
@@ -22,6 +22,18 @@ enum TIMER_NR {
    HEARTBEAT,
 // letzte eintrag, neue timer davor!
    TIMER_MAX_TIMER};
+#endif
+#ifdef __AVR_ATtiny261A__
+enum TIMER_NR {
+//   TIMER_COMM,
+//   TIMER_ADC,
+//   TIMER_BALANCE,
+	MAIN,
+   HEARTBEAT,
+// letzte eintrag, neue timer davor!
+   TIMER_MAX_TIMER};
+#endif
+
 
 void timer_clear_timer(uint8_t nr);
 // setzt den timer mit der nummer nr zurück

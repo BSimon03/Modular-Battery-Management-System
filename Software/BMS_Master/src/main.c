@@ -13,15 +13,15 @@
 #include "communication.h"
 #include "status.h"
 #include "manch_m.h"
-#include "timer.h"
+#include "timer.h" 
 
 
 int main(void)
 {
 	
 	//fx
-	DDRD|=(1<<PIND3);
-	PORTD&=~(1<<PIND3);
+DDRD|=(1<<PIND3);
+PORTD&=~(1<<PIND3);
 	
 	
 	uint16_t daten;
@@ -34,14 +34,69 @@ int main(void)
 	
 	//fx
 	sei();
-    while (1) 
-    {
-    	PORTD^=(1<<PIND3);
+   while (1) 
+   {
+		timer_add_time();
+//PIND=(1<<PIND3);
+		if (state == 0)
+		{
+			gl_manch_dat = REQ_VOLT_G;
+			manch_init_send();
+			state = 1;
+		}
+		else if (state==1)	// warten, bis fertig gesendet
+		{
+			com_stat=manch_result();
+			if (com_stat == 1)
+			{
+				_delay_ms(2);
+				state = 5;
+			}
+		}
+		else if (state==5) // von oben empfangen
+		{
+			timer_clear_timer(MAIN);
+			manch_init_receive();
+			state = 6;
+		}
+		else if(state==6)		//Daten von oben warten
+		{
+			com_stat=manch_result();
+			
+			if (com_stat==0)		//während auf Daten gewartet wird LED orange blinken
+			{
+				stat_led_off();
+			}
+			else if(com_stat==1)			//wenn Daten erfolgreich Empfangen wurden LED grün
+			{
+				stat_led_green();
+				state=5;
+			}
+			else //if (com_stat==2)		//wenn Fehler beim Empfangen LED rot
+			{
+				stat_led_red();
+				//_delay_ms(100);
+				state=5;
+			}
+			
+			if (timer_get_timer(MAIN) >= 15) // time out, kommt nix von oben
+			{
+				//stat_led_red();
+				state = 8;
+			}
+		}
+		else if (state==8)
+		{
+			_delay_ms(1000);
+			state = 0;
+		}
 		
+				
+/*		
+		//============================= send test ============================
 		while (1)
 		{
 			manch_init_send();
-			manch_send();
 			_delay_ms(1000);
 		}
 
@@ -86,11 +141,9 @@ int main(void)
 				state=0;
 			}
 		}
+*/
 		
 		//Timer für Heartbeat
-		timer_add_time();
-		counter+=timer_get_timer(HEARTBEAT);
-		timer_clear_timer(HEARTBEAT);
     }
 }
 

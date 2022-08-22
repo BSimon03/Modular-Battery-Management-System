@@ -36,4 +36,7 @@ clean:
  
 # Install flashes the code
 install:
-#    avrdude -c usbtiny -p $(MCU) -U flash:w:$(PROJ).hex
+	dfu-programmer atmega32u4 erase
+	dfu-programmer atmega32u4 flash $(PROJ).hex
+	dfu-programmer atmega32u4 start
+	

@@ -210,7 +210,7 @@ DDRA |= 0x80;
 		
 		else if(state==1)		//Daten Empfangen
 		{
-			com_stat=manch_receive();
+			com_stat=manch_result();
 			
 			if (com_stat==0)		//während auf Daten gewartet wird LED orange blinken
 			{
@@ -266,7 +266,7 @@ DDRA |= 0x80;
 		}
 		else if (state==4)	// warten, bis fertig gesendet
 		{
-			com_stat=manch_receive();
+			com_stat=manch_result();
 			if (com_stat == 1)
 			{
 				//_delay_ms(3);
@@ -281,7 +281,7 @@ DDRA |= 0x80;
 		}
 		else if(state==6)		//Daten von oben warten
 		{
-			com_stat=manch_receive();
+			com_stat=manch_result();
 			
 			if (com_stat==0)		//während auf Daten gewartet wird LED orange blinken
 			{
@@ -309,7 +309,7 @@ DDRA |= 0x80;
 		}
 		else if (state==8)	// warten, bis fertig gesendet
 		{
-			com_stat=manch_receive();
+			com_stat=manch_result();
 			if (com_stat == 1)
 			{
 				state = 5;

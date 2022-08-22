@@ -91,11 +91,13 @@ void manch_init_receive()
    DDRMANCH &= ~PN_MANCH_REC; // pin als Eingang
    CLRMANCH;                  // no pull-up
    // timer OCRA für receive error, timeout, wenn keine flanke kommt
-   TCCR1A = 0x02;                                // mode 14, fast pwm, top is icr1
+   TCCR1A = 0x00;                                // mode 12, fast pwm, top is icr1
    TCCR1B = 0x18;                                //  - " -
+   TCNT1 = 0;
    OCR1A = 2 * F_CPU / BAUDRATE / CLOCK_PR + 18; // timeout => bit zu lang
    ICR1 = 0xffff;  // top-wert
    TIFR1 = 0xff;   // flags löschen
+   PCIFR = 0xff;	// flags löschen
    TIMSK1 = 0x02;          // ocr1a match interrupt;
    PCICR = 0x01;           // flankeninterrupt
    PCMSK0 = PN_MANCH_REC; // enable pcint on receive pin
@@ -137,7 +139,7 @@ void manch_send()
 }
 */
 //====================================================================
-uint8_t manch_receive()
+uint8_t manch_result()
 {
 	return manch_res;
 }
@@ -202,9 +204,16 @@ asm volatile (	"push r24" "\n\t"
 			manch_bit = manch_bit|0x01; // comp.optimierung
 	}
   #endif //MANCHESTER1
-#endif //__AVR_ATtiny261A__
-
 PINA=0x80;		//fx
+#endif //__AVR_ATtiny261A__
+#ifdef __AVR_ATmega32U4__
+//	if ((PINMANCH&PN_MANCH_REC) == PN_MANCH_REC)
+//		manch_bit = manch_bit|0x01; // comp.optimierung
+//	else	
+//		manch_bit = 0;
+PIND=(1<<PIND3);
+#endif 
+
    if (manch_i == 0) // anfang
    {
 //   	stat_led_green();
@@ -220,7 +229,12 @@ PINA=0x80;		//fx
          manch_x = 'k';
          manch_i++;
       }
+#ifdef __AVR_ATtiny261A__
 PINA=0x80;
+#endif
+#ifdef __AVR_ATmega32U4__
+PIND=(1<<PIND3);
+#endif
    }
    else
    {
@@ -338,7 +352,12 @@ ISR(TIMER1_OVF_vect)
       SETMANCH1;
 #endif // MANCHESTER1
 	   TCCR1B = 0; // timer stoppen
-	   TIMSK = 0x00; // overflow interrupt stoppen
+#ifdef __AVR_ATmega32U4__
+	   TIMSK1 = 0x00; // overflow interrupt stoppen
+#endif
+#ifdef __AVR_ATtiny261A__
+		TIMSK = 0x00; // overflow interrupt stoppen
+#endif
 	   manch_res = 1;
    }
    else
