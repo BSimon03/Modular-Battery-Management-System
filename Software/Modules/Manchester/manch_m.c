@@ -20,9 +20,9 @@
 
 uint8_t register manch_i asm("r4");           // manch_i: counter
 uint8_t register manch_d asm("r5");
-uint8_t register manch_d1 asm("r5"); // manch_d: manchester data
-uint8_t register manch1_d asm("r6"); 
-uint8_t register manch1_d1 asm("r7");
+uint8_t register manch_d1 asm("r6"); // manch_d: manchester data
+uint8_t register manch1_d asm("r7"); 
+uint8_t register manch1_d1 asm("r8");
 static uint8_t manch_x; // manch_x: differs betwenn long and short 
 static uint8_t manch_nr; // welche schnittstelle empfängt?
 uint8_t register manch_bit asm("r16");
@@ -167,8 +167,13 @@ ISR(PCINT0_vect)
    uint16_t tim;
 #endif //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
-ISR(PCINT_vect)
+ISR(PCINT_vect, ISR_NAKED)
 {
+asm volatile (	"push r24" "\n\t"
+					"in r24,__SREG__" "\n\t"
+					"push r24" "\n\t"
+					"push r18" "\n\t"
+					"push r25" "\n\t");
 	uint8_t tim;
 #endif //__AVR_ATtiny261A__
 
@@ -297,6 +302,14 @@ PINA=0x80;
 			manch_res = 3;
       }
    }
+#ifdef __AVR_ATtiny261A__
+asm volatile (	"pop r25" "\n\t"
+					"pop r18" "\n\t"
+					"pop r24" "\n\t"
+					"out __SREG__, r24" "\n\t"
+					"pop r24" "\n\t"
+					"reti");
+#endif
 }
 
 //==========================================================================
