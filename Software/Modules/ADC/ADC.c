@@ -14,7 +14,7 @@
 #include "ADC.h"
 
 static uint8_t state = ST_REGISTER;
-static uint16_t adc_values[2];
+static uint16_t adc_values[ADC_SAMPLES_V];
 static uint8_t adc_counter;
 static uint16_t adc_value = 0;
 static uint16_t sort; // sort algorithm
@@ -61,7 +61,7 @@ int8_t measure_temperature()
 	return temperature;
 }
 
-uint16_t measure_voltage(uint8_t conversions)
+uint16_t measure_voltage()
 {
 	adc_value = 0;
 
@@ -78,7 +78,7 @@ uint16_t measure_voltage(uint8_t conversions)
 		if (ADC_INTERRUPT)
 		{
 			ADC_CLEAR_INT();
-			if (adc_counter < conversions)
+			if (adc_counter < ADC_SAMPLES_V)
 			{
 				adc_values[adc_counter] = 0;					 // current position in the array set to 0
 				adc_values[adc_counter] |= ADCL;				 // save ADCL in the array
@@ -93,6 +93,7 @@ uint16_t measure_voltage(uint8_t conversions)
 		}
 		break;
 	case ST_FILTER:
+//PINA=0x80;
 		#if ADC_FILTER_V == 1 // filters out the greatest and the smallest value measured for higher precision
 			// shifting the greatest value to the right
 			for (adc_counter = 0; adc_counter <= conversions; adc_counter++)
@@ -124,9 +125,9 @@ uint16_t measure_voltage(uint8_t conversions)
 		#else
 			// Adding all measured values to variable
 			adc_value = 0; // Resetting variable
-			for (adc_counter = 0; adc_counter < conversions; adc_counter++)
+			for (adc_counter = 0; adc_counter < ADC_SAMPLES_V; adc_counter++)
 				adc_value += adc_values[adc_counter];
-			adc_value /= (conversions);
+			adc_value /= (ADC_SAMPLES_V);
 		#endif
 		// voltage = (float)adc_value / 400; //divided by 1024 aka 10-bit, multiplied by 2,56 aka internal reference voltage
 		state = ST_REGISTER;

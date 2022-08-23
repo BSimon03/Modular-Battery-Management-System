@@ -76,11 +76,12 @@ PORTD&=~(1<<PIND3);
 			{
 				stat_led_red();
 				//_delay_ms(100);
-				state=5;
+				state=8;
 			}
 			
 			if (timer_get_timer(MAIN) >= 15) // time out, kommt nix von oben
 			{
+				manch_stop_receive();
 				//stat_led_red();
 				state = 8;
 			}

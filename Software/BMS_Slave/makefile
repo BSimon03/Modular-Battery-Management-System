@@ -9,7 +9,7 @@ SOURCES=src/main.c\
 ../Modules/Manchester/manch_m.c\
 ../Modules/Status/status.c\
 ../Modules/Timing/timer.c\
-##../Modules/ADC/ADC.c\
+../Modules/ADC/ADC.c\
 ##../Modules/One_Wire_COMM/communication.c
 
 # List of object files generated from source files

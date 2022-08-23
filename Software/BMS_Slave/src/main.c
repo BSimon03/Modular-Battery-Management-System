@@ -27,7 +27,7 @@ error! #define __AVR_ATtiny261A__
 #define DEBUG_PIN PINB5 // PCINT13
 
 //--------------SETTINGS-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
-#define ADC_SAMPLES_V 4 // Averaging samples, 6 is max
+
 
 //--------------BALANCING------------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
 #define BALANCING_DDR DDRB
@@ -188,7 +188,7 @@ int main(void)
 //	timer_clear_timer(TIMER_BALANCE);
 uint8_t com_stat;
 uint8_t state;
-DDRA |= 0x80;
+//DDRA |= 0x80;
 	state = 0;
 	while (1)
 	{
@@ -219,6 +219,15 @@ DDRA |= 0x80;
 			
 			else if(com_stat==1)			//wenn Daten erfolgreich Empfangen wurden LED grün
 			{
+				gl_manch_dat1 = gl_manch_dat;	// befehl weiter nach oben
+				if (gl_manch_dat == REQ_VOLT_G)
+				{
+					gl_manch_dat = battery_voltage; //antwort
+				}
+				if (gl_manch_dat == REQ_TEMP_G)
+				{
+					gl_manch_dat = battery_temperature; //antwort
+				}				
 				stat_led_green();
 				timer_clear_timer(MAIN); //_delay_ms(20);
 				state=2;
@@ -254,7 +263,7 @@ DDRA |= 0x80;
 				state=0;
 			}
 		}
-		else if (state==2)  // kurz warten
+		else if (state==2)  
 		{
 			if (timer_get_timer(MAIN) >= 7)
 				state = 3; 
@@ -295,7 +304,7 @@ DDRA |= 0x80;
 			else if (com_stat==2)		//wenn Fehler beim Empfangen LED rot
 			{
 				stat_led_red();
-				_delay_ms(100);
+				_delay_ms(100); //???
 				state=0;
 			}
 			
@@ -315,12 +324,14 @@ DDRA |= 0x80;
 				state = 5;
 			}
 		}
-/*
-		BALANCE_time = timer_get_timer(TIMER_BALANCE);
 
+//		BALANCE_time = timer_get_timer(TIMER_BALANCE);
+
+
+// ADC; Messen der Spannung und Temperatur
 		if (!ADCstat)
 		{
-			volt_raw = measure_voltage(ADC_SAMPLES_V);
+			volt_raw = measure_voltage();
 			if (volt_raw) // make sure conversion is done
 			{
 				battery_voltage = volt_raw * VOLT_K + VOLT_D;
@@ -339,7 +350,7 @@ DDRA |= 0x80;
 		//--------------PACKAGE-HANDLING-------------------------------------------------------------------------------------------------------------------------------------------------------------------//
 
 		// 0 is top, 1 is bottom
-
+/*
 		switch (comm_stat)
 		{
 		case COMM_RECEIVE: // receiving data from bottom board
@@ -463,7 +474,7 @@ void bms_slave_init() // Combining all init functions
 #endif
 	timer_init_timer();
 //	timer_add_time();
-//	ADC_init();
+	ADC_init();
 	stat_led_init(); // Status LED initialised
 	BALANCING_DDR |= (1 << BALANCING_PIN);
 	sei(); // global interrupt enable

@@ -12,6 +12,10 @@
 #ifndef ADC_H
 #define ADC_H
 
+#define ADC_SAMPLES_V 4 // Averaging samples, 6 is max
+// Setting the filtering for voltage (0: OFF    1: ON)
+#define ADC_FILTER_V 0
+
 #define EEPROM_3V_ADR (uint16_t *)0x01   // Address of 3v raw value
 #define EEPROM_4V_ADR (uint16_t *)0x03   // Address of 4v raw value
 #define EEPROM_temp_ADR (uint16_t *)0x05 // Address of ADC temperature offset
@@ -40,9 +44,6 @@
 #define ADC_START_CONVERSION() ADCSRA |= (1 << ADSC) // ADC start conversion
 #define ADC_CLEAR_INT() ADCSRA |= (1 << ADIF)        // clear interrupt flag
 
-// Setting the filtering for voltage (0: OFF    1: ON)
-#define ADC_FILTER_V 0
-
 // Giving Names to Numbers
 enum ADC_STATES
 {
@@ -69,6 +70,6 @@ int8_t measure_temperature();
 // ADC filtering can be enabled by defining FILTER as 1
 // Filtering cuts lowest and highest value and averages the remaining ones.
 // It's recommended to make at least 6 measurements when using ADC filtering
-uint16_t measure_voltage(uint8_t);
+uint16_t measure_voltage(void);
 
 #endif // ADC_H

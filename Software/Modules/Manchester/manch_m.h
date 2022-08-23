@@ -85,12 +85,12 @@ void manch_init_send(void);
 // initializes the manchester-transmitter
 // has to be called before manch_send
 
-void manch_send(void);
-// copies data to send-buffer and starts sending
-
 void manch_init_receive();
 // initializes the manchester-receiver from bottom
 // has to be called before the call of manch_receive
+
+void manch_stop_receive(void);
+//disables the receive interrups
 
 uint8_t manch_result(void);
 // copies received data to *data

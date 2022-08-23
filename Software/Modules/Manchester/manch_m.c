@@ -19,10 +19,10 @@
 #include "status.h"
 
 uint8_t register manch_i asm("r4");           // manch_i: counter
-uint8_t register manch_d asm("r5");
-uint8_t register manch_d1 asm("r6"); // manch_d: manchester data
-uint8_t register manch1_d asm("r7"); 
-uint8_t register manch1_d1 asm("r8");
+uint8_t register volatile manch_d asm("r5");
+uint8_t register volatile manch_d1 asm("r6"); // manch_d: manchester data
+uint8_t register volatile manch1_d asm("r7"); 
+uint8_t register volatile manch1_d1 asm("r8");
 static uint8_t manch_x; // manch_x: differs betwenn long and short 
 static uint8_t manch_nr; // welche schnittstelle empfängt?
 uint8_t register manch_bit asm("r16");
@@ -113,31 +113,6 @@ void manch_init_receive()
 }
 
 
-//=========================================================================
-/*
-void manch_send()
-{
-   manch_res = 0;
-   manch_i = 0;
-   manch_d = (uint8_t)(gl_manch_dat >> 8) | 0x80; // msb als startbit immer 1
-   manch_d1 = (uint8_t)(gl_manch_dat & 0x00ff);
-#ifdef MANCHESTER1
-   manch1_d = (uint8_t)(gl_manch_dat1 >> 8) | 0x80; // msb als startbit immer 1
-   manch1_d1 = (uint8_t)(gl_manch_dat1 & 0x00ff);
-#endif //MANCHESTER1
-#ifdef __AVR_ATmega32U4__
-   TIFR1 = 0xff;   // flags löschen fx
-#endif //__AVR_ATmega32u4
-#ifdef __AVR_ATtiny261A__
-   TIFR = 0xFF;
-#endif //__AVR_ATtiny261A__
-#ifdef __AVR_ATtiny261A__
-   TC1H = 0;	// 10-bit register!
-#endif
-   TCNT1 = F_CPU / BAUDRATE / CLOCK_PR - 20; 
-   TCCR1B |= TCCR1B_TIMER_START;
-}
-*/
 //====================================================================
 uint8_t manch_result()
 {
@@ -159,6 +134,7 @@ manch_stop_receive()
                PCMSK1 = 0; // enable pcint on receive pin
                PCMSK0 = 0; // - " -
 #endif                                  //__AVR_ATtiny261A__
+	gl_manch_dat = (manch_d<<8) + manch_d1;
 }
 
 //======================================================================
@@ -193,7 +169,10 @@ asm volatile (	"push r24" "\n\t"
 		if ((PINMANCH&PN_MANCH_REC) == PN_MANCH_REC)
 			manch_bit = manch_bit|0x01; // comp.optimierung
 		else	
+		{
 			manch_bit = 0;
+//PINA=0x80;		//fx
+		}
 	}
   #ifdef MANCHESTER1
 	else // schnittstelle von oben invertiert!
@@ -204,7 +183,7 @@ asm volatile (	"push r24" "\n\t"
 			manch_bit = manch_bit|0x01; // comp.optimierung
 	}
   #endif //MANCHESTER1
-PINA=0x80;		//fx
+//PINA=0x80;		//fx
 #endif //__AVR_ATtiny261A__
 #ifdef __AVR_ATmega32U4__
 //	if ((PINMANCH&PN_MANCH_REC) == PN_MANCH_REC)
@@ -230,7 +209,7 @@ PIND=(1<<PIND3);
          manch_i++;
       }
 #ifdef __AVR_ATtiny261A__
-PINA=0x80;
+//PINA=0x80;
 #endif
 #ifdef __AVR_ATmega32U4__
 PIND=(1<<PIND3);
@@ -252,14 +231,15 @@ PIND=(1<<PIND3);
             if (READMANCH == 1)
 #endif //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
-            if (manch_bit&0x01 == 0) //comp. optimierung
+            if (manch_bit&0x01 == 1) //comp. optimierung
 #endif
             {
-               manch_d1 |= 0x01;
+            	manch_d1 &= 0xFE;
             }
             else
             {
-               manch_d1 &= 0xFE;
+            	manch_d1 |= 0x01;
+//PINA=0x80;		//fx
             }
             manch_i++;
             if (manch_i == 9) // 1. byte fertig
@@ -284,14 +264,15 @@ PIND=(1<<PIND3);
             if (READMANCH == 1)
 #endif //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
-            if (manch_bit&0x01 == 0) //comp. optimierung
+            if (manch_bit&0x01 == 1) //comp. optimierung
 #endif
             {
-               manch_d1 |= 0x01;
+            	manch_d1 &= 0xFE;
             }
             else
             {
-               manch_d1 &= 0xFE;
+            	manch_d1 |= 0x01;
+//PINA=0x80;		//fx
             }
             manch_i++;
             if (manch_i == 9) // 1. byte fertig
