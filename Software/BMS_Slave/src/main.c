@@ -71,6 +71,8 @@ enum COMM_STAT
 void bms_slave_init(void);
 void eeprom_callibrate(uint8_t eeprom_stat);
 
+uint8_t register manch_bit asm("r16"); // in manch_h verschieben!
+
 //--------------MAIN-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
 int main(void)
 {
@@ -180,9 +182,9 @@ int main(void)
 	uint16_t voltage_h = eeprom_read_word(EEPROM_4V_ADR);
 	uint16_t voltage_l = eeprom_read_word(EEPROM_3V_ADR);
 
-	uint16_t VOLT_K = (CAL_VOLT_H_EXT - CAL_VOLT_L_EXT) / (voltage_h - voltage_l); // Multiplication factor for slope error
+	uint16_t VOLT_K = 50;//(CAL_VOLT_H_EXT - CAL_VOLT_L_EXT) / (voltage_h - voltage_l); // Multiplication factor for slope error
 
-	uint16_t VOLT_D = CAL_VOLT_H_EXT - (voltage_h * VOLT_K); // Value to subtract from measurement to kill offset VOLT_D is x64
+	uint16_t VOLT_D = 0;//CAL_VOLT_H_EXT - (voltage_h * VOLT_K); // Value to subtract from measurement to kill offset VOLT_D is x64
 
 	// clear timers after startup
 //	timer_clear_timer(TIMER_BALANCE);
@@ -222,13 +224,16 @@ uint8_t state;
 				gl_manch_dat1 = gl_manch_dat;	// befehl weiter nach oben
 				if (gl_manch_dat == REQ_VOLT_G)
 				{
+					stat_led_green();
 					gl_manch_dat = battery_voltage; //antwort
 				}
-				if (gl_manch_dat == REQ_TEMP_G)
+				else if (gl_manch_dat == REQ_TEMP_G)
 				{
-					gl_manch_dat = battery_temperature; //antwort
+					stat_led_green();
+					gl_manch_dat = 0x000f;//battery_temperature; //antwort
 				}				
-				stat_led_green();
+				else
+					stat_led_red();
 				timer_clear_timer(MAIN); //_delay_ms(20);
 				state=2;
 			}
@@ -334,7 +339,7 @@ uint8_t state;
 			volt_raw = measure_voltage();
 			if (volt_raw) // make sure conversion is done
 			{
-				battery_voltage = volt_raw * VOLT_K + VOLT_D;
+				battery_voltage = ((volt_raw/ADC_SAMPLES_V) * VOLT_K + VOLT_D);//   /10; /10 geht nicht??
 				ADCstat = MEASURE_TEMP;
 			}
 		}
@@ -343,7 +348,7 @@ uint8_t state;
 			battery_temperature = measure_temperature();
 			if (battery_temperature > -100) // make sure conversion is done
 			{
-				battery_temperature = volt_raw - TEMP_D;
+				battery_temperature = volt_raw; //- TEMP_D;
 				ADCstat = MEASURE_VOLT;
 			}
 		}

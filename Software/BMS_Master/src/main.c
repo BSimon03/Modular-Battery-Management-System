@@ -8,6 +8,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <util/delay.h>
+#include <stdio.h>
 
 
 #include "communication.h"
@@ -15,29 +16,35 @@
 #include "manch_m.h"
 #include "timer.h" 
 
+#define ANZ_ZELLEN 2
+
+uint8_t register manch_bit asm("r16"); // in manch_h verschieben!
+
+uint16_t spg[ANZ_ZELLEN];
 
 int main(void)
 {
 	
 	//fx
-DDRD|=(1<<PIND3);
-PORTD&=~(1<<PIND3);
-	
-	
+DDRB|= (1<<PINB3);
+//PORTD&=~(1<<PIND0);	
 	uint16_t daten;
+	uint8_t i;
 	uint8_t state=0;
 	uint8_t com_stat=0;
 	
 	timer_init_timer();
 	stat_led_init();
+	RS232_init();
+
 	uint16_t counter=0;
 	
 	//fx
 	sei();
+	//printf("hello");
    while (1) 
    {
 		timer_add_time();
-//PIND=(1<<PIND3);
 		if (state == 0)
 		{
 			gl_manch_dat = REQ_VOLT_G;
@@ -49,13 +56,14 @@ PORTD&=~(1<<PIND3);
 			com_stat=manch_result();
 			if (com_stat == 1)
 			{
-				_delay_ms(2);
+				//_delay_ms(2);
+				i=0;
 				state = 5;
 			}
 		}
 		else if (state==5) // von oben empfangen
 		{
-			timer_clear_timer(MAIN);
+			timer_clear_timer(MAIN); 
 			manch_init_receive();
 			state = 6;
 		}
@@ -69,6 +77,10 @@ PORTD&=~(1<<PIND3);
 			}
 			else if(com_stat==1)			//wenn Daten erfolgreich Empfangen wurden LED grün
 			{
+				spg[i]=gl_manch_dat & 0x7FFF;
+				if (spg[i] < 15000)  // höchstwertiges bit kann nicht übertragen werden, 
+					spg[i] += 0x8000;
+				i++;
 				stat_led_green();
 				state=5;
 			}
@@ -79,7 +91,7 @@ PORTD&=~(1<<PIND3);
 				state=8;
 			}
 			
-			if (timer_get_timer(MAIN) >= 15) // time out, kommt nix von oben
+			if (timer_get_timer(MAIN) >= 25) // time out, kommt nix von oben
 			{
 				manch_stop_receive();
 				//stat_led_red();
@@ -88,6 +100,8 @@ PORTD&=~(1<<PIND3);
 		}
 		else if (state==8)
 		{
+			for (i=0; i<ANZ_ZELLEN; i++)
+				printf("%d ",spg[i]/10);
 			_delay_ms(1000);
 			state = 0;
 		}

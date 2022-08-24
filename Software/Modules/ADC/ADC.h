@@ -11,8 +11,9 @@
 
 #ifndef ADC_H
 #define ADC_H
+// Averaging samples, 64 is max
+#define ADC_SAMPLES_V 32 
 
-#define ADC_SAMPLES_V 4 // Averaging samples, 6 is max
 // Setting the filtering for voltage (0: OFF    1: ON)
 #define ADC_FILTER_V 0
 

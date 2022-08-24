@@ -10,6 +10,7 @@
 
 #include <avr/io.h>
 #include "status.h"
+#include "manch_m.h"
 
 //Status LED
 void stat_led_init(){

@@ -12,9 +12,10 @@
 #include <avr/io.h>
 #include <stdint.h>
 #include "ADC.h"
+#include "manch_m.h"
 
-static uint8_t state = ST_REGISTER;
-static uint16_t adc_values[ADC_SAMPLES_V];
+static uint8_t adc_state = ST_REGISTER;
+static uint16_t adc_values;
 static uint8_t adc_counter;
 static uint16_t adc_value = 0;
 static uint16_t sort; // sort algorithm
@@ -38,23 +39,24 @@ int8_t measure_temperature()
 {
 	int8_t temperature = -100;
 
-	switch (state)
+	switch (adc_state)
 	{
 	case ST_REGISTER:
 		ADMUX = 0xDF;  // Internal Reference Voltage 1.1V // Attaching Channel 11 to the ADC... Temperature
 		ADCSRB = 0x08; // clearing REFS2, mux 5 bit set
-		state = ST_MEASURE;
+		adc_state = ST_MEASURE;
+		adc_values = 0;
 		ADC_START_CONVERSION();
 		break;
 	case ST_MEASURE:
 		if (ADC_INTERRUPT)
 		{
 			ADC_CLEAR_INT();
-			adc_values[0] = 0;					   // current position in the array set to 0
-			adc_values[0] |= ADCL;				   // save ADCL in the array
-			adc_values[0] |= ((ADCH & 0x03) << 8); // save ADCH at the right position in the array
-			temperature = adc_values[0] - 275;
-			state = ST_REGISTER;
+			//adc_values[0] = 0;					   // current position in the array set to 0
+			//adc_values[0] |= ADCL;				   // save ADCL in the array
+			//adc_values[0] |= ((ADCH & 0x03) << 8); // save ADCH at the right position in the array
+			temperature = 0X0f;//adc_values[0] - 275;
+			adc_state = ST_REGISTER;
 		}
 		break;
 	}
@@ -65,30 +67,37 @@ uint16_t measure_voltage()
 {
 	adc_value = 0;
 
-	switch (state)
+	switch (adc_state)
 	{
 	case ST_REGISTER:
 		ADMUX = 0x86;  // Internal Reference Voltage 2.56V, ADC attached to Channel 6 aka PA7
 		ADCSRB = 0x10; // Internal Reference Voltage 2.56V
-		state = ST_MEASURE;
+		adc_state = ST_MEASURE;
 		adc_counter = 0;
+		adc_values = 0;
 		ADC_START_CONVERSION();
 		break;
 	case ST_MEASURE:
 		if (ADC_INTERRUPT)
 		{
 			ADC_CLEAR_INT();
-			if (adc_counter < ADC_SAMPLES_V)
+			if (adc_counter == 0) // 1. messung nach umschalten verwerfen!
 			{
-				adc_values[adc_counter] = 0;					 // current position in the array set to 0
-				adc_values[adc_counter] |= ADCL;				 // save ADCL in the array
-				adc_values[adc_counter] |= ((ADCH & 0x03) << 8); // save ADCH at the right position in the array
+				adc_counter++;
+				ADC_START_CONVERSION();
+			}
+			else if (adc_counter < ADC_SAMPLES_V+1)
+			{
+				//adc_values[adc_counter] = 0;					 // current position in the array set to 0
+				//adc_values[adc_counter] |= ADCL;				 // save ADCL in the array
+				//adc_values[adc_counter] |= ((ADCH & 0x03) << 8); // save ADCH at the right position in the array
+				adc_values += ADC;
 				adc_counter++;
 				ADC_START_CONVERSION();
 			}
 			else
 			{
-				state = ST_FILTER;
+				adc_state = ST_FILTER;
 			}
 		}
 		break;
@@ -96,7 +105,7 @@ uint16_t measure_voltage()
 //PINA=0x80;
 		#if ADC_FILTER_V == 1 // filters out the greatest and the smallest value measured for higher precision
 			// shifting the greatest value to the right
-			for (adc_counter = 0; adc_counter <= conversions; adc_counter++)
+/*			for (adc_counter = 0; adc_counter <= conversions; adc_counter++)
 			{
 				if (adc_values[adc_counter + 1] < adc_values[adc_counter])
 				{
@@ -122,15 +131,16 @@ uint16_t measure_voltage()
 			for (adc_counter = 1; adc_counter < (conversions - 1); adc_counter++)
 				adc_value += adc_values[adc_counter];
 			adc_value /= (conversions - 2);
+*/
 		#else
 			// Adding all measured values to variable
-			adc_value = 0; // Resetting variable
-			for (adc_counter = 0; adc_counter < ADC_SAMPLES_V; adc_counter++)
-				adc_value += adc_values[adc_counter];
-			adc_value /= (ADC_SAMPLES_V);
+//			adc_value = 0; // Resetting variable
+//			for (adc_counter = 1; adc_counter < ADC_SAMPLES_V; adc_counter++)
+//				adc_value += adc_values[adc_counter];
+			adc_value = adc_values; //(ADC_SAMPLES_V);
 		#endif
 		// voltage = (float)adc_value / 400; //divided by 1024 aka 10-bit, multiplied by 2,56 aka internal reference voltage
-		state = ST_REGISTER;
+			adc_state = ST_REGISTER;
 		break;
 	}
 	return adc_value;

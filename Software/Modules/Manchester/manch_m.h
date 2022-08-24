@@ -112,6 +112,21 @@ uint8_t manch_receive1(uint16_t *data);
 
 #endif // MANCHESTER1
 
+// registervariablen, muss der compiler in jedem modul kennen
+uint8_t register manch_i asm("r4");           // manch_i: counter
+uint8_t register volatile manch_d asm("r5");
+uint8_t register volatile manch_d1 asm("r6"); // manch_d: manchester data
+#ifdef MANCHESTER1
+uint8_t register volatile manch1_d asm("r7"); 
+uint8_t register volatile manch1_d1 asm("r8");
+#endif
+#ifdef __AVR_ATtiny261A__
+uint8_t register manch_bit asm("r16");
+#endif
+// !!nicht verändern!! in inline assembler hardcodiert!
+uint8_t volatile register manch_res asm("r3"); 
+
+
 //==========globale variablen================================
 #ifdef MANCH_M
 	#define EXTERN

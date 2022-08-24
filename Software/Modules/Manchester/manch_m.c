@@ -18,17 +18,8 @@
 #include "manch_m.h"
 #include "status.h"
 
-uint8_t register manch_i asm("r4");           // manch_i: counter
-uint8_t register volatile manch_d asm("r5");
-uint8_t register volatile manch_d1 asm("r6"); // manch_d: manchester data
-uint8_t register volatile manch1_d asm("r7"); 
-uint8_t register volatile manch1_d1 asm("r8");
 static uint8_t manch_x; // manch_x: differs betwenn long and short 
 static uint8_t manch_nr; // welche schnittstelle empfängt?
-uint8_t register manch_bit asm("r16");
-
-// !!nicht verändern!! in inline assembler hardcodiert!
-uint8_t volatile register manch_res asm("r3"); 
 
 //=============================================================================
 void manch_init_send(void)
@@ -190,7 +181,7 @@ asm volatile (	"push r24" "\n\t"
 //		manch_bit = manch_bit|0x01; // comp.optimierung
 //	else	
 //		manch_bit = 0;
-PIND=(1<<PIND3);
+//PINB|=(1<<PINB3);
 #endif 
 
    if (manch_i == 0) // anfang
@@ -211,16 +202,13 @@ PIND=(1<<PIND3);
 #ifdef __AVR_ATtiny261A__
 //PINA=0x80;
 #endif
-#ifdef __AVR_ATmega32U4__
-PIND=(1<<PIND3);
-#endif
    }
    else
    {
 //flanke nach halben bit:
       if ((F_CPU / BAUDRATE / CLOCK_PR ) / 3 < tim && tim < (F_CPU / BAUDRATE / CLOCK_PR * 2) / 3) //
       {
-//PINA=0x80;
+//PINB|=0x08;
          if (manch_x == 'l') // weiter
             manch_x = 'k';
          else // bit einlesen!
@@ -228,18 +216,19 @@ PIND=(1<<PIND3);
             manch_d1 = manch_d1 << 1;
             manch_x = 'l';      // nächstes mal einlesen nach ganzem bit
 #ifdef __AVR_ATmega32U4__
-            if (READMANCH == 1)
+            if (READMANCH == 0) // vergleich mit 1 geht nicht!!!
 #endif //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
-            if (manch_bit&0x01 == 1) //comp. optimierung
+            if (manch_bit&0x01 == 1) //comp. optimierung, vgl mit 0 geht nicht!!!
 #endif
             {
             	manch_d1 &= 0xFE;
+//PINB|=0x8;
             }
             else
             {
             	manch_d1 |= 0x01;
-//PINA=0x80;		//fx
+//PINB|=0x8;//PINA=0x80;		//fx
             }
             manch_i++;
             if (manch_i == 9) // 1. byte fertig
@@ -256,23 +245,24 @@ PIND=(1<<PIND3);
 // flanke nach ganzem bit
       else if ((F_CPU / BAUDRATE / CLOCK_PR * 2) / 3 < tim && tim < (F_CPU / BAUDRATE / CLOCK_PR * 4) / 3) //
       {
-//PINA=0x80;
+//PINB|=0x8;
          if (manch_x == 'l') // bit einlesen
          {
             manch_d1 = manch_d1 << 1;
 #ifdef __AVR_ATmega32U4__
-            if (READMANCH == 1)
+            if (READMANCH == 0)
 #endif //__AVR_ATmega32u4
 #ifdef __AVR_ATtiny261A__
             if (manch_bit&0x01 == 1) //comp. optimierung
 #endif
             {
             	manch_d1 &= 0xFE;
+//PINB|=0x8;
             }
             else
             {
             	manch_d1 |= 0x01;
-//PINA=0x80;		//fx
+//PINB|=0x8;//PINA=0x80;		//fx
             }
             manch_i++;
             if (manch_i == 9) // 1. byte fertig

@@ -13,6 +13,7 @@
 
 #include <avr/io.h>
 #include "timer.h"
+#include "manch_m.h"
 
 uint16_t timer_timer[TIMER_MAX_TIMER];
 uint16_t timer_tick;  // zählt die ms (genauer: 1024µs)
