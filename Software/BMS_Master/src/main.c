@@ -47,7 +47,7 @@ DDRB|= (1<<PINB3);
 		timer_add_time();
 		if (state == 0)
 		{
-			gl_manch_dat = REQ_VOLT_G;
+			gl_manch_dat = COM_BLC_OFF_G;
 			manch_init_send();
 			state = 1;
 		}
@@ -78,8 +78,8 @@ DDRB|= (1<<PINB3);
 			else if(com_stat==1)			//wenn Daten erfolgreich Empfangen wurden LED grün
 			{
 				spg[i]=gl_manch_dat & 0x7FFF;
-				if (spg[i] < 15000)  // höchstwertiges bit kann nicht übertragen werden, 
-					spg[i] += 0x8000;
+//				if (spg[i] < 15000)  // höchstwertiges bit kann nicht übertragen werden, 
+//					spg[i] += 0x8000;
 				i++;
 				stat_led_green();
 				state=5;
@@ -98,10 +98,10 @@ DDRB|= (1<<PINB3);
 				state = 8;
 			}
 		}
-		else if (state==8)
+		else if (state==8) // ausgabe auf serieller: spannung /10; temp -275
 		{
 			for (i=0; i<ANZ_ZELLEN; i++)
-				printf("%d ",spg[i]/10);
+				printf("%d ",spg[i]-275);
 			_delay_ms(1000);
 			state = 0;
 		}

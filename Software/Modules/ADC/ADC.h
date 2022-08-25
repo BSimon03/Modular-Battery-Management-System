@@ -13,6 +13,7 @@
 #define ADC_H
 // Averaging samples, 64 is max
 #define ADC_SAMPLES_V 32 
+#define ADC_SAMPLES_T 32
 
 // Setting the filtering for voltage (0: OFF    1: ON)
 #define ADC_FILTER_V 0
@@ -64,7 +65,7 @@ void ADC_init(void);
 // ADC filtering can be enabled by defining FILTER as 1
 // Filtering cuts lowest and highest value and averages the remaining ones.
 // It's recommended to make at least 6 measurements when using ADC filtering
-int8_t measure_temperature();
+uint16_t measure_temperature();
 
 // Function measure_voltage:
 // Returns the voltage raw value after at least 3 calls

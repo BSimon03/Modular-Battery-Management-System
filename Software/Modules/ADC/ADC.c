@@ -35,9 +35,10 @@ void ADC_init()
 	//  ADIF must be written to 1 in order to clear it
 }
 
-int8_t measure_temperature()
+//===============================================================================
+uint16_t measure_temperature()
 {
-	int8_t temperature = -100;
+	uint16_t temperature = 0;
 
 	switch (adc_state)
 	{
@@ -45,24 +46,38 @@ int8_t measure_temperature()
 		ADMUX = 0xDF;  // Internal Reference Voltage 1.1V // Attaching Channel 11 to the ADC... Temperature
 		ADCSRB = 0x08; // clearing REFS2, mux 5 bit set
 		adc_state = ST_MEASURE;
+		adc_counter = 0;
 		adc_values = 0;
 		ADC_START_CONVERSION();
 		break;
+		
 	case ST_MEASURE:
 		if (ADC_INTERRUPT)
 		{
 			ADC_CLEAR_INT();
-			//adc_values[0] = 0;					   // current position in the array set to 0
-			//adc_values[0] |= ADCL;				   // save ADCL in the array
-			//adc_values[0] |= ((ADCH & 0x03) << 8); // save ADCH at the right position in the array
-			temperature = 0X0f;//adc_values[0] - 275;
-			adc_state = ST_REGISTER;
+			if (adc_counter == 0) // 1. messung nach umschalten verwerfen!
+			{
+				adc_counter++;
+				ADC_START_CONVERSION();
+			}
+			else if (adc_counter < ADC_SAMPLES_T+1)
+			{
+				adc_values += ADC;
+				adc_counter++;
+				ADC_START_CONVERSION();
+			}
+			else
+			{
+				temperature = adc_values;
+				adc_state = ST_REGISTER;
+			}
 		}
-		break;
+		break;		
 	}
 	return temperature;
 }
 
+//=====================================================================================
 uint16_t measure_voltage()
 {
 	adc_value = 0;
@@ -88,9 +103,6 @@ uint16_t measure_voltage()
 			}
 			else if (adc_counter < ADC_SAMPLES_V+1)
 			{
-				//adc_values[adc_counter] = 0;					 // current position in the array set to 0
-				//adc_values[adc_counter] |= ADCL;				 // save ADCL in the array
-				//adc_values[adc_counter] |= ((ADCH & 0x03) << 8); // save ADCH at the right position in the array
 				adc_values += ADC;
 				adc_counter++;
 				ADC_START_CONVERSION();

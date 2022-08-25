@@ -27,7 +27,7 @@ enum TIMER_NR {
 enum TIMER_NR {
 //   TIMER_COMM,
 //   TIMER_ADC,
-//   TIMER_BALANCE,
+   TIMER_BALANCE,
 	MAIN,
    HEARTBEAT,
 // letzte eintrag, neue timer davor!

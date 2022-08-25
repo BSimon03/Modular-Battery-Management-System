@@ -9,36 +9,24 @@
 /*  Author: Simon Ball                       */
 /*********************************************/
 
-//--------------CPU-FREQUENCY--------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
+//--------------CPU-FREQUENCY------------------------------------------------------//
 //--Define CPU frequency, if not already defined in the platformio.ini or intellisense
 #ifndef F_CPU
 error! #define F_CPU 2000000L
 #endif
 
-//--------------USED-HARDWARE--------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
+//--------------USED-HARDWARE------------------------------------------------------//
 //--Define Microcontroller, if not already defined in the platform.ini or intellisense
 #ifndef __AVR_ATtiny261A__
-error! #define __AVR_ATtiny261A__
+error! not implementet!
 #endif
 
-//--------------PIN-DEFINITIONS------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
+//--------------PIN-DEFINITIONS----------------------------------------------------//
 #define DEBUG_DDR DDRB
 #define DEBUG_PORT PORTB
 #define DEBUG_PIN PINB5 // PCINT13
 
-//--------------SETTINGS-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
-
-
-//--------------BALANCING------------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
-#define BALANCING_DDR DDRB
-#define BALANCING_PORT PORTB
-#define BALANCING_PIN PINB4
-
-#define START_BALANCING() BALANCING_PORT |= (1 << BALANCING_PIN)
-
-#define STOP_BALANCING() BALANCING_PORT &= ~(1 << BALANCING_PIN)
-
-//--------------LIBRARY-INCLUDES-----------------------------------------------------------------------------------------------------------------------------------------------------------------------//
+//--------------LIBRARY-INCLUDES-------------------------------------------------//
 #include <avr/io.h>
 #include <stdint.h>
 #include <avr/interrupt.h>
@@ -46,7 +34,7 @@ error! #define __AVR_ATtiny261A__
 #include <avr/sleep.h>
 #include <util/delay.h>
 
-//--------------SOURCE-FILES---------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
+//--------------SOURCE-FILES-----------------------------------------------------//
 // These are stored outside of the project folder, but will still be compiled
 #include "ADC.h"
 #include "communication.h"
@@ -73,7 +61,7 @@ void eeprom_callibrate(uint8_t eeprom_stat);
 
 uint8_t register manch_bit asm("r16"); // in manch_h verschieben!
 
-//--------------MAIN-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
+//--------------MAIN----------------------------------------------------------------//
 int main(void)
 {
 	bms_slave_init(); // Initiating the MCU, Registers configurated
@@ -89,7 +77,7 @@ int main(void)
 	uint8_t comm_stat = COMM_RECEIVE;
 
 	// Timing
-	uint16_t BALANCE_time = 0; // compare value
+	uint8_t BALANCE_time = 0; // compare value
 
 	uint8_t ADCstat = MEASURE_VOLT;
 	// 0  : Set up for Battery Temperature Measurement
@@ -98,7 +86,7 @@ int main(void)
 	// Measurements
 	uint16_t volt_raw = 0;
 
-	int8_t battery_temperature; // battery_temperature = adc_value - 273; // K to degree C
+	uint16_t battery_temperature; // battery_temperature in K 
 	uint16_t battery_voltage;	// battery_voltage = (float)adc_value / 200; // divided by 1024 aka 10-bit, multiplied by 2,56 aka internal reference voltage * 2 (voltage divider)
 
 /*
@@ -177,7 +165,7 @@ int main(void)
 	}
 */	
 
-	int8_t TEMP_D = (int8_t)eeprom_read_word(EEPROM_temp_ADR) - CAL_TEMP; // calculate temperature offset
+	int8_t TEMP_D = 0;//(int8_t)eeprom_read_word(EEPROM_temp_ADR) - CAL_TEMP; // calculate temperature offset
 
 	uint16_t voltage_h = eeprom_read_word(EEPROM_4V_ADR);
 	uint16_t voltage_l = eeprom_read_word(EEPROM_3V_ADR);
@@ -222,18 +210,36 @@ uint8_t state;
 			else if(com_stat==1)			//wenn Daten erfolgreich Empfangen wurden LED grün
 			{
 				gl_manch_dat1 = gl_manch_dat;	// befehl weiter nach oben
-				if (gl_manch_dat == REQ_VOLT_G)
+				if (gl_manch_dat == REQ_VOLT_G) // spannungs anfrage
 				{
 					stat_led_green();
-					gl_manch_dat = battery_voltage; //antwort
+					gl_manch_dat = battery_voltage; //antwort spannung in 0.1mV
 				}
-				else if (gl_manch_dat == REQ_TEMP_G)
+				else if (gl_manch_dat == REQ_TEMP_G) // temperatur-anfrage
 				{
 					stat_led_green();
-					gl_manch_dat = 0x000f;//battery_temperature; //antwort
+					gl_manch_dat = battery_temperature; //antwort temperatur in [K]
+				}
+				else if (gl_manch_dat == COM_BLC_OFF_G) // temperatur-anfrage
+				{
+					stat_led_green();
+					BALANCE_time = 0;
+				}
+				else if ( (gl_manch_dat&0xff00) == COM_BLC_A) // balancing ein
+				{
+					stat_led_green();
+					if ( (gl_manch_dat&0x00ff) == 1) // slave adressier!
+					{
+						gl_manch_dat1 = 0;
+						BALANCE_time = 1;
+						timer_clear_timer(TIMER_BALANCE);
+					}
+					else
+						gl_manch_dat1 = gl_manch_dat -1;
 				}				
 				else
 					stat_led_red();
+					
 				timer_clear_timer(MAIN); //_delay_ms(20);
 				state=2;
 			}
@@ -331,7 +337,21 @@ uint8_t state;
 		}
 
 //		BALANCE_time = timer_get_timer(TIMER_BALANCE);
-
+		if (BALANCE_time)
+		{
+			if (timer_get_timer(TIMER_BALANCE) < 50000)
+			{
+				stat_led_orange();
+				START_BALANCING();
+			}
+			else
+				BALANCE_time = 0;
+			
+		}
+		else
+		{
+			STOP_BALANCING();
+		}
 
 // ADC; Messen der Spannung und Temperatur
 		if (!ADCstat)
@@ -345,10 +365,10 @@ uint8_t state;
 		}
 		else
 		{
-			battery_temperature = measure_temperature();
-			if (battery_temperature > -100) // make sure conversion is done
+			volt_raw = measure_temperature();
+			if (volt_raw) // make sure conversion is done
 			{
-				battery_temperature = volt_raw; //- TEMP_D;
+				battery_temperature = volt_raw/ADC_SAMPLES_T + TEMP_D; // T in [K];
 				ADCstat = MEASURE_VOLT;
 			}
 		}

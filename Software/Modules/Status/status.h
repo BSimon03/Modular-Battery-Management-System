@@ -15,7 +15,14 @@
 #define LEDPORT PORTA
 #define LEDPINR PINA5
 #define LEDPING PINA6
+//BALANCING-------------------------------------------------------//
+#define BALANCING_DDR DDRB
+#define BALANCING_PORT PORTB
+#define BALANCING_PIN PINB4
+#define START_BALANCING() BALANCING_PORT |= (1 << BALANCING_PIN)
+#define STOP_BALANCING() BALANCING_PORT &= ~(1 << BALANCING_PIN)
 #endif
+
 #ifdef __AVR_ATmega32U4__
 #define LEDDDR  DDRD
 #define LEDPORT PORTD
