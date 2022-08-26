@@ -47,7 +47,7 @@ DDRB|= (1<<PINB3);
 		timer_add_time();
 		if (state == 0)
 		{
-			gl_manch_dat = COM_BLC_OFF_G;
+			gl_manch_dat = COM_BLC_A+1;
 			manch_init_send();
 			state = 1;
 		}

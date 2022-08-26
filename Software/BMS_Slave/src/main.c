@@ -214,34 +214,40 @@ uint8_t state;
 				{
 					stat_led_green();
 					gl_manch_dat = battery_voltage; //antwort spannung in 0.1mV
+					state=2;
 				}
 				else if (gl_manch_dat == REQ_TEMP_G) // temperatur-anfrage
 				{
 					stat_led_green();
 					gl_manch_dat = battery_temperature; //antwort temperatur in [K]
+					state=2;
 				}
 				else if (gl_manch_dat == COM_BLC_OFF_G) // temperatur-anfrage
 				{
 					stat_led_green();
 					BALANCE_time = 0;
+					state=2;
 				}
 				else if ( (gl_manch_dat&0xff00) == COM_BLC_A) // balancing ein
 				{
+					state=2;
 					stat_led_green();
 					if ( (gl_manch_dat&0x00ff) == 1) // slave adressier!
 					{
-						gl_manch_dat1 = 0;
+						gl_manch_dat1 = 0; // ungültiges command senden, => nächster leitet nix weiter
 						BALANCE_time = 1;
 						timer_clear_timer(TIMER_BALANCE);
 					}
 					else
 						gl_manch_dat1 = gl_manch_dat -1;
 				}				
-				else
+				else // kein bekannter befehl, nix weitersenden, auf befehl warten
+				{
 					stat_led_red();
+					state = 0;
+				}
 					
 				timer_clear_timer(MAIN); //_delay_ms(20);
-				state=2;
 			}
 			else if (com_stat==2)		//wenn Fehler beim Empfangen LED rot
 			{
@@ -274,7 +280,7 @@ uint8_t state;
 				state=0;
 			}
 		}
-		else if (state==2)  
+		else if (state==2)  // kurze pause bis zum antworten
 		{
 			if (timer_get_timer(MAIN) >= 7)
 				state = 3; 
@@ -372,110 +378,7 @@ uint8_t state;
 				ADCstat = MEASURE_VOLT;
 			}
 		}
-		//--------------PACKAGE-HANDLING-------------------------------------------------------------------------------------------------------------------------------------------------------------------//
 
-		// 0 is top, 1 is bottom
-/*
-		switch (comm_stat)
-		{
-		case COMM_RECEIVE: // receiving data from bottom board
-			comm_stat_b = manch_receive1(&bot_received);
-//			comm_stat_t = manch_receive(&top_received);
-			if (comm_stat_b == 1) // if data received from bot
-			{
-				if (bot_received & 0x40) // if command is Global
-				{
-					comm_stat = COMM_GLOBAL;
-				}
-				else
-				{
-					comm_stat = COMM_ADD;
-				}
-			}
-			else if (comm_stat_b == 2) // if error
-			{
-				manch_init_receive1();
-			}
-
-			if (comm_stat_t == 1) // if data received from top
-			{
-				bot_send = top_received;
-				top_send = 0x00;
-				manch_init_send1();
-				manch_send1(bot_send);
-				manch_init_send();
-				manch_send(top_send);
-			}
-			else if (comm_stat_t == 2) // if error
-			{
-				manch_init_receive();
-			}
-
-			break;
-		case COMM_GLOBAL:					// handling global commands
-			top_send = bot_received; 		// prepare global command for next module
-
-			if (bot_received & REQ_VOLT_G) 	// checking if battery voltage is requested
-			{
-				bot_send = battery_voltage >> 6;
-				bot_send |= (calc_parity(battery_voltage) << 14) | (1 << 15); // add parity to data
-			}
-			else if (bot_received & REQ_TEMP_G) // checking if battery temperature is requested
-			{
-				bot_send = (uint16_t)battery_temperature >> 6;
-				bot_send |= (calc_parity(battery_temperature) << 14) | (1 << 15); // add parity to data
-			}
-			else if (*bot_received & COM_SLP_G) // sleep command received
-			{
-				// Standby mode ATtiny261A
-				bot_send = 0x00;	// send nothing, high active bus
-				set_sleep_mode(SLEEP_MODE_STANDBY);
-				sleep_enable();
-				sleep_mode();
-				sleep_disable();
-				// Power down mode ATtiny261A
-				//set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-				//sleep_enable();
-				//sleep_mode();
-				//sleep_disable();
-			}
-			
-			manch_init_send1();				// initialize send to bot module
-			manch_send1(bot_send);			// send data to bot module
-			manch_init_send();				// initialize send to top board
-			manch_send(top_send);			// send global command to top board		
-			break;
-*/
-/*
-		case COMM_ADD:															  // handling addressed commands
-
-			if ((!(bot_received & ADDRESS_MASK)) && (bot_received & COM_BLC_A)) // checking if the current slave is addressed and command is balancing
-			{
-				START_BALANCING();
-				timer_clear_timer(TIMER_BALANCE);
-				stat_led_orange();
-			}
-			else // current module not addressed... pass through addressed command
-			{
-				address_received = (uint8_t)bot_received & ADDRESS_MASK;
-				top_send = bot_received & ~ADDRESS_MASK;		 // handout addressed command to next module
-				top_send |= calc_data_bal(address_received - 1); // add address and parity to command
-				manch_init_send();								 // initialize send to top board
-				manch_send(top_send);							 // send command to next module
-			}
-
-			break;
-
-		}
-*/
-		//--------------BALANCING-TIMING-------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
-/*
-		if (BALANCE_time >= 1000) // Balancing Timeout after 1 second
-		{
-			STOP_BALANCING();
-			timer_clear_timer(TIMER_BALANCE);
-		}
-*/
 	}
 }
 
