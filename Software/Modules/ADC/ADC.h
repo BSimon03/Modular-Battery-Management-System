@@ -21,6 +21,7 @@
 #define EEPROM_3V_ADR (uint16_t *)0x01   // Address of 3v raw value
 #define EEPROM_4V_ADR (uint16_t *)0x03   // Address of 4v raw value
 #define EEPROM_temp_ADR (uint16_t *)0x05 // Address of ADC temperature offset
+#define EEPROM_debug_ADR (uint16_t *)0x07 // zum debuggen
 
 // Callibration
 #define CAL_VOLT_HT 0x035C    //                              -> 4.3V

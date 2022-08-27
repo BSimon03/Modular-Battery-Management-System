@@ -9,6 +9,9 @@
 /*  Author: Simon Ball                       */
 /*********************************************/
 
+//erzeugt das programm zum calibrieren
+//#define CALIBRATION
+
 //--------------CPU-FREQUENCY------------------------------------------------------//
 //--Define CPU frequency, if not already defined in the platformio.ini or intellisense
 #ifndef F_CPU
@@ -86,69 +89,87 @@ int main(void)
 	// Measurements
 	uint16_t volt_raw = 0;
 
-	uint16_t battery_temperature; // battery_temperature in K 
-	uint16_t battery_voltage;	// battery_voltage = (float)adc_value / 200; // divided by 1024 aka 10-bit, multiplied by 2,56 aka internal reference voltage * 2 (voltage divider)
-
-/*
-	_delay_ms(500);
+	uint16_t battery_temperature=0; // battery_temperature in K 
+	uint16_t battery_voltage=0;	// battery_voltage = (float)adc_value / 200; // divided by 1024 aka 10-bit, multiplied by 2,56 aka internal reference voltage * 2 (voltage divider)
 	uint8_t eeprom_stat = eeprom_read_byte(EEPROM_STATUS_ADR);
-	_delay_ms(500);
-	//--------------CALIBRATION----------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
-	if (eeprom_stat != EEPROM_CALIBRATED) // if EEPROM not calibrated
+	uint16_t eeprom_voltage_h = eeprom_read_word(EEPROM_4V_ADR);
+	uint16_t eeprom_voltage_l = eeprom_read_word(EEPROM_3V_ADR);
+	uint16_t eeprom_temp = eeprom_read_word(EEPROM_temp_ADR);
+	
+	if ( (eeprom_voltage_h==0xffff) || (eeprom_voltage_l==0xffff) || (eeprom_temp==0xffff) ) // if EEPROM not complite calibrated
 	{
-		eeprom_update_byte(EEPROM_STATUS_ADR, 0x00);
-		// TEMP CALLIBRATION
-		while (battery_temperature < 0) // Measure ambient temperature
+#ifndef CALIBRATION
+		while (1)
 		{
-			battery_temperature = measure_temperature();
+			_delay_ms(250);
+			stat_led_off();
+			_delay_ms(100);
+			stat_led_red();
 		}
-		eeprom_update_word(EEPROM_temp_ADR, (uint16_t)battery_temperature);
+	}
+#endif // not CALIBRATION
+
+//============ calibration ======================================================================
+#ifdef CALIBRATION
+		_delay_ms(1500);
+
+		// TEMP CALLIBRATION
+		if (eeprom_temp==0xffff)
+		{
+			while (battery_temperature == 0) // Measure ambient temperature
+				battery_temperature = measure_temperature();
+			eeprom_write_word(EEPROM_temp_ADR, battery_temperature/ADC_SAMPLES_T);
+		}
 
 		// VOLT CALLIBRATION
-		for (int i = 0; i < 10; i++)
-			while (battery_voltage == 0) // Measure SUPPLY voltage
-			{
-				battery_voltage = measure_voltage(6);
-			}
+		while (battery_voltage == 0) // Measure SUPPLY voltage
+			battery_voltage = measure_voltage();
+		battery_voltage = (battery_voltage/ADC_SAMPLES_V);
 
 		// 3V detection
-		if ((battery_voltage <= CAL_VOLT_LT) && (battery_voltage >= CAL_VOLT_LB) && (!(eeprom_stat & EEPROM_STATUS_L))) // battery voltage in low borders and not calibrated yet
+		if ((battery_voltage <= CAL_VOLT_LT) && (battery_voltage >= CAL_VOLT_LB) && 
+								(eeprom_voltage_l==0xffff)) // battery voltage in low borders and not calibrated yet
 		{
-			eeprom_update_word(EEPROM_3V_ADR, battery_voltage);
-			if (!(eeprom_stat & EEPROM_STATUS_H)) // high voltage not calibrated yet
-			{
-				eeprom_update_byte(EEPROM_STATUS_ADR, EEPROM_STATUS_L); // set low voltage callibrated
-			}
-			else
-			{
-				eeprom_update_byte(EEPROM_STATUS_ADR, EEPROM_CALIBRATED); // set all callibrated
-			}
+			eeprom_write_word(EEPROM_3V_ADR, battery_voltage);
 			while (1)
 			{
-				_delay_ms(250);
 				stat_led_green();
-				_delay_ms(250);
-				stat_led_red();
+				_delay_ms(100);
+				stat_led_off();
+				_delay_ms(100);
+				stat_led_green();
+				_delay_ms(100);
+				stat_led_off();
+				_delay_ms(100);
+				stat_led_green();
+				_delay_ms(100);
+				stat_led_off();
+				_delay_ms(500);
 			}
 		}
 		// 4V detection
-		else if ((battery_voltage >= CAL_VOLT_HB) && (battery_voltage <= CAL_VOLT_HT) && (!(eeprom_stat & EEPROM_STATUS_H))) // battery voltage in high borders and not calibrated yet
+		else if ((battery_voltage >= CAL_VOLT_HB) && (battery_voltage <= CAL_VOLT_HT) && \
+							(eeprom_voltage_h==0xffff)) // battery voltage in high borders and not calibrated yet
 		{
-			eeprom_update_word(EEPROM_4V_ADR, battery_voltage);
-			if (!(eeprom_stat & EEPROM_STATUS_L)) // low voltage not calibrated yet
-			{
-				eeprom_update_byte(EEPROM_STATUS_ADR, EEPROM_STATUS_H); // set high voltage callibrated
-			}
-			else
-			{
-				eeprom_update_byte(EEPROM_STATUS_ADR, EEPROM_CALIBRATED); // set all callibrated
-			}
+			eeprom_write_word(EEPROM_4V_ADR, battery_voltage);
 			while (1)
 			{
-				_delay_ms(250);
 				stat_led_green();
-				_delay_ms(250);
+				_delay_ms(100);
 				stat_led_off();
+				_delay_ms(100);
+				stat_led_green();
+				_delay_ms(100);
+				stat_led_off();
+				_delay_ms(100);
+				stat_led_green();
+				_delay_ms(100);
+				stat_led_off();
+				_delay_ms(100);
+				stat_led_green();
+				_delay_ms(100);
+				stat_led_off();
+				_delay_ms(500);
 			}
 		}
 		// battery voltage out of predefined borders
@@ -162,13 +183,24 @@ int main(void)
 				stat_led_off();
 			}
 		}
+
 	}
-*/	
+	else // calibriert!
+	{
+				while (1)
+			{
+				_delay_ms(200);
+				stat_led_green();
+				_delay_ms(200);
+				stat_led_off();
+			}
 
+//=================== ende calibration ============================================================
+#else // CALIBRATION
+
+	else // calibriert
+	{
 	int8_t TEMP_D = 0;//(int8_t)eeprom_read_word(EEPROM_temp_ADR) - CAL_TEMP; // calculate temperature offset
-
-	uint16_t voltage_h = eeprom_read_word(EEPROM_4V_ADR);
-	uint16_t voltage_l = eeprom_read_word(EEPROM_3V_ADR);
 
 	uint16_t VOLT_K = 50;//(CAL_VOLT_H_EXT - CAL_VOLT_L_EXT) / (voltage_h - voltage_l); // Multiplication factor for slope error
 
@@ -180,6 +212,8 @@ uint8_t com_stat;
 uint8_t state;
 //DDRA |= 0x80;
 	state = 0;
+
+
 	while (1)
 	{
 		//--------------ADC------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
@@ -379,6 +413,8 @@ uint8_t state;
 			}
 		}
 
+	} // main-loop
+#endif CALIBRATION
 	}
 }
 

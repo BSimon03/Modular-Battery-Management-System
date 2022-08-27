@@ -41,6 +41,12 @@ clean:
 install:
 
 	avrdude -c avrispmkII  -P usb -p ATtiny261 -U flash:w:BMS_Slave.hex:i -v
+	
+# update: reads eeprom, flasches the code, write old eeprom-data
+update:
+	avrdude -c avrispmkII  -P usb -p attiny261 -U eeprom:r:callibration_data.hex:i -v
+	avrdude -c avrispmkII  -P usb -p attiny261 -U flash:w:BMS_Slave.hex:i -v
+	avrdude -c avrispmkII  -P usb -p attiny261 -U eeprom:w:callibration_data.hex:i -v
 
 # info, etc:
 info:
