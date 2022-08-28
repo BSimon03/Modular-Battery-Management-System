@@ -67,6 +67,7 @@ uint8_t register manch_bit asm("r16"); // in manch_h verschieben!
 //--------------MAIN----------------------------------------------------------------//
 int main(void)
 {
+	uint32_t volt_k;
 	bms_slave_init(); // Initiating the MCU, Registers configurated
 	// Data received
 	uint16_t bot_received = 0; // data received from the lower slave
@@ -91,12 +92,12 @@ int main(void)
 
 	uint16_t battery_temperature=0; // battery_temperature in K 
 	uint16_t battery_voltage=0;	// battery_voltage = (float)adc_value / 200; // divided by 1024 aka 10-bit, multiplied by 2,56 aka internal reference voltage * 2 (voltage divider)
-	uint8_t eeprom_stat = eeprom_read_byte(EEPROM_STATUS_ADR);
+//	uint8_t eeprom_stat = eeprom_read_byte(EEPROM_STATUS_ADR);
 	uint16_t eeprom_voltage_h = eeprom_read_word(EEPROM_4V_ADR);
-	uint16_t eeprom_voltage_l = eeprom_read_word(EEPROM_3V_ADR);
+//	uint16_t eeprom_voltage_l = eeprom_read_word(EEPROM_3V_ADR);
 	uint16_t eeprom_temp = eeprom_read_word(EEPROM_temp_ADR);
 	
-	if ( (eeprom_voltage_h==0xffff) || (eeprom_voltage_l==0xffff) || (eeprom_temp==0xffff) ) // if EEPROM not complite calibrated
+	if ( (eeprom_voltage_h==0xffff) /*|| (eeprom_voltage_l==0xffff)*/ || (eeprom_temp==0xffff) ) // if EEPROM not complite calibrated
 	{
 #ifndef CALIBRATION
 		while (1)
@@ -124,10 +125,9 @@ int main(void)
 		// VOLT CALLIBRATION
 		while (battery_voltage == 0) // Measure SUPPLY voltage
 			battery_voltage = measure_voltage();
-		battery_voltage = (battery_voltage/ADC_SAMPLES_V);
-
+/*
 		// 3V detection
-		if ((battery_voltage <= CAL_VOLT_LT) && (battery_voltage >= CAL_VOLT_LB) && 
+		if ((battery_voltage <= (CAL_VOLT_LT*ADC_SAMPLES_V)) && (battery_voltage >= (CAL_VOLT_LB*ADC_SAMPLES_V)) && 
 								(eeprom_voltage_l==0xffff)) // battery voltage in low borders and not calibrated yet
 		{
 			eeprom_write_word(EEPROM_3V_ADR, battery_voltage);
@@ -147,8 +147,8 @@ int main(void)
 				_delay_ms(500);
 			}
 		}
-		// 4V detection
-		else if ((battery_voltage >= CAL_VOLT_HB) && (battery_voltage <= CAL_VOLT_HT) && \
+*/		// 4V detection
+		if ((battery_voltage >= (CAL_VOLT_HB*ADC_SAMPLES_V)) && (battery_voltage <= (CAL_VOLT_HT*ADC_SAMPLES_V)) && \
 							(eeprom_voltage_h==0xffff)) // battery voltage in high borders and not calibrated yet
 		{
 			eeprom_write_word(EEPROM_4V_ADR, battery_voltage);
@@ -200,11 +200,10 @@ int main(void)
 
 	else // calibriert
 	{
-	int8_t TEMP_D = 0;//(int8_t)eeprom_read_word(EEPROM_temp_ADR) - CAL_TEMP; // calculate temperature offset
+	int8_t temp_d = CAL_TEMP - eeprom_temp; // calculate temperature offset
 
-	uint16_t VOLT_K = 50;//(CAL_VOLT_H_EXT - CAL_VOLT_L_EXT) / (voltage_h - voltage_l); // Multiplication factor for slope error
-
-	uint16_t VOLT_D = 0;//CAL_VOLT_H_EXT - (voltage_h * VOLT_K); // Value to subtract from measurement to kill offset VOLT_D is x64
+	volt_k = (4*1024000UL*ADC_SAMPLES_V)/eeprom_voltage_h; // steigung mit 1-punkt-cal bei 4V [1mV/1024]
+//	uint16_t VOLT_D = 0;//CAL_VOLT_H_EXT - (voltage_h * VOLT_K); // Value to subtract from measurement to kill offset VOLT_D is x64
 
 	// clear timers after startup
 //	timer_clear_timer(TIMER_BALANCE);
@@ -399,7 +398,8 @@ uint8_t state;
 			volt_raw = measure_voltage();
 			if (volt_raw) // make sure conversion is done
 			{
-				battery_voltage = ((volt_raw/ADC_SAMPLES_V) * VOLT_K + VOLT_D);//   /10; /10 geht nicht??
+				battery_voltage = (volt_k * volt_raw)/32768UL;//(1024*ADC_SAMPLES_V);
+				//battery_voltage = (volt_raw/ADC_SAMPLES_V) * volt_k ;//   /10; /10 geht nicht??
 				ADCstat = MEASURE_TEMP;
 			}
 		}
@@ -408,7 +408,7 @@ uint8_t state;
 			volt_raw = measure_temperature();
 			if (volt_raw) // make sure conversion is done
 			{
-				battery_temperature = volt_raw/ADC_SAMPLES_T + TEMP_D; // T in [K];
+				battery_temperature = volt_raw/ADC_SAMPLES_T + temp_d; // T in [K];
 				ADCstat = MEASURE_VOLT;
 			}
 		}

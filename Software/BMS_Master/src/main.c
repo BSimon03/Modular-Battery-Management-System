@@ -47,7 +47,7 @@ DDRB|= (1<<PINB3);
 		timer_add_time();
 		if (state == 0)
 		{
-			gl_manch_dat = COM_BLC_A+1;
+			gl_manch_dat = COM_BLC_A+2;
 			manch_init_send();
 			state = 1;
 		}
@@ -101,7 +101,7 @@ DDRB|= (1<<PINB3);
 		else if (state==8) // ausgabe auf serieller: spannung /10; temp -275
 		{
 			for (i=0; i<ANZ_ZELLEN; i++)
-				printf("%d ",spg[i]-275);
+				printf("%d ",spg[i]);
 			_delay_ms(1000);
 			state = 0;
 		}

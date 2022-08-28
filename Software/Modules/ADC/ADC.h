@@ -34,7 +34,7 @@
 #define CAL_VOLT_L_EXT 0x9600 // Callibration Voltage LOW     -> 3V
 #define CAL_VOLT_LB 0x021C    //                              -> 2.7V
 
-#define CAL_TEMP (int8_t)22 // Environment temperature during calibration
+#define CAL_TEMP 292 // Environment temperature during calibration, in [K]
 
 #define EEPROM_STATUS_ADR (uint8_t *)0x00 // Address of the status byte
 // Byte pointers to each bit in the eeprom status byte
