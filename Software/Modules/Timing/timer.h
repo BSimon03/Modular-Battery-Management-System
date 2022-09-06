@@ -19,7 +19,7 @@ enum TIMER_NR {
 //   TIMER_ADC,
 //   TIMER_BALANCE,
 	MAIN,
-   HEARTBEAT,
+	CONTROL,
 // letzte eintrag, neue timer davor!
    TIMER_MAX_TIMER};
 #endif
